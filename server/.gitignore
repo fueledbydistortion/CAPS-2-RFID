@@ -1,0 +1,21 @@
+# Node
+node_modules
+
+# Env files
+.env
+.env.*
+
+# Firebase credentials (never commit!)
+credentials.json
+*_credentials.json
+*credentials*.json
+
+# Uploads and generated files
+uploads/
+dist/
+*.local
+
+# OS/editor
+.DS_Store
+.vscode/
+

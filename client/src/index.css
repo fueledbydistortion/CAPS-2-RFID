@@ -1,0 +1,497 @@
+/* Root CSS Variables for Smart Child Care */
+:root {
+  /* Primary Colors from Logo */
+  --primary-forest-green: hsl(152, 65%, 28%);
+  --secondary-navy-blue: hsl(220, 60%, 25%);
+  --accent-amber: hsl(38, 92%, 50%);
+  
+  /* Status Colors */
+  --success-emerald: hsl(145, 60%, 40%);
+  --warning-amber: hsl(38, 92%, 50%);
+  --info-blue: hsl(220, 60%, 25%); /* Updated to use navy blue from logo */
+  
+  /* Neutral Colors */
+  --background-light: hsl(210, 20%, 98%);
+  --text-dark: hsl(220, 60%, 25%); /* Updated to use navy blue from logo */
+  --border-light: hsl(210, 15%, 90%);
+  
+  /* Typography */
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--background-light);
+  color: var(--text-dark);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Global Material-UI Overrides */
+.MuiButton-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+}
+
+.MuiTypography-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Table Styling */
+.MuiTableCell-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTableCell-head {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+/* Form Controls and Inputs */
+.MuiTextField-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiInputBase-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiInputLabel-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiFormHelperText-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Chips and Badges */
+.MuiChip-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+/* Menu Items */
+.MuiMenuItem-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Dialog Title */
+.MuiDialogTitle-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 700 !important;
+}
+
+/* Tabs */
+.MuiTab-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.MuiTabs-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Dialog Components */
+.MuiDialogContent-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiDialogActions-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiDialogContentText-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Lists */
+.MuiList-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiListItem-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiListItemText-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Cards */
+.MuiCard-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiCardHeader-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiCardContent-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Alerts and Notifications */
+.MuiAlert-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiSnackbar-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Tooltips */
+.MuiTooltip-tooltip {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Paper */
+.MuiPaper-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Accordion */
+.MuiAccordion-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiAccordionSummary-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+/* Breadcrumbs */
+.MuiBreadcrumbs-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Stepper */
+.MuiStepLabel-label {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Select and Autocomplete */
+.MuiSelect-select {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiAutocomplete-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Popper and Popover */
+.MuiPopover-paper {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiPopper-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Badge */
+.MuiBadge-badge {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+/* Switch and Checkbox Labels */
+.MuiFormControlLabel-label {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Radio Button Labels */
+.MuiRadio-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Pagination */
+.MuiPagination-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiPaginationItem-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+/* ========== TABLES - Jakarta Sans ========== */
+.MuiTableContainer-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTable-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTableHead-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTableBody-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTableRow-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTableFooter-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTableSortLabel-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.MuiTablePagination-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTablePagination-selectLabel {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTablePagination-displayedRows {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTablePagination-select {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTablePagination-actions {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiToolbar-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* ========== CALENDAR - Jakarta Sans ========== */
+.calendar-day {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.calendar-header {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.calendar-cell {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.calendar-event {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.calendar-month-view {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.calendar-week-view {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* ========== TABS - Jakarta Sans ========== */
+.MuiTabPanel-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTabScrollButton-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTab-wrapper {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.MuiTabs-indicator {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiTabs-flexContainer {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* ========== BUTTONS - Jakarta Sans ========== */
+.MuiButton-contained {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.MuiButton-outlined {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.MuiButton-text {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.MuiIconButton-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiButtonBase-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiLoadingButton-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.MuiButton-label {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.MuiButton-startIcon,
+.MuiButton-endIcon {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiFab-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.MuiToggleButton-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.MuiToggleButtonGroup-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* ========== DIALOGS - Jakarta Sans ========== */
+.MuiDialog-root {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiDialog-paper {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.MuiDialogTitle-root h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 700 !important;
+}
+
+/* SweetAlert2 Dialogs */
+.swal2-popup {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.swal2-title {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 700 !important;
+}
+
+.swal2-html-container {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.swal2-confirm,
+.swal2-cancel,
+.swal2-deny {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.swal2-input,
+.swal2-textarea {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background-light);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-forest-green);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-navy-blue);
+}
+
+/* Animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+/* Smooth transitions */
+a, button {
+  transition: all 0.3s ease;
+}
+
+/* Focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid var(--accent-amber);
+  outline-offset: 2px;
+}
+
+/* Selection color */
+::selection {
+  background-color: var(--accent-amber);
+  color: white;
+}
+

@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Notifications - Smart Child Care</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 600px;
+      width: 100%;
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 30px;
+    }
+    
+    button {
+      padding: 14px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+    
+    .result {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .result.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+    
+    .result.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+    
+    .info-box {
+      background: #e7f3ff;
+      border-left: 4px solid #2196f3;
+      padding: 16px;
+      margin: 20px 0;
+      border-radius: 5px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    
+    .info-box strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #1976d2;
+    }
+    
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔔 Test Notifications</h1>
+    <p class="subtitle">Smart Child Care - Notification System Tester</p>
+    
+    <div class="info-box">
+      <strong>📋 How to use:</strong>
+      1. Login to your dashboard<br>
+      2. Open browser console (F12) and find your User ID<br>
+      3. Copy your authentication token from Network tab<br>
+      4. Paste both below and click "Test"
+    </div>
+    
+    <div class="form-group">
+      <label for="userId">User ID (UID):</label>
+      <input type="text" id="userId" placeholder="e.g., abc123xyz456..." />
+    </div>
+    
+    <div class="form-group">
+      <label for="token">Firebase Auth Token:</label>
+      <input type="text" id="token" placeholder="Paste your token here..." />
+    </div>
+    
+    <div class="form-group">
+      <label for="notificationType">Notification Type:</label>
+      <select id="notificationType">
+        <option value="system">🔔 System</option>
+        <option value="attendance">✓ Attendance</option>
+        <option value="assignment">📝 Assignment</option>
+        <option value="announcement">📢 Announcement</option>
+        <option value="badge">🏆 Badge</option>
+        <option value="message">💬 Message</option>
+      </select>
+    </div>
+    
+    <div class="btn-group">
+      <button class="btn-primary" onclick="testSingleNotification()">
+        Test Single
+      </button>
+      <button class="btn-primary" onclick="testAllNotifications()">
+        Test All Types
+      </button>
+      <button class="btn-secondary" onclick="clearResults()">
+        Clear
+      </button>
+    </div>
+    
+    <div id="result" class="result"></div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000';
+
+    function showResult(message, isSuccess) {
+      const resultDiv = document.getElementById('result');
+      resultDiv.className = `result ${isSuccess ? 'success' : 'error'}`;
+      resultDiv.textContent = message;
+      resultDiv.style.display = 'block';
+    }
+
+    function clearResults() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.style.display = 'none';
+    }
+
+    async function testSingleNotification() {
+      clearResults();
+      
+      const userId = document.getElementById('userId').value.trim();
+      const token = document.getElementById('token').value.trim();
+      const type = document.getElementById('notificationType').value;
+
+      if (!userId || !token) {
+        showResult('⚠️ Please enter both User ID and Token', false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/test-notifications/test-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ userId, type })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showResult(`✅ Success! ${type} notification created. Check your dashboard notification bell!`, true);
+        } else {
+          showResult(`❌ Error: ${data.error || 'Failed to create notification'}`, false);
+        }
+      } catch (error) {
+        showResult(`❌ Network Error: ${error.message}. Is the server running?`, false);
+      }
+    }
+
+    async function testAllNotifications() {
+      clearResults();
+      
+      const userId = document.getElementById('userId').value.trim();
+      const token = document.getElementById('token').value.trim();
+
+      if (!userId || !token) {
+        showResult('⚠️ Please enter both User ID and Token', false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/test-notifications/test-all-notifications`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ userId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showResult(`✅ Success! Created ${data.count} test notifications. Check your dashboard notification bell!`, true);
+        } else {
+          showResult(`❌ Error: ${data.error || 'Failed to create notifications'}`, false);
+        }
+      } catch (error) {
+        showResult(`❌ Network Error: ${error.message}. Is the server running on port 3000?`, false);
+      }
+    }
+
+    // Auto-fill from localStorage if available
+    window.addEventListener('load', () => {
+      const savedUserId = localStorage.getItem('lastTestedUserId');
+      if (savedUserId) {
+        document.getElementById('userId').value = savedUserId;
+      }
+    });
+
+    // Save userId for next time
+    document.getElementById('userId').addEventListener('change', (e) => {
+      localStorage.setItem('lastTestedUserId', e.target.value);
+    });
+  </script>
+</body>
+</html>
+

@@ -21,19 +21,22 @@ if (!process.env.VERCEL) {
 // Files will be stored in memory as Buffer objects
 const storage = multer.memoryStorage();
 
-// Legacy disk storage (kept for backward compatibility)
-const diskStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, attachmentsDir);
-  },
-  filename: function (req, file, cb) {
-    // Generate unique filename with timestamp
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    const name = path.basename(file.originalname, ext);
-    cb(null, `${name}-${uniqueSuffix}${ext}`);
-  }
-});
+// Legacy disk storage (kept for backward compatibility) - only in non-Vercel environments
+let diskStorage = null;
+if (!process.env.VERCEL) {
+  diskStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+      cb(null, attachmentsDir);
+    },
+    filename: function (req, file, cb) {
+      // Generate unique filename with timestamp
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const ext = path.extname(file.originalname);
+      const name = path.basename(file.originalname, ext);
+      cb(null, `${name}-${uniqueSuffix}${ext}`);
+    }
+  });
+}
 
 // File filter
 const fileFilter = (req, file, cb) => {
@@ -71,18 +74,26 @@ const upload = multer({
   }
 });
 
-// Configure multer with disk storage (legacy/backup)
-const uploadToDisk = multer({
-  storage: diskStorage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-    files: 5 // Maximum 5 files per request
-  }
-});
+// Configure multer with disk storage (legacy/backup) - only in non-Vercel environments
+let uploadToDisk = null;
+if (!process.env.VERCEL && diskStorage) {
+  uploadToDisk = multer({
+    storage: diskStorage,
+    fileFilter: fileFilter,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit
+      files: 5 // Maximum 5 files per request
+    }
+  });
+}
 
-// Helper function to delete file from disk
+// Helper function to delete file from disk - only in non-Vercel environments
 const deleteFile = (filePath) => {
+  if (process.env.VERCEL) {
+    console.warn('File deletion not supported on Vercel serverless');
+    return false;
+  }
+  
   try {
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);

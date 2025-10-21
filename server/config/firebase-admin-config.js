@@ -25,11 +25,23 @@ const storageBucket =
 
 if (!admin.apps.length) {
   try {
+    const appConfig = {
+      databaseURL,
+      storageBucket,
+      // Optimize for serverless environments
+      databaseAuthVariableOverride: null,
+      // Set connection timeout
+      httpAgent: {
+        timeout: 10000, // 10 seconds timeout
+        keepAlive: true,
+        keepAliveMsecs: 30000,
+      },
+    };
+
     if (serviceAccount) {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        databaseURL,
-        storageBucket,
+        ...appConfig,
       });
       console.log("✅ Firebase Admin initialized with JSON credentials");
     } else if (hasEnvCreds) {
@@ -44,8 +56,7 @@ if (!admin.apps.length) {
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
           privateKey: normalizedPrivateKey,
         }),
-        databaseURL,
-        storageBucket,
+        ...appConfig,
       });
       console.log("✅ Firebase Admin initialized with environment variables");
     } else {

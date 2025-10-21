@@ -29,6 +29,7 @@ const passwordResetRoutes = require("./routes/passwordResetRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const notificationPreferencesRoutes = require("./routes/notificationPreferencesRoutes");
 const testNotificationRoutes = require("./routes/testNotificationRoutes");
+const healthRoutes = require("./routes/healthRoutes");
 
 const PORT = process.env.PORT || 3001;
 
@@ -37,14 +38,14 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     const allowedOrigins = [
       "http://localhost:3000",
       "http://localhost:5173", // Vite dev server
       "https://smart-child-care-app.vercel.app",
-      "https://smart-child-care-z13s.vercel.app"
+      "https://smart-child-care-z13s.vercel.app",
     ];
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -54,8 +55,8 @@ const corsOptions = {
   },
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 };
 
 app.use(cors(corsOptions));
@@ -110,6 +111,7 @@ app.use("/api/password-reset", passwordResetRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/notification-preferences", notificationPreferencesRoutes);
 app.use("/api/test-notifications", testNotificationRoutes);
+app.use("/api/health", healthRoutes);
 
 // Basic test route
 app.get("/", (req, res) => {

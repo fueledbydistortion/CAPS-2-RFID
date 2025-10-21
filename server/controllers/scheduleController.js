@@ -1,5 +1,7 @@
 const QRCode = require("qrcode");
 const { db, admin } = require("../config/firebase-admin-config");
+const { safeDbQuery } = require("../utils/timeoutWrapper");
+const { withCache, invalidateCache } = require("../utils/cache");
 
 // Helper function to format time to 12-hour format
 const formatTo12Hour = (timeStr) => {
@@ -166,6 +168,9 @@ const createSchedule = async (req, res) => {
 
     await scheduleRef.set(finalScheduleData);
 
+    // Invalidate cache for schedules
+    invalidateCache("schedules_");
+
     res.status(201).json({
       success: true,
       data: finalScheduleData,
@@ -180,22 +185,84 @@ const createSchedule = async (req, res) => {
   }
 };
 
-// Get all schedules
+// Get all schedules with pagination and filtering
 const getAllSchedules = async (req, res) => {
   try {
-    const snapshot = await db.ref("schedules").once("value");
-    const schedules = [];
+    const {
+      page = 1,
+      limit = 50,
+      day,
+      sectionId,
+      teacherId,
+      subjectId,
+    } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = Math.min(parseInt(limit), 100); // Cap at 100 items per page
+    const offset = (pageNum - 1) * limitNum;
+
+    let query = db.ref("schedules");
+
+    // Apply filters
+    if (day) {
+      query = query.orderByChild("day").equalTo(day);
+    } else if (sectionId) {
+      query = query.orderByChild("sectionId").equalTo(sectionId);
+    } else if (teacherId) {
+      query = query.orderByChild("teacherId").equalTo(teacherId);
+    } else if (subjectId) {
+      query = query.orderByChild("subjectId").equalTo(subjectId);
+    } else {
+      // Default ordering by creation date for better performance
+      query = query.orderByChild("createdAt");
+    }
+
+    // Create cache key based on query parameters
+    const cacheKey = `schedules_${JSON.stringify({
+      day,
+      sectionId,
+      teacherId,
+      subjectId,
+      page: pageNum,
+      limit: limitNum,
+    })}`;
+
+    const result = await withCache(
+      cacheKey,
+      async () => {
+        const dbResult = await safeDbQuery(() => query.once("value"));
+        if (!dbResult.success) {
+          throw new Error(dbResult.error);
+        }
+        return dbResult.data;
+      },
+      300000
+    ); // 5 minutes cache
+
+    const snapshot = result;
+    const allSchedules = [];
 
     if (snapshot.exists()) {
       snapshot.forEach((childSnapshot) => {
-        schedules.push(childSnapshot.val());
+        allSchedules.push(childSnapshot.val());
       });
     }
 
+    // Apply pagination
+    const totalCount = allSchedules.length;
+    const paginatedSchedules = allSchedules.slice(offset, offset + limitNum);
+
     res.json({
       success: true,
-      data: schedules,
-      count: schedules.length,
+      data: paginatedSchedules,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalCount,
+        pages: Math.ceil(totalCount / limitNum),
+        hasNext: offset + limitNum < totalCount,
+        hasPrev: pageNum > 1,
+      },
     });
   } catch (error) {
     console.error("Error fetching schedules:", error);
@@ -349,6 +416,9 @@ const updateSchedule = async (req, res) => {
       updatedSchedule.qrCode = qrUpdateData.qrCode;
     }
 
+    // Invalidate cache for schedules
+    invalidateCache("schedules_");
+
     res.json({
       success: true,
       data: updatedSchedule,
@@ -379,6 +449,9 @@ const deleteSchedule = async (req, res) => {
 
     // Delete schedule
     await db.ref(`schedules/${id}`).remove();
+
+    // Invalidate cache for schedules
+    invalidateCache("schedules_");
 
     res.json({
       success: true,

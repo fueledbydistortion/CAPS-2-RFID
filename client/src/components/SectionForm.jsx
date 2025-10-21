@@ -27,6 +27,7 @@ import { Field, Form, Formik } from "formik";
 import React, { useEffect, useState } from "react";
 import {
   addStudentToSection,
+  getAllSections,
   removeStudentFromSection,
 } from "../utils/sectionService";
 import { getAllUsers } from "../utils/userService";
@@ -42,6 +43,7 @@ const SectionForm = ({
   const [assignedStudents, setAssignedStudents] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [students, setStudents] = useState([]);
+  const [allSections, setAllSections] = useState([]);
   const [loadingTeachers, setLoadingTeachers] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -57,6 +59,7 @@ const SectionForm = ({
     if (open) {
       loadTeachers();
       loadStudents();
+      loadAllSections();
     }
   }, [open]);
 
@@ -114,6 +117,38 @@ const SectionForm = ({
     } finally {
       setLoadingStudents(false);
     }
+  };
+
+  const loadAllSections = async () => {
+    try {
+      const result = await getAllSections();
+      if (result.success) {
+        setAllSections(result.data);
+      }
+    } catch (error) {
+      console.error("Error loading sections:", error);
+    }
+  };
+
+  // Get available teachers (not assigned to other daycare levels)
+  const getAvailableTeachers = () => {
+    if (!teachers.length || !allSections.length) return teachers;
+
+    // Get teacher IDs that are already assigned to other sections
+    const assignedTeacherIds = allSections
+      .filter((section) => {
+        // Exclude current section if editing
+        if (sectionData && section.id === sectionData.id) {
+          return false;
+        }
+        return section.teacherId && section.teacherId.trim() !== "";
+      })
+      .map((section) => section.teacherId);
+
+    // Filter out teachers who are already assigned
+    return teachers.filter(
+      (teacher) => !assignedTeacherIds.includes(teacher.uid)
+    );
   };
 
   const handleAddStudent = async () => {
@@ -297,11 +332,20 @@ const SectionForm = ({
                             <MenuItem value="">
                               <em>Select a teacher</em>
                             </MenuItem>
-                            {teachers.map((teacher) => (
-                              <MenuItem key={teacher.uid} value={teacher.uid}>
-                                {teacher.firstName} {teacher.lastName}
+                            {getAvailableTeachers().length === 0 ? (
+                              <MenuItem value="" disabled>
+                                <em>
+                                  No available teachers (all assigned to other
+                                  daycare levels)
+                                </em>
                               </MenuItem>
-                            ))}
+                            ) : (
+                              getAvailableTeachers().map((teacher) => (
+                                <MenuItem key={teacher.uid} value={teacher.uid}>
+                                  {teacher.firstName} {teacher.lastName}
+                                </MenuItem>
+                              ))
+                            )}
                           </Select>
                           {meta.touched && meta.error && (
                             <Typography
@@ -309,6 +353,15 @@ const SectionForm = ({
                               color="error"
                               sx={{ mt: 0.5, ml: 1.75 }}>
                               {meta.error}
+                            </Typography>
+                          )}
+                          {getAvailableTeachers().length === 0 && (
+                            <Typography
+                              variant="caption"
+                              color="warning.main"
+                              sx={{ mt: 0.5, ml: 1.75 }}>
+                              All teachers are already assigned to other daycare
+                              levels
                             </Typography>
                           )}
                         </FormControl>

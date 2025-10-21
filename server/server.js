@@ -39,7 +39,7 @@ const healthRoutes = require("./routes/healthRoutes");
 
 const PORT = process.env.PORT || 3001;
 
-// Enable CORS for all routes with specific origins - MORE PERMISSIVE FOR DEBUGGING
+// Enable CORS for all routes with specific origins
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
@@ -49,23 +49,61 @@ const corsOptions = {
       "http://localhost:3000",
       "http://localhost:5173", // Vite dev server
       "https://smart-child-care-app.vercel.app",
-      "https://smart-child-care-z13s.vercel.app",
+      "https://smart-child-care-server.vercel.app/",
     ];
 
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
       console.log("CORS: Allowing origin:", origin);
-      callback(null, true); // Temporarily allow all origins for debugging
+      callback(null, true); // Allow all origins for now
     }
   },
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin",
+    "Access-Control-Request-Method",
+    "Access-Control-Request-Headers",
+  ],
+  exposedHeaders: ["Content-Length", "X-Foo", "X-Bar"],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 };
 
+// Apply CORS to all routes
 app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options("*", cors(corsOptions));
+
+// Additional CORS middleware for edge cases
+app.use((req, res, next) => {
+  // Set CORS headers manually as backup
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  // Handle preflight requests
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+    return;
+  }
+
+  next();
+});
 
 // Parse JSON bodies
 app.use(express.json());
@@ -112,6 +150,17 @@ app.get("/api/debug", (req, res) => {
     availableEnvVars: Object.keys(process.env).filter((key) =>
       key.startsWith("FIREBASE")
     ),
+  });
+});
+
+// Add a CORS test endpoint
+app.get("/api/cors-test", (req, res) => {
+  res.json({
+    message: "CORS test successful",
+    origin: req.headers.origin,
+    method: req.method,
+    headers: req.headers,
+    timestamp: new Date().toISOString(),
   });
 });
 

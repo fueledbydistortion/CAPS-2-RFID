@@ -1,222 +1,234 @@
-import React, { useState, useEffect } from 'react'
-import { 
-  Box, 
-  Paper, 
-  Typography, 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Chip, 
-  Button,
-  TextField,
-  InputAdornment,
+import {
+  Add,
+  Delete,
+  Edit,
+  Print,
+  Refresh,
+  School,
+  Search,
+  ViewList,
+  ViewModule,
+} from "@mui/icons-material";
+import {
   Alert,
-  Snackbar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
   CircularProgress,
-  Tooltip,
+  // Collapse,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  InputAdornment,
+  Paper,
+  Snackbar,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  IconButton,
-  Tabs,
-  Tab,
-  MenuItem,
-  // Collapse,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
-} from '@mui/material'
-import { 
-  Add, 
-  Edit, 
-  Delete, 
-  School,
-  Search,
-  Refresh,
-  ViewList,
-  ViewModule,
-  ExpandMore,
-  ExpandLess,
-  QrCode2,
-  Print
-} from '@mui/icons-material'
-import { generateQRCode } from '../utils/qrService'
-import SectionForm from '../components/SectionForm'
-import ConfirmDialog from '../components/ConfirmDialog'
-import { 
-  createSection, 
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import ConfirmDialog from "../components/ConfirmDialog";
+import SectionForm from "../components/SectionForm";
+import { useAuth } from "../contexts/AuthContext";
+import { generateQRCode } from "../utils/qrService";
+import {
+  createSection,
+  deleteSection,
   getAllSections,
-  updateSection, 
-  deleteSection, 
   subscribeToAllSections,
-  searchSections,
-  getSectionsByGrade
-} from '../utils/sectionService'
-import { getAllUsers } from '../utils/userService'
-import { useAuth } from '../contexts/AuthContext'
+  updateSection,
+} from "../utils/sectionService";
+import { getAllUsers } from "../utils/userService";
 
 const SectionsContent = () => {
-  const { userProfile } = useAuth()
-  const [sections, setSections] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filteredSections, setFilteredSections] = useState([])
-  const [viewMode, setViewMode] = useState('table') // 'cards' or 'table'
-  const [allUsers, setAllUsers] = useState([])
-  const [expandedSectionIds, setExpandedSectionIds] = useState({})
-  const [parentQrCache, setParentQrCache] = useState({})
-  const [qrPreviewOpen, setQrPreviewOpen] = useState(false)
-  const [qrPreviewSrc, setQrPreviewSrc] = useState('')
-  const [qrPreviewType, setQrPreviewType] = useState('timeIn')
-  const [qrPreviewParent, setQrPreviewParent] = useState(null)
-  
+  const { userProfile } = useAuth();
+  const [sections, setSections] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredSections, setFilteredSections] = useState([]);
+  const [viewMode, setViewMode] = useState("table"); // 'cards' or 'table'
+  const [allUsers, setAllUsers] = useState([]);
+  const [expandedSectionIds, setExpandedSectionIds] = useState({});
+  const [parentQrCache, setParentQrCache] = useState({});
+  const [qrPreviewOpen, setQrPreviewOpen] = useState(false);
+  const [qrPreviewSrc, setQrPreviewSrc] = useState("");
+  const [qrPreviewType, setQrPreviewType] = useState("timeIn");
+  const [qrPreviewParent, setQrPreviewParent] = useState(null);
+
   // Dialog states
-  const [sectionFormOpen, setSectionFormOpen] = useState(false)
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
-  const [editingSection, setEditingSection] = useState(null)
-  const [deletingSection, setDeletingSection] = useState(null)
-  
+  const [sectionFormOpen, setSectionFormOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [editingSection, setEditingSection] = useState(null);
+  const [deletingSection, setDeletingSection] = useState(null);
+
   // Notification states
   const [snackbar, setSnackbar] = useState({
     open: false,
-    message: '',
-    severity: 'success'
-  })
-
+    message: "",
+    severity: "success",
+  });
 
   // Load sections and users when component mounts
   useEffect(() => {
-    loadSections()
-    loadUsers()
-  }, [])
+    loadSections();
+    loadUsers();
+  }, []);
 
   // Set up real-time subscription
   useEffect(() => {
     const unsubscribe = subscribeToAllSections((result) => {
       if (result.success) {
-        setSections(result.data)
+        setSections(result.data);
       } else {
-        showSnackbar('Error loading sections: ' + result.error, 'error')
+        showSnackbar("Error loading sections: " + result.error, "error");
       }
-    })
+    });
 
-    return () => unsubscribe()
-  }, [])
+    return () => unsubscribe();
+  }, []);
 
   // Filter sections when search term or user profile changes
   useEffect(() => {
-    let filtered = sections
+    let filtered = sections;
 
     // If user is a teacher, filter sections to show only those assigned to them
-    if (userProfile && userProfile.role === 'teacher') {
-      filtered = filtered.filter(section => section.teacherId === userProfile.uid)
+    if (userProfile && userProfile.role === "teacher") {
+      filtered = filtered.filter(
+        (section) => section.teacherId === userProfile.uid
+      );
     }
 
     // Filter by search term
     if (searchTerm.trim()) {
-      filtered = filtered.filter(section => 
+      filtered = filtered.filter((section) =>
         section.name?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+      );
     }
 
-    setFilteredSections(filtered)
-  }, [searchTerm, sections, userProfile])
+    setFilteredSections(filtered);
+  }, [searchTerm, sections, userProfile]);
 
   const loadSections = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const result = await getAllSections()
+      const result = await getAllSections();
       if (result.success) {
-        setSections(result.data)
+        setSections(result.data);
       } else {
-        showSnackbar('Error loading sections: ' + result.error, 'error')
+        showSnackbar("Error loading sections: " + result.error, "error");
       }
     } catch (error) {
-      showSnackbar('Error loading sections: ' + error.message, 'error')
+      showSnackbar("Error loading sections: " + error.message, "error");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const loadUsers = async () => {
     try {
-      const result = await getAllUsers()
+      const result = await getAllUsers();
       if (result.success) {
-        setAllUsers(result.data)
+        setAllUsers(result.data);
       }
     } catch (error) {
-      console.error('Error loading users:', error)
+      console.error("Error loading users:", error);
     }
-  }
+  };
 
   const getStudentName = (studentId) => {
-    const parent = allUsers.find(user => user.uid === studentId)
-    if (parent && parent.role === 'parent' && parent.childName) {
-      return `${parent.firstName} ${parent.lastName} (Child: ${parent.childName})`
+    const parent = allUsers.find((user) => user.uid === studentId);
+    if (parent && parent.role === "parent" && parent.childName) {
+      return `${parent.firstName} ${parent.lastName} (Child: ${parent.childName})`;
     }
-    return parent ? `${parent.firstName} ${parent.lastName}` : 'Unknown Parent'
-  }
+    return parent ? `${parent.firstName} ${parent.lastName}` : "Unknown Parent";
+  };
 
   const getTeacherName = (teacherId) => {
-    const teacher = allUsers.find(user => user.uid === teacherId && user.role === 'teacher')
-    return teacher ? `${teacher.firstName} ${teacher.lastName}` : 'No teacher assigned'
-  }
+    const teacher = allUsers.find(
+      (user) => user.uid === teacherId && user.role === "teacher"
+    );
+    return teacher
+      ? `${teacher.firstName} ${teacher.lastName}`
+      : "No teacher assigned";
+  };
 
   const ensureParentQRCodes = async (parent) => {
-    if (!parent || parent.role !== 'parent') return {}
-    const cacheKey = parent.uid
-    const cached = parentQrCache[cacheKey]
-    if (cached && cached.timeIn && cached.timeOut) return cached
-    const basePayload = { type: 'parent', parentId: parent.uid, timestamp: new Date().toISOString() }
+    if (!parent || parent.role !== "parent") return {};
+    const cacheKey = parent.uid;
+    const cached = parentQrCache[cacheKey];
+    if (cached && cached.timeIn && cached.timeOut) return cached;
+    const basePayload = {
+      type: "parent",
+      parentId: parent.uid,
+      timestamp: new Date().toISOString(),
+    };
     try {
       const [timeIn, timeOut] = await Promise.all([
-        generateQRCode(JSON.stringify({ ...basePayload, attendanceType: 'timeIn' }), { color: { dark: '#4caf50', light: '#ffffff' }, width: 160 }),
-        generateQRCode(JSON.stringify({ ...basePayload, attendanceType: 'timeOut' }), { color: { dark: '#ff9800', light: '#ffffff' }, width: 160 })
-      ])
-      const qr = { timeIn, timeOut }
-      setParentQrCache(prev => ({ ...prev, [cacheKey]: qr }))
-      return qr
+        generateQRCode(
+          JSON.stringify({ ...basePayload, attendanceType: "timeIn" }),
+          { color: { dark: "#4caf50", light: "#ffffff" }, width: 160 }
+        ),
+        generateQRCode(
+          JSON.stringify({ ...basePayload, attendanceType: "timeOut" }),
+          { color: { dark: "#ff9800", light: "#ffffff" }, width: 160 }
+        ),
+      ]);
+      const qr = { timeIn, timeOut };
+      setParentQrCache((prev) => ({ ...prev, [cacheKey]: qr }));
+      return qr;
     } catch (e) {
-      console.error('QR generation failed:', e)
-      return {}
+      console.error("QR generation failed:", e);
+      return {};
     }
-  }
+  };
 
   const toggleExpand = (sectionId) => {
-    setExpandedSectionIds(prev => ({ ...prev, [sectionId]: !prev[sectionId] }))
-  }
+    setExpandedSectionIds((prev) => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
 
   const openParentQRPreview = async (parent, type) => {
-    const qr = await ensureParentQRCodes(parent)
-    const src = type === 'timeOut' ? qr.timeOut : qr.timeIn
+    const qr = await ensureParentQRCodes(parent);
+    const src = type === "timeOut" ? qr.timeOut : qr.timeIn;
     if (src) {
-      setQrPreviewParent(parent)
-      setQrPreviewType(type)
-      setQrPreviewSrc(src)
-      setQrPreviewOpen(true)
+      setQrPreviewParent(parent);
+      setQrPreviewType(type);
+      setQrPreviewSrc(src);
+      setQrPreviewOpen(true);
     }
-  }
+  };
 
   const closeParentQRPreview = () => {
-    setQrPreviewOpen(false)
-    setQrPreviewSrc('')
-    setQrPreviewParent(null)
-  }
+    setQrPreviewOpen(false);
+    setQrPreviewSrc("");
+    setQrPreviewParent(null);
+  };
 
   const handlePrintQR = async () => {
     // Create a new window for printing
-    const printWindow = window.open('', '_blank')
-    if (!printWindow) return
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
 
-    const parentName = qrPreviewParent ? `${qrPreviewParent.firstName} ${qrPreviewParent.lastName}` : ''
-    
+    const parentName = qrPreviewParent
+      ? `${qrPreviewParent.firstName} ${qrPreviewParent.lastName}`
+      : "";
+
     // Ensure both QR codes are generated
-    const qrCodes = await ensureParentQRCodes(qrPreviewParent)
-    
+    const qrCodes = await ensureParentQRCodes(qrPreviewParent);
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -346,7 +358,9 @@ const SectionsContent = () => {
                 <p class="qr-parent-name">${parentName}</p>
               </div>
               <div class="qr-image-wrapper time-in">
-                <img src="${qrCodes.timeIn}" alt="Time In QR Code" class="qr-image" />
+                <img src="${
+                  qrCodes.timeIn
+                }" alt="Time In QR Code" class="qr-image" />
               </div>
               <div class="qr-instructions">
                 <strong>Instructions:</strong><br/>
@@ -369,7 +383,9 @@ const SectionsContent = () => {
                 <p class="qr-parent-name">${parentName}</p>
               </div>
               <div class="qr-image-wrapper time-out">
-                <img src="${qrCodes.timeOut}" alt="Time Out QR Code" class="qr-image" />
+                <img src="${
+                  qrCodes.timeOut
+                }" alt="Time Out QR Code" class="qr-image" />
               </div>
               <div class="qr-instructions">
                 <strong>Instructions:</strong><br/>
@@ -391,104 +407,130 @@ const SectionsContent = () => {
           </script>
         </body>
       </html>
-    `)
-    printWindow.document.close()
-  }
+    `);
+    printWindow.document.close();
+  };
 
-  const showSnackbar = (message, severity = 'success') => {
+  const showSnackbar = (message, severity = "success") => {
     setSnackbar({
       open: true,
       message,
-      severity
-    })
-  }
+      severity,
+    });
+  };
 
   const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }))
-  }
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
 
   const handleAddSection = () => {
-    setEditingSection(null)
-    setSectionFormOpen(true)
-  }
+    setEditingSection(null);
+    setSectionFormOpen(true);
+  };
 
   const handleEditSection = (section) => {
-    setEditingSection(section)
-    setSectionFormOpen(true)
-  }
+    setEditingSection(section);
+    setSectionFormOpen(true);
+  };
 
   const handleDeleteSection = (section) => {
-    setDeletingSection(section)
-    setConfirmDialogOpen(true)
-  }
+    setDeletingSection(section);
+    setConfirmDialogOpen(true);
+  };
 
   const handleSectionFormSubmit = async (formData) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      let result
+      let result;
       if (editingSection) {
         // Update existing section
-        result = await updateSection(editingSection.id, formData)
+        result = await updateSection(editingSection.id, formData);
         if (result.success) {
-          showSnackbar('Section updated successfully!')
-          setSectionFormOpen(false)
+          showSnackbar("Section updated successfully!");
+          setSectionFormOpen(false);
         } else {
-          showSnackbar('Error updating section: ' + result.error, 'error')
+          showSnackbar("Error updating section: " + result.error, "error");
         }
       } else {
         // Create new section
-        result = await createSection(formData)
+        result = await createSection(formData);
         if (result.success) {
-          showSnackbar('Section created successfully!')
-          setSectionFormOpen(false)
+          showSnackbar("Section created successfully!");
+          setSectionFormOpen(false);
         } else {
-          showSnackbar('Error creating section: ' + result.error, 'error')
+          showSnackbar("Error creating section: " + result.error, "error");
         }
       }
     } catch (error) {
-      showSnackbar('Error: ' + error.message, 'error')
+      showSnackbar("Error: " + error.message, "error");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleConfirmDelete = async () => {
-    if (!deletingSection) return
-    
-    setLoading(true)
+    if (!deletingSection) return;
+
+    setLoading(true);
     try {
-      const result = await deleteSection(deletingSection.id)
+      const result = await deleteSection(deletingSection.id);
       if (result.success) {
-        showSnackbar('Section deleted successfully!')
-        setConfirmDialogOpen(false)
-        setDeletingSection(null)
+        showSnackbar("Section deleted successfully!");
+        setConfirmDialogOpen(false);
+        setDeletingSection(null);
       } else {
-        showSnackbar('Error deleting section: ' + result.error, 'error')
+        showSnackbar("Error deleting section: " + result.error, "error");
       }
     } catch (error) {
-      showSnackbar('Error: ' + error.message, 'error')
+      showSnackbar("Error: " + error.message, "error");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
+  };
 
   return (
     <Box>
-      <Paper sx={{ p: 4, mb: 4, background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(15px)', border: '2px solid rgba(31, 120, 80, 0.2)', borderRadius: '20px', boxShadow: '0 8px 32px rgba(31, 120, 80, 0.2)' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h4" sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700, background: 'linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+      <Paper
+        sx={{
+          p: 4,
+          mb: 4,
+          background: "rgba(255, 255, 255, 0.95)",
+          backdropFilter: "blur(15px)",
+          border: "2px solid rgba(31, 120, 80, 0.2)",
+          borderRadius: "20px",
+          boxShadow: "0 8px 32px rgba(31, 120, 80, 0.2)",
+        }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontFamily: "Plus Jakarta Sans, sans-serif",
+              fontWeight: 700,
+              background:
+                "linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))",
+              backgroundClip: "text",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}>
             Section Management
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
             {/* Only show Add Section button for non-teacher users */}
-            {(!userProfile || userProfile.role !== 'teacher') && (
-              <Button 
-                variant="contained" 
-                startIcon={<Add />} 
+            {(!userProfile || userProfile.role !== "teacher") && (
+              <Button
+                variant="contained"
+                startIcon={<Add />}
                 onClick={handleAddSection}
-                sx={{ background: 'linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))' }}
-              >
+                sx={{
+                  background:
+                    "linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))",
+                }}>
                 Add Section
               </Button>
             )}
@@ -496,7 +538,14 @@ const SectionsContent = () => {
         </Box>
 
         {/* Controls */}
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3, flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            alignItems: "center",
+            mb: 3,
+            flexWrap: "wrap",
+          }}>
           <TextField
             size="small"
             placeholder="Search sections..."
@@ -511,17 +560,19 @@ const SectionsContent = () => {
             }}
             sx={{ minWidth: 250 }}
           />
-          
 
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: "flex", gap: 1 }}>
             <Tooltip title="Refresh">
               <IconButton onClick={loadSections} disabled={loading}>
                 <Refresh />
               </IconButton>
             </Tooltip>
-            <Tooltip title={viewMode === 'cards' ? 'Table View' : 'Card View'}>
-              <IconButton onClick={() => setViewMode(viewMode === 'cards' ? 'table' : 'cards')}>
-                {viewMode === 'cards' ? <ViewList /> : <ViewModule />}
+            <Tooltip title={viewMode === "cards" ? "Table View" : "Card View"}>
+              <IconButton
+                onClick={() =>
+                  setViewMode(viewMode === "cards" ? "table" : "cards")
+                }>
+                {viewMode === "cards" ? <ViewList /> : <ViewModule />}
               </IconButton>
             </Tooltip>
           </Box>
@@ -529,88 +580,118 @@ const SectionsContent = () => {
 
         {/* Content */}
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
             <CircularProgress />
           </Box>
-        ) : viewMode === 'cards' ? (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+        ) : viewMode === "cards" ? (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3 }}>
             {filteredSections.length === 0 ? (
-              <Box sx={{ width: '100%', textAlign: 'center', py: 4 }}>
+              <Box sx={{ width: "100%", textAlign: "center", py: 4 }}>
                 <Typography variant="h6" color="text.secondary">
-                  {userProfile && userProfile.role === 'teacher' 
-                    ? 'No sections assigned to you yet' 
-                    : 'No sections found'
-                  }
+                  {userProfile && userProfile.role === "teacher"
+                    ? "No sections assigned to you yet"
+                    : "No sections found"}
                 </Typography>
-                {userProfile && userProfile.role === 'teacher' && (
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                {userProfile && userProfile.role === "teacher" && (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 1 }}>
                     Contact your administrator to get sections assigned to you.
                   </Typography>
                 )}
               </Box>
             ) : (
               filteredSections.map((section) => (
-                <Card key={section.id} sx={{ 
-                  flex: '1 1 350px', 
-                  minWidth: '350px',
-                  maxWidth: '400px',
-                  height: 'fit-content',
-                  background: 'rgba(255, 255, 255, 0.95)', 
-                  backdropFilter: 'blur(15px)', 
-                  border: '2px solid rgba(31, 120, 80, 0.2)', 
-                  borderRadius: '16px', 
-                  boxShadow: '0 6px 20px rgba(31, 120, 80, 0.15)', 
-                  transition: 'all 0.3s ease', 
-                  '&:hover': { 
-                    transform: 'translateY(-4px)', 
-                    boxShadow: '0 12px 30px rgba(31, 120, 80, 0.25)' 
-                  } 
-                }}>
+                <Card
+                  key={section.id}
+                  sx={{
+                    flex: "1 1 350px",
+                    minWidth: "350px",
+                    maxWidth: "400px",
+                    height: "fit-content",
+                    background: "rgba(255, 255, 255, 0.95)",
+                    backdropFilter: "blur(15px)",
+                    border: "2px solid rgba(31, 120, 80, 0.2)",
+                    borderRadius: "16px",
+                    boxShadow: "0 6px 20px rgba(31, 120, 80, 0.15)",
+                    transition: "all 0.3s ease",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: "0 12px 30px rgba(31, 120, 80, 0.25)",
+                    },
+                  }}>
                   <CardHeader
-                    avatar={<School sx={{ color: 'hsl(152, 65%, 28%)' }} />}
+                    avatar={<School sx={{ color: "hsl(152, 65%, 28%)" }} />}
                     title={section.name}
                     subheader={`Capacity: ${section.capacity}`}
-                    titleTypographyProps={{ variant: 'h6', fontWeight: 600 }}
+                    titleTypographyProps={{ variant: "h6", fontWeight: 600 }}
                   />
                   <CardContent>
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}>
                         Teacher: {getTeacherName(section.teacherId)}
                       </Typography>
-                      {section.assignedStudents && section.assignedStudents.length > 0 && (
-                        <Box sx={{ mb: 1 }}>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                            Assigned Parents ({section.assignedStudents.length}):
-                          </Typography>
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                            {section.assignedStudents.slice(0, 3).map((studentId) => (
-                              <Chip
-                                key={studentId}
-                                label={getStudentName(studentId)}
-                                size="small"
-                                variant="outlined"
-                                color="primary"
-                              />
-                            ))}
-                            {section.assignedStudents.length > 3 && (
-                              <Chip
-                                label={`+${section.assignedStudents.length - 3} more`}
-                                size="small"
-                                variant="outlined"
-                                color="secondary"
-                              />
-                            )}
+                      {section.assignedStudents &&
+                        section.assignedStudents.length > 0 && (
+                          <Box sx={{ mb: 1 }}>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ mb: 0.5 }}>
+                              Assigned Parents (
+                              {section.assignedStudents.length}):
+                            </Typography>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 0.5,
+                              }}>
+                              {section.assignedStudents
+                                .slice(0, 3)
+                                .map((studentId) => (
+                                  <Chip
+                                    key={studentId}
+                                    label={getStudentName(studentId)}
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                  />
+                                ))}
+                              {section.assignedStudents.length > 3 && (
+                                <Chip
+                                  label={`+${
+                                    section.assignedStudents.length - 3
+                                  } more`}
+                                  size="small"
+                                  variant="outlined"
+                                  color="secondary"
+                                />
+                              )}
+                            </Box>
                           </Box>
-                        </Box>
-                      )}
+                        )}
                     </Box>
                     {/* Only show action buttons for non-teacher users */}
-                    {(!userProfile || userProfile.role !== 'teacher') && (
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button size="small" variant="outlined" startIcon={<Edit />} onClick={() => handleEditSection(section)}>
+                    {(!userProfile || userProfile.role !== "teacher") && (
+                      <Box sx={{ display: "flex", gap: 1 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<Edit />}
+                          onClick={() => handleEditSection(section)}>
                           Edit
                         </Button>
-                        <Button size="small" variant="outlined" color="error" startIcon={<Delete />} onClick={() => handleDeleteSection(section)}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          startIcon={<Delete />}
+                          onClick={() => handleDeleteSection(section)}>
                           Delete
                         </Button>
                       </Box>
@@ -621,41 +702,100 @@ const SectionsContent = () => {
             )}
           </Box>
         ) : (
-          <TableContainer component={Paper} sx={{ 
-            background: 'rgba(255, 255, 255, 0.95)', 
-            backdropFilter: 'blur(15px)', 
-            border: '2px solid rgba(31, 120, 80, 0.2)', 
-            borderRadius: '16px', 
-            boxShadow: '0 6px 20px rgba(31, 120, 80, 0.15)' 
-          }}>
+          <TableContainer
+            component={Paper}
+            sx={{
+              background: "rgba(255, 255, 255, 0.95)",
+              backdropFilter: "blur(15px)",
+              border: "2px solid rgba(31, 120, 80, 0.2)",
+              borderRadius: "16px",
+              boxShadow: "0 6px 20px rgba(31, 120, 80, 0.15)",
+            }}>
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }} width={48}></TableCell>
-                  <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>Section Name</TableCell>
-                  <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>Capacity</TableCell>
-                  <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>Teacher</TableCell>
-                  <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>No. of Students</TableCell>
-                  <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>Students</TableCell>
+                  <TableCell
+                    sx={{
+                      fontFamily: "Plus Jakarta Sans, sans-serif",
+                      fontWeight: 600,
+                    }}
+                    width={48}></TableCell>
+                  <TableCell
+                    sx={{
+                      fontFamily: "Plus Jakarta Sans, sans-serif",
+                      fontWeight: 600,
+                    }}>
+                    Daycare Level
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontFamily: "Plus Jakarta Sans, sans-serif",
+                      fontWeight: 600,
+                    }}>
+                    Capacity
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontFamily: "Plus Jakarta Sans, sans-serif",
+                      fontWeight: 600,
+                    }}>
+                    Teacher
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontFamily: "Plus Jakarta Sans, sans-serif",
+                      fontWeight: 600,
+                    }}>
+                    No. of Students
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontFamily: "Plus Jakarta Sans, sans-serif",
+                      fontWeight: 600,
+                    }}>
+                    Students
+                  </TableCell>
                   {/* Only show Actions column for non-teacher users */}
-                  {(!userProfile || userProfile.role !== 'teacher') && (
-                    <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }} align="center">Actions</TableCell>
+                  {(!userProfile || userProfile.role !== "teacher") && (
+                    <TableCell
+                      sx={{
+                        fontFamily: "Plus Jakarta Sans, sans-serif",
+                        fontWeight: 600,
+                      }}
+                      align="center">
+                      Actions
+                    </TableCell>
                   )}
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredSections.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={(!userProfile || userProfile.role !== 'teacher') ? 7 : 6} align="center" sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-                      <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-                        {userProfile && userProfile.role === 'teacher' 
-                          ? 'No sections assigned to you yet' 
-                          : 'No sections found'
-                        }
+                    <TableCell
+                      colSpan={
+                        !userProfile || userProfile.role !== "teacher" ? 7 : 6
+                      }
+                      align="center"
+                      sx={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}>
+                        {userProfile && userProfile.role === "teacher"
+                          ? "No sections assigned to you yet"
+                          : "No sections found"}
                       </Typography>
-                      {userProfile && userProfile.role === 'teacher' && (
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-                          Contact your administrator to get sections assigned to you.
+                      {userProfile && userProfile.role === "teacher" && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{
+                            display: "block",
+                            mt: 1,
+                            fontFamily: "Plus Jakarta Sans, sans-serif",
+                          }}>
+                          Contact your administrator to get sections assigned to
+                          you.
                         </Typography>
                       )}
                     </TableCell>
@@ -663,14 +803,24 @@ const SectionsContent = () => {
                 ) : (
                   filteredSections.map((section) => (
                     <React.Fragment key={section.id}>
-                      <TableRow sx={{ '&:hover': { backgroundColor: 'rgba(31, 120, 80, 0.02)' } }}>
-                        <TableCell width={48} sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                      <TableRow
+                        sx={{
+                          "&:hover": {
+                            backgroundColor: "rgba(31, 120, 80, 0.02)",
+                          },
+                        }}>
+                        <TableCell
+                          width={48}
+                          sx={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}>
                           {/* <IconButton size="small" onClick={() => toggleExpand(section.id)}>
                             {expandedSectionIds[section.id] ? <ExpandLess /> : <ExpandMore />}
                           </IconButton> */}
                         </TableCell>
                         <TableCell>
-                          <Typography variant="subtitle2" fontWeight={600} sx={{ color: 'hsl(152, 65%, 28%)' }}>
+                          <Typography
+                            variant="subtitle2"
+                            fontWeight={600}
+                            sx={{ color: "hsl(152, 65%, 28%)" }}>
                             {section.name}
                           </Typography>
                         </TableCell>
@@ -680,30 +830,48 @@ const SectionsContent = () => {
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" color={section.teacherId ? 'text.primary' : 'text.secondary'}>
+                          <Typography
+                            variant="body2"
+                            color={
+                              section.teacherId
+                                ? "text.primary"
+                                : "text.secondary"
+                            }>
                             {getTeacherName(section.teacherId)}
                           </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" fontWeight={500}>
-                            {section.assignedStudents ? section.assignedStudents.length : 0}
+                            {section.assignedStudents
+                              ? section.assignedStudents.length
+                              : 0}
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          {section.assignedStudents && section.assignedStudents.length > 0 ? (
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                              {section.assignedStudents.slice(0, 2).map((studentId) => (
-                                <Chip
-                                  key={studentId}
-                                  label={getStudentName(studentId)}
-                                  size="small"
-                                  variant="outlined"
-                                  color="secondary"
-                                />
-                              ))}
+                          {section.assignedStudents &&
+                          section.assignedStudents.length > 0 ? (
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 0.5,
+                              }}>
+                              {section.assignedStudents
+                                .slice(0, 2)
+                                .map((studentId) => (
+                                  <Chip
+                                    key={studentId}
+                                    label={getStudentName(studentId)}
+                                    size="small"
+                                    variant="outlined"
+                                    color="secondary"
+                                  />
+                                ))}
                               {section.assignedStudents.length > 2 && (
                                 <Chip
-                                  label={`+${section.assignedStudents.length - 2}`}
+                                  label={`+${
+                                    section.assignedStudents.length - 2
+                                  }`}
                                   size="small"
                                   variant="outlined"
                                   color="default"
@@ -717,34 +885,32 @@ const SectionsContent = () => {
                           )}
                         </TableCell>
                         {/* Only show Actions column for non-teacher users */}
-                        {(!userProfile || userProfile.role !== 'teacher') && (
+                        {(!userProfile || userProfile.role !== "teacher") && (
                           <TableCell>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Box sx={{ display: "flex", gap: 1 }}>
                               <Tooltip title="Edit Section">
-                                <IconButton 
-                                  size="small" 
+                                <IconButton
+                                  size="small"
                                   color="primary"
                                   onClick={() => handleEditSection(section)}
-                                  sx={{ 
-                                    '&:hover': { 
-                                      backgroundColor: 'rgba(31, 120, 80, 0.1)' 
-                                    } 
-                                  }}
-                                >
+                                  sx={{
+                                    "&:hover": {
+                                      backgroundColor: "rgba(31, 120, 80, 0.1)",
+                                    },
+                                  }}>
                                   <Edit />
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="Delete Section">
-                                <IconButton 
-                                  size="small" 
+                                <IconButton
+                                  size="small"
                                   color="error"
                                   onClick={() => handleDeleteSection(section)}
-                                  sx={{ 
-                                    '&:hover': { 
-                                      backgroundColor: 'rgba(244, 67, 54, 0.1)' 
-                                    } 
-                                  }}
-                                >
+                                  sx={{
+                                    "&:hover": {
+                                      backgroundColor: "rgba(244, 67, 54, 0.1)",
+                                    },
+                                  }}>
                                   <Delete />
                                 </IconButton>
                               </Tooltip>
@@ -755,7 +921,14 @@ const SectionsContent = () => {
 
                       {/* Expandable content row */}
                       <TableRow>
-                        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={(!userProfile || userProfile.role !== 'teacher') ? 7 : 6} sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+                        <TableCell
+                          style={{ paddingBottom: 0, paddingTop: 0 }}
+                          colSpan={
+                            !userProfile || userProfile.role !== "teacher"
+                              ? 7
+                              : 6
+                          }
+                          sx={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}>
                           {/* <Collapse in={!!expandedSectionIds[section.id]} timeout="auto" unmountOnExit>
                             <Box sx={{ py: 2, px: 1, backgroundColor: 'rgba(31, 120, 80, 0.03)', borderRadius: 1 }}>
                               <Typography variant="subtitle2" sx={{ mb: 1, color: 'hsl(152, 65%, 28%)', fontWeight: 600 }}>
@@ -833,59 +1006,84 @@ const SectionsContent = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert 
-          onClose={handleCloseSnackbar} 
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
+        <Alert
+          onClose={handleCloseSnackbar}
           severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
+          sx={{ width: "100%" }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
 
       {/* Parent QR Preview Modal */}
-      <Dialog open={qrPreviewOpen} onClose={closeParentQRPreview} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ textAlign: 'center', fontWeight: 600 }}>
-          {qrPreviewType === 'timeIn' ? 'Parent Time-In QR' : 'Parent Time-Out QR'}
+      <Dialog
+        open={qrPreviewOpen}
+        onClose={closeParentQRPreview}
+        maxWidth="xs"
+        fullWidth>
+        <DialogTitle sx={{ textAlign: "center", fontWeight: 600 }}>
+          {qrPreviewType === "timeIn"
+            ? "Parent Time-In QR"
+            : "Parent Time-Out QR"}
         </DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+        <DialogContent
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 2,
+          }}>
           {qrPreviewParent && (
             <Typography variant="body2" color="text.secondary">
               {qrPreviewParent.firstName} {qrPreviewParent.lastName}
             </Typography>
           )}
           {qrPreviewSrc && (
-            <Box sx={{ p: 1, borderRadius: 2, border: `3px solid ${qrPreviewType === 'timeIn' ? '#4caf50' : '#ff9800'}` }}>
-              <img src={qrPreviewSrc} alt="Parent QR" style={{ width: 220, height: 220 }} />
+            <Box
+              sx={{
+                p: 1,
+                borderRadius: 2,
+                border: `3px solid ${
+                  qrPreviewType === "timeIn" ? "#4caf50" : "#ff9800"
+                }`,
+              }}>
+              <img
+                src={qrPreviewSrc}
+                alt="Parent QR"
+                style={{ width: 220, height: 220 }}
+              />
             </Box>
           )}
           <Typography variant="caption" color="text.secondary">
-            Have the teacher scan this code to {qrPreviewType === 'timeIn' ? 'check in' : 'check out'}.
+            Have the teacher scan this code to{" "}
+            {qrPreviewType === "timeIn" ? "check in" : "check out"}.
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 2 }}>
-          <Button 
-            onClick={handlePrintQR} 
-            variant="outlined" 
+        <DialogActions sx={{ justifyContent: "space-between", px: 3, pb: 2 }}>
+          <Button
+            onClick={handlePrintQR}
+            variant="outlined"
             startIcon={<Print />}
-            sx={{ 
-              borderColor: qrPreviewType === 'timeIn' ? '#4caf50' : '#ff9800',
-              color: qrPreviewType === 'timeIn' ? '#4caf50' : '#ff9800',
-              '&:hover': {
-                borderColor: qrPreviewType === 'timeIn' ? '#45a049' : '#f57c00',
-                backgroundColor: qrPreviewType === 'timeIn' ? 'rgba(76, 175, 80, 0.04)' : 'rgba(255, 152, 0, 0.04)'
-              }
-            }}
-          >
+            sx={{
+              borderColor: qrPreviewType === "timeIn" ? "#4caf50" : "#ff9800",
+              color: qrPreviewType === "timeIn" ? "#4caf50" : "#ff9800",
+              "&:hover": {
+                borderColor: qrPreviewType === "timeIn" ? "#45a049" : "#f57c00",
+                backgroundColor:
+                  qrPreviewType === "timeIn"
+                    ? "rgba(76, 175, 80, 0.04)"
+                    : "rgba(255, 152, 0, 0.04)",
+              },
+            }}>
             Print Both QR Codes
           </Button>
-          <Button onClick={closeParentQRPreview} variant="contained">Close</Button>
+          <Button onClick={closeParentQRPreview} variant="contained">
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
-  )
-}
+  );
+};
 
-export default SectionsContent
-
+export default SectionsContent;

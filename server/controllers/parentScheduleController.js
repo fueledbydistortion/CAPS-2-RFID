@@ -305,7 +305,7 @@ const findActiveScheduleForParent = async (parentId) => {
     });
   }
 
-  // Sections where parent is assigned (parent represents their child)
+  // Daycare Level where parent is assigned (parent represents their child)
   const relevantSections = sections.filter((section) => {
     return (
       Array.isArray(section.assignedStudents) &&

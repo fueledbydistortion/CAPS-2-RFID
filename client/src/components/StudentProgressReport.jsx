@@ -583,7 +583,7 @@ const StudentProgressReport = () => {
                 </Box>
               </Box>
 
-              {/* Enrolled Sections */}
+              {/* Enrolled Daycare Level */}
               <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ 
                   display: 'flex', 
@@ -594,7 +594,7 @@ const StudentProgressReport = () => {
                   borderRadius: 2
                 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, color: 'purple' }}>
-                    Enrolled Sections
+                    Enrolled Daycare Level
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>

@@ -1,189 +1,201 @@
-import React, { useState, useEffect } from 'react'
+import { Add, Delete, School, Search } from "@mui/icons-material";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  TextField,
-  Autocomplete,
   Alert,
+  Autocomplete,
+  Box,
+  Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  IconButton,
-  Tooltip
-} from '@mui/material'
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { getAllSections } from "../utils/sectionService";
 import {
-  Add,
-  Delete,
-  School,
-  Search
-} from '@mui/icons-material'
-import { getAllSections } from '../utils/sectionService'
-import { 
-  assignSectionToSkill, 
-  removeSectionFromSkill, 
-  getSkillSections 
-} from '../utils/skillService'
+  assignSectionToSkill,
+  getSkillSections,
+  removeSectionFromSkill,
+} from "../utils/skillService";
 
-const SectionAssignmentDialog = ({ 
-  open, 
-  onClose, 
-  skillId, 
+const SectionAssignmentDialog = ({
+  open,
+  onClose,
+  skillId,
   skillName,
-  onAssignmentChange 
+  onAssignmentChange,
 }) => {
-  const [sections, setSections] = useState([])
-  const [assignedSections, setAssignedSections] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedSection, setSelectedSection] = useState(null)
-  const [error, setError] = useState('')
+  const [sections, setSections] = useState([]);
+  const [assignedSections, setAssignedSections] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSection, setSelectedSection] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (open && skillId) {
-      loadSections()
-      loadAssignedSections()
+      loadSections();
+      loadAssignedSections();
     }
-  }, [open, skillId])
+  }, [open, skillId]);
 
   const loadSections = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const result = await getAllSections()
+      const result = await getAllSections();
       if (result.success) {
-        setSections(result.data)
+        setSections(result.data);
       } else {
-        setError('Error loading sections: ' + result.error)
+        setError("Error loading sections: " + result.error);
       }
     } catch (error) {
-      setError('Error loading sections: ' + error.message)
+      setError("Error loading sections: " + error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const loadAssignedSections = async () => {
     try {
-      const result = await getSkillSections(skillId)
+      const result = await getSkillSections(skillId);
       if (result.success) {
-        setAssignedSections(result.data)
+        setAssignedSections(result.data);
       }
     } catch (error) {
-      console.error('Error loading assigned sections:', error)
+      console.error("Error loading assigned sections:", error);
     }
-  }
+  };
 
   const handleAssignSection = async () => {
-    if (!selectedSection) return
+    if (!selectedSection) return;
 
-    setLoading(true)
+    setLoading(true);
     try {
-      const result = await assignSectionToSkill(skillId, selectedSection.id)
+      const result = await assignSectionToSkill(skillId, selectedSection.id);
       if (result.success) {
-        setAssignedSections(prev => [...prev, selectedSection])
-        setSelectedSection(null)
+        setAssignedSections((prev) => [...prev, selectedSection]);
+        setSelectedSection(null);
         if (onAssignmentChange) {
-          onAssignmentChange()
+          onAssignmentChange();
         }
       } else {
-        setError('Error assigning section: ' + result.error)
+        setError("Error assigning section: " + result.error);
       }
     } catch (error) {
-      setError('Error assigning section: ' + error.message)
+      setError("Error assigning section: " + error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleRemoveSection = async (sectionId) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const result = await removeSectionFromSkill(skillId, sectionId)
+      const result = await removeSectionFromSkill(skillId, sectionId);
       if (result.success) {
-        setAssignedSections(prev => prev.filter(section => section.id !== sectionId))
+        setAssignedSections((prev) =>
+          prev.filter((section) => section.id !== sectionId)
+        );
         if (onAssignmentChange) {
-          onAssignmentChange()
+          onAssignmentChange();
         }
       } else {
-        setError('Error removing section: ' + result.error)
+        setError("Error removing section: " + result.error);
       }
     } catch (error) {
-      setError('Error removing section: ' + error.message)
+      setError("Error removing section: " + error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const filteredSections = sections.filter(section => {
-    const isNotAssigned = !assignedSections.some(assigned => assigned.id === section.id)
-    const matchesSearch = section.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         section.grade?.toLowerCase().includes(searchTerm.toLowerCase())
-    return isNotAssigned && matchesSearch
-  })
+  const filteredSections = sections.filter((section) => {
+    const isNotAssigned = !assignedSections.some(
+      (assigned) => assigned.id === section.id
+    );
+    const matchesSearch =
+      section.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      section.grade?.toLowerCase().includes(searchTerm.toLowerCase());
+    return isNotAssigned && matchesSearch;
+  });
 
   const handleClose = () => {
-    setError('')
-    setSearchTerm('')
-    setSelectedSection(null)
-    onClose()
-  }
+    setError("");
+    setSearchTerm("");
+    setSelectedSection(null);
+    onClose();
+  };
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={handleClose}
       maxWidth="lg"
       fullWidth
       PaperProps={{
         sx: {
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(15px)',
-          border: '2px solid rgba(31, 120, 80, 0.2)',
-          borderRadius: '20px',
-          boxShadow: '0 8px 32px rgba(31, 120, 80, 0.2)'
-        }
-      }}
-    >
-      <DialogTitle sx={{ 
-        background: 'linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))', 
-        backgroundClip: 'text', 
-        WebkitBackgroundClip: 'text', 
-        WebkitTextFillColor: 'transparent',
-        fontWeight: 700,
-        fontSize: '1.5rem'
+          background: "rgba(255, 255, 255, 0.95)",
+          backdropFilter: "blur(15px)",
+          border: "2px solid rgba(31, 120, 80, 0.2)",
+          borderRadius: "20px",
+          boxShadow: "0 8px 32px rgba(31, 120, 80, 0.2)",
+        },
       }}>
-        Assign Sections to Skill: {skillName}
+      <DialogTitle
+        sx={{
+          background:
+            "linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))",
+          backgroundClip: "text",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          fontWeight: 700,
+          fontSize: "1.5rem",
+        }}>
+        Assign Daycare Level to Skill: {skillName}
       </DialogTitle>
 
       <DialogContent sx={{ p: 3 }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
             {error}
           </Alert>
         )}
 
         {/* Add Section Section */}
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" sx={{ mb: 2, color: 'hsl(152, 65%, 28%)', fontWeight: 600, fontFamily: 'Plus Jakarta Sans, sans-serif' , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
+          <Typography
+            variant="h6"
+            sx={{
+              mb: 2,
+              color: "hsl(152, 65%, 28%)",
+              fontWeight: 600,
+              fontFamily: "Plus Jakarta Sans, sans-serif",
+              fontFamily: "Plus Jakarta Sans, sans-serif",
+              fontWeight: 700,
+            }}>
             Add Section
           </Typography>
-          
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+
+          <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 2 }}>
             <Autocomplete
               options={filteredSections}
-              getOptionLabel={(option) => `${option.name} (Grade ${option.grade})`}
+              getOptionLabel={(option) =>
+                `${option.name} (Grade ${option.grade})`
+              }
               value={selectedSection}
               onChange={(event, newValue) => setSelectedSection(newValue)}
-              sx={{ flex: 1, minWidth: '400px' }}
+              sx={{ flex: 1, minWidth: "400px" }}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -191,41 +203,42 @@ const SectionAssignmentDialog = ({
                   placeholder="Search sections..."
                   variant="outlined"
                   size="small"
-                  sx={{ 
-                    width: '100%',
-                    '& .MuiOutlinedInput-root': {
-                      minWidth: '350px'
-                    }
+                  sx={{
+                    width: "100%",
+                    "& .MuiOutlinedInput-root": {
+                      minWidth: "350px",
+                    },
                   }}
                 />
               )}
               renderOption={(props, option) => (
-                <Box component="li" {...props} sx={{ minWidth: '350px' }}>
-                  <Box sx={{ width: '100%' }}>
+                <Box component="li" {...props} sx={{ minWidth: "350px" }}>
+                  <Box sx={{ width: "100%" }}>
                     <Typography variant="body2" fontWeight={600}>
                       {option.name}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Grade {option.grade} • Capacity: {option.capacity} • Students: {option.assignedStudents?.length || 0}
+                      Grade {option.grade} • Capacity: {option.capacity} •
+                      Students: {option.assignedStudents?.length || 0}
                     </Typography>
                   </Box>
                 </Box>
               )}
               disabled={loading}
             />
-            
+
             <Button
               variant="contained"
               startIcon={<Add />}
               onClick={handleAssignSection}
               disabled={!selectedSection || loading}
-              sx={{ 
-                background: 'linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))',
+              sx={{
+                background:
+                  "linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))",
                 minWidth: 120,
                 maxWidth: 150,
-                flexShrink: 0
-              }}
-            >
+                flexShrink: 0,
+              }}>
               Assign
             </Button>
           </Box>
@@ -238,32 +251,46 @@ const SectionAssignmentDialog = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
-              startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />
+              startAdornment: (
+                <Search sx={{ mr: 1, color: "text.secondary" }} />
+              ),
             }}
-            sx={{ 
+            sx={{
               mb: 2,
-              '& .MuiOutlinedInput-root': {
-                minWidth: '350px'
-              }
+              "& .MuiOutlinedInput-root": {
+                minWidth: "350px",
+              },
             }}
           />
         </Box>
 
-        {/* Assigned Sections */}
+        {/* Assigned Daycare Level */}
         <Box>
-          <Typography variant="h6" sx={{ mb: 2, color: 'hsl(152, 65%, 28%)', fontWeight: 600, fontFamily: 'Plus Jakarta Sans, sans-serif' , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
-            Assigned Sections ({assignedSections.length})
+          <Typography
+            variant="h6"
+            sx={{
+              mb: 2,
+              color: "hsl(152, 65%, 28%)",
+              fontWeight: 600,
+              fontFamily: "Plus Jakarta Sans, sans-serif",
+              fontFamily: "Plus Jakarta Sans, sans-serif",
+              fontWeight: 700,
+            }}>
+            Assigned Daycare Level ({assignedSections.length})
           </Typography>
 
           {assignedSections.length === 0 ? (
-            <Box sx={{ 
-              textAlign: 'center', 
-              py: 4, 
-              backgroundColor: 'rgba(31, 120, 80, 0.05)',
-              borderRadius: '12px',
-              border: '2px dashed rgba(31, 120, 80, 0.3)'
-            }}>
-              <School sx={{ fontSize: 48, color: 'rgba(31, 120, 80, 0.5)', mb: 2 }} />
+            <Box
+              sx={{
+                textAlign: "center",
+                py: 4,
+                backgroundColor: "rgba(31, 120, 80, 0.05)",
+                borderRadius: "12px",
+                border: "2px dashed rgba(31, 120, 80, 0.3)",
+              }}>
+              <School
+                sx={{ fontSize: 48, color: "rgba(31, 120, 80, 0.5)", mb: 2 }}
+              />
               <Typography variant="body1" color="text.secondary">
                 No sections assigned to this skill yet
               </Typography>
@@ -272,25 +299,46 @@ const SectionAssignmentDialog = ({
               </Typography>
             </Box>
           ) : (
-            <TableContainer component={Paper} sx={{ 
-              boxShadow: 'none', 
-              border: '1px solid rgba(31, 120, 80, 0.2)',
-              borderRadius: '12px'
-            }}>
+            <TableContainer
+              component={Paper}
+              sx={{
+                boxShadow: "none",
+                border: "1px solid rgba(31, 120, 80, 0.2)",
+                borderRadius: "12px",
+              }}>
               <Table size="small">
                 <TableHead>
-                  <TableRow sx={{ backgroundColor: 'rgba(31, 120, 80, 0.05)' }}>
-                    <TableCell sx={{ fontWeight: 600, color: 'hsl(152, 65%, 28%)' }}>Section Name</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: 'hsl(152, 65%, 28%)' }}>Capacity</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: 'hsl(152, 65%, 28%)' }}>Students</TableCell>
-                    <TableCell sx={{ fontWeight: 600, color: 'hsl(152, 65%, 28%)', textAlign: 'center' }}>Actions</TableCell>
+                  <TableRow sx={{ backgroundColor: "rgba(31, 120, 80, 0.05)" }}>
+                    <TableCell
+                      sx={{ fontWeight: 600, color: "hsl(152, 65%, 28%)" }}>
+                      Daycare Level
+                    </TableCell>
+                    <TableCell
+                      sx={{ fontWeight: 600, color: "hsl(152, 65%, 28%)" }}>
+                      Capacity
+                    </TableCell>
+                    <TableCell
+                      sx={{ fontWeight: 600, color: "hsl(152, 65%, 28%)" }}>
+                      Students
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: 600,
+                        color: "hsl(152, 65%, 28%)",
+                        textAlign: "center",
+                      }}>
+                      Actions
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {assignedSections.map((section) => (
                     <TableRow key={section.id} hover>
                       <TableCell>
-                        <Typography variant="body2" fontWeight={500} sx={{ color: 'hsl(152, 65%, 28%)' }}>
+                        <Typography
+                          variant="body2"
+                          fontWeight={500}
+                          sx={{ color: "hsl(152, 65%, 28%)" }}>
                           {section.name}
                         </Typography>
                       </TableCell>
@@ -304,19 +352,18 @@ const SectionAssignmentDialog = ({
                           {section.assignedStudents?.length || 0} students
                         </Typography>
                       </TableCell>
-                      <TableCell sx={{ textAlign: 'center' }}>
+                      <TableCell sx={{ textAlign: "center" }}>
                         <Tooltip title="Remove Section">
-                          <IconButton 
-                            size="small" 
-                            color="error" 
+                          <IconButton
+                            size="small"
+                            color="error"
                             onClick={() => handleRemoveSection(section.id)}
                             disabled={loading}
-                            sx={{ 
-                              '&:hover': { 
-                                backgroundColor: 'rgba(244, 67, 54, 0.1)' 
-                              } 
-                            }}
-                          >
+                            sx={{
+                              "&:hover": {
+                                backgroundColor: "rgba(244, 67, 54, 0.1)",
+                              },
+                            }}>
                             <Delete fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -330,24 +377,22 @@ const SectionAssignmentDialog = ({
         </Box>
 
         {loading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
             <CircularProgress size={24} />
           </Box>
         )}
       </DialogContent>
 
       <DialogActions sx={{ p: 3, pt: 0 }}>
-        <Button 
+        <Button
           onClick={handleClose}
           variant="outlined"
-          sx={{ borderRadius: '8px' }}
-        >
+          sx={{ borderRadius: "8px" }}>
           Close
         </Button>
       </DialogActions>
     </Dialog>
-  )
-}
+  );
+};
 
-export default SectionAssignmentDialog
-
+export default SectionAssignmentDialog;

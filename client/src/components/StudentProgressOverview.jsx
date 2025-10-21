@@ -571,7 +571,7 @@ const StudentProgressOverview = () => {
                   <TableHead>
                     <TableRow sx={{ backgroundColor: 'rgba(31, 120, 80, 0.05)' }}>
                       <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>Student</TableCell>
-                      <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>Sections</TableCell>
+                      <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>Daycare Level</TableCell>
                       <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>Progress</TableCell>
                       <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>Lessons</TableCell>
                       <TableCell sx={{ fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 }}>Status</TableCell>
@@ -921,7 +921,7 @@ const StudentProgressOverview = () => {
                 </Box>
               </Box>
 
-              {/* Enrolled Sections */}
+              {/* Enrolled Daycare Level */}
               <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ 
                   display: 'flex', 
@@ -932,7 +932,7 @@ const StudentProgressOverview = () => {
                   borderRadius: 2
                 }}>
                   <Typography variant="h6" sx={{ fontWeight: 600, color: 'purple' }}>
-                    Enrolled Sections
+                    Enrolled Daycare Level
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>

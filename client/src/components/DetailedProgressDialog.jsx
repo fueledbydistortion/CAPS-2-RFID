@@ -189,7 +189,7 @@ const DetailedProgressDialog = ({ open, onClose, studentData, loading = false })
             </Box>
           </Box>
 
-          {/* Content Sections - Flexbox Row */}
+          {/* Content Daycare Level - Flexbox Row */}
           <Box sx={{ 
             display: 'flex', 
             gap: 4,

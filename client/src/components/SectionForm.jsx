@@ -223,7 +223,7 @@ const SectionForm = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        {sectionData ? "Edit Section" : "Add New Section"}
+        {sectionData ? "Edit Daycare Level" : "Add New Daycare Level"}
       </DialogTitle>
       <Formik
         initialValues={initialValues}
@@ -318,7 +318,7 @@ const SectionForm = ({
                     Assigned Parents ({assignedStudents.length})
                   </Typography>
 
-                  {/* Add Student Section */}
+                  {/* Add Student Daycare Lever */}
                   <Box
                     sx={{
                       display: "flex",

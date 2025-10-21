@@ -50,7 +50,7 @@ const RFIDSuccessModal = ({
           setCountdown(1);
           setIsClosing(false);
         }, 300); // Small delay for smooth transition
-      }, 500); // Auto-close after 1 second
+      }, 3000); // Auto-close after 1 second
 
       return () => {
         console.log("🔍 RFIDSuccessModal Debug - Cleaning up timer");

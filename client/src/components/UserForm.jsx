@@ -23,8 +23,9 @@ import {
   Typography,
 } from "@mui/material";
 import { Field, Form, Formik } from "formik";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { getAllUsers } from "../utils/userService";
 import { userFormSchema } from "../validation/schema";
 
 // Role constants
@@ -34,17 +35,63 @@ const ROLES = {
   ADMIN: "admin",
 };
 
-const UserForm = ({ 
-  open, 
-  onClose, 
-  onSubmit, 
-  userData = null, 
+const UserForm = ({
+  open,
+  onClose,
+  onSubmit,
+  userData = null,
   loading = false,
 }) => {
   const { userProfile } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+  const [allUsers, setAllUsers] = useState([]);
+  const [rfidError, setRfidError] = useState("");
+
+  // Load all users when form opens
+  useEffect(() => {
+    if (open) {
+      loadAllUsers();
+    }
+  }, [open]);
+
+  const loadAllUsers = async () => {
+    try {
+      const result = await getAllUsers();
+      if (result.success) {
+        setAllUsers(result.data);
+      }
+    } catch (error) {
+      console.error("Error loading users:", error);
+    }
+  };
+
+  // Check if RFID is already registered to another user
+  const checkRfidUniqueness = (rfid, currentUserId = null) => {
+    if (!rfid || !rfid.trim()) {
+      setRfidError("");
+      return true;
+    }
+
+    const trimmedRfid = rfid.trim();
+    const existingUser = allUsers.find(
+      (user) =>
+        user.childRFID === trimmedRfid &&
+        user.uid !== currentUserId &&
+        user.role === "parent"
+    );
+
+    if (existingUser) {
+      setRfidError(
+        `RFID "${trimmedRfid}" is already registered to ${existingUser.firstName} ${existingUser.lastName}`
+      );
+      return false;
+    } else {
+      setRfidError("");
+      return true;
+    }
+  };
+
   const getInitialValues = () => {
     if (userData) {
       return {
@@ -156,6 +203,15 @@ const UserForm = ({
   };
 
   const handleSubmit = async (values, { setSubmitting }) => {
+    // Check RFID uniqueness before submission
+    if (values.role === ROLES.PARENT && values.childRFID) {
+      const isRfidUnique = checkRfidUniqueness(values.childRFID, userData?.uid);
+      if (!isRfidUnique) {
+        setSubmitting(false);
+        return;
+      }
+    }
+
     await onSubmit(values);
     setSubmitting(false);
   };
@@ -165,10 +221,10 @@ const UserForm = ({
     userProfile && userProfile.role === "teacher" && !userData;
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      maxWidth="md" 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
       fullWidth
       PaperProps={{
         sx: {
@@ -200,8 +256,8 @@ const UserForm = ({
               display: "flex",
               flexDirection: "column",
             }}>
-            <DialogContent 
-              sx={{ 
+            <DialogContent
+              sx={{
                 flex: 1,
                 overflowY: "auto",
                 overflowX: "hidden",
@@ -291,7 +347,7 @@ const UserForm = ({
                       </Field>
                     </Box>
                   </Box>
-                  
+
                   <Box
                     sx={{ display: "flex", gap: 2, flexWrap: "wrap", mt: 2 }}>
                     <Box sx={{ flex: "1 1 200px", minWidth: "200px" }}>
@@ -324,7 +380,7 @@ const UserForm = ({
                       </Field>
                     </Box>
                   </Box>
-                  
+
                   {/* Password fields - Always show for new users, show for admins when editing */}
                   <Box
                     sx={{ display: "flex", gap: 2, flexWrap: "wrap", mt: 2 }}>
@@ -421,7 +477,7 @@ const UserForm = ({
                       </Field>
                     </Box>
                   </Box>
-                  
+
                   {/* Only show role field for non-teachers or when creating new users */}
                   {(!userProfile ||
                     userProfile.role !== "teacher" ||
@@ -474,7 +530,7 @@ const UserForm = ({
                         }}>
                         Child Information
                       </Typography>
-                      
+
                       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
                         <Box sx={{ flex: "1 1 200px", minWidth: "200px" }}>
                           <Field name="childFirstName">
@@ -498,12 +554,36 @@ const UserForm = ({
                                 fullWidth
                                 label="Child RFID ID"
                                 placeholder="Scan child's RFID card"
-                                error={meta.touched && Boolean(meta.error)}
-                                helperText={meta.touched && meta.error}
+                                error={
+                                  (meta.touched && Boolean(meta.error)) ||
+                                  Boolean(rfidError)
+                                }
+                                helperText={
+                                  meta.touched && meta.error
+                                    ? meta.error
+                                    : rfidError
+                                    ? rfidError
+                                    : ""
+                                }
                                 required
                                 inputProps={{
                                   inputMode: "text",
                                   autoComplete: "off",
+                                }}
+                                onChange={(e) => {
+                                  field.onChange(e);
+                                  // Check RFID uniqueness in real-time
+                                  checkRfidUniqueness(
+                                    e.target.value,
+                                    userData?.uid
+                                  );
+                                }}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    backgroundColor: rfidError
+                                      ? "rgba(244, 67, 54, 0.05)"
+                                      : "transparent",
+                                  },
                                 }}
                               />
                             )}
@@ -875,7 +955,7 @@ const UserForm = ({
                         }}>
                         Father Information
                       </Typography>
-                      
+
                       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
                         <Box sx={{ flex: "1 1 200px", minWidth: "200px" }}>
                           <Field name="fatherFirstName">
@@ -977,7 +1057,7 @@ const UserForm = ({
                         }}>
                         Mother Information
                       </Typography>
-                      
+
                       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
                         <Box sx={{ flex: "1 1 200px", minWidth: "200px" }}>
                           <Field name="motherFirstName">
@@ -1074,11 +1154,14 @@ const UserForm = ({
               <Button onClick={onClose} disabled={loading || isSubmitting}>
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
-                variant="contained" 
+              <Button
+                type="submit"
+                variant="contained"
                 disabled={
-                  loading || isSubmitting || Object.keys(errors).length > 0
+                  loading ||
+                  isSubmitting ||
+                  Object.keys(errors).length > 0 ||
+                  Boolean(rfidError)
                 }
                 sx={{
                   background:

@@ -560,7 +560,16 @@ export const userFormSchema = yup.object().shape({
       schema
         .required("Child RFID is required")
         .max(64, "RFID must be at most 64 characters")
-        .trim(),
+        .trim()
+        .test(
+          "rfid-uniqueness",
+          "This RFID is already registered to another user",
+          function (value) {
+            // This will be handled by the component-level validation
+            // The schema validation is kept for basic format validation
+            return true;
+          }
+        ),
     otherwise: (schema) => schema.notRequired(),
   }),
 

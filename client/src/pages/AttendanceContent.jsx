@@ -48,8 +48,13 @@ import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import * as XLSX from "xlsx";
 import QRScannerDialog from "../components/QRScannerDialog";
+import RFIDSuccessModal from "../components/RFIDSuccessModal";
 import { useAuth } from "../contexts/AuthContext";
 import { getAllAttendance } from "../utils/attendanceService";
+import {
+  determineAttendanceType,
+  getCurrentDay,
+} from "../utils/attendanceTimeUtils";
 import {
   calculateAttendanceStatus,
   formatAttendanceMessage,
@@ -95,6 +100,10 @@ const AttendanceContent = () => {
     message: "",
     severity: "success",
   });
+
+  // RFID Success Modal states
+  const [rfidModalOpen, setRfidModalOpen] = useState(false);
+  const [rfidModalData, setRfidModalData] = useState(null);
 
   // Load initial data when component mounts
   useEffect(() => {
@@ -226,8 +235,10 @@ const AttendanceContent = () => {
   };
 
   const filterRecords = () => {
+    let filtered;
+
     if (searchTerm.trim()) {
-      const filtered = attendanceRecords.filter((record) => {
+      filtered = attendanceRecords.filter((record) => {
         const studentName = getStudentName(record.studentId).toLowerCase();
         const sectionName = getSectionNameByScheduleId(
           record.scheduleId
@@ -240,10 +251,29 @@ const AttendanceContent = () => {
           date.includes(searchTerm.toLowerCase())
         );
       });
-      setFilteredRecords(filtered);
     } else {
-      setFilteredRecords(attendanceRecords);
+      filtered = attendanceRecords;
     }
+
+    // Sort records in descending order (most recent first)
+    // First by date (newest first), then by time (latest time first)
+    const sortedFiltered = filtered.sort((a, b) => {
+      // Compare dates first
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+
+      if (dateA.getTime() !== dateB.getTime()) {
+        return dateB.getTime() - dateA.getTime(); // DESC by date
+      }
+
+      // If same date, sort by time (latest time first)
+      const timeA = a.timeIn || a.timeOut || "00:00";
+      const timeB = b.timeIn || b.timeOut || "00:00";
+
+      return timeB.localeCompare(timeA); // DESC by time
+    });
+
+    setFilteredRecords(sortedFiltered);
   };
 
   const getStudentName = (studentId) => {
@@ -293,6 +323,18 @@ const AttendanceContent = () => {
 
   const handleCloseSnackbar = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
+  const handleCloseRfidModal = () => {
+    console.log("🔍 AttendanceContent Debug - handleCloseRfidModal called");
+    setRfidModalOpen(false);
+    setRfidModalData(null);
+
+    // After the success modal closes, automatically open the RFID scanner again
+    setTimeout(() => {
+      console.log("🔍 AttendanceContent Debug - Auto-restarting RFID scanner");
+      handleOpenScanner(); // This will open the "Scan RFID" dialog
+    }, 500); // Small delay for smooth transition
   };
 
   const handleRefresh = () => {
@@ -505,9 +547,11 @@ const AttendanceContent = () => {
     handleExportClose();
   };
 
-  // RFID Scan handlers (replace QR scanning)
+  // RFID Scan handlers
   const handleOpenScanner = async (e) => {
-    e.stopPropagation();
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+    }
     const { value: rfid } = await Swal.fire({
       title: "Scan RFID",
       input: "text",
@@ -515,7 +559,7 @@ const AttendanceContent = () => {
       inputPlaceholder: "RFID value...",
       inputAttributes: { autocapitalize: "off", autocomplete: "off" },
       showCancelButton: true,
-      confirmButtonText: "Next",
+      confirmButtonText: "Scan",
       confirmButtonColor: "#4caf50",
       cancelButtonColor: "#d33",
       allowOutsideClick: false,
@@ -533,20 +577,11 @@ const AttendanceContent = () => {
 
     if (!rfid) return;
 
-    const pick = await Swal.fire({
-      title: "Select Attendance Type",
-      showDenyButton: true,
-      confirmButtonText: "Time In",
-      denyButtonText: "Time Out",
-      confirmButtonColor: "#4caf50",
-      denyButtonColor: "#ff9800",
-    });
-
-    const attendanceType = pick.isDenied ? "timeOut" : "timeIn";
-    await handleScanRFID(rfid, attendanceType);
+    // Automatically determine attendance type based on current time and schedule
+    await handleScanRFID(rfid);
   };
 
-  const handleScanRFID = async (rfidValue, attendanceType) => {
+  const handleScanRFID = async (rfidValue) => {
     try {
       // Match RFID against registered users (parents with child info)
       const parent = students.find(
@@ -561,6 +596,40 @@ const AttendanceContent = () => {
         });
         return;
       }
+
+      // Find the relevant schedule for today
+      const currentDay = getCurrentDay();
+      const relevantSchedule = schedules.find(
+        (schedule) => schedule.day === currentDay
+      );
+
+      if (!relevantSchedule) {
+        await Swal.fire({
+          icon: "warning",
+          title: "No Schedule Today",
+          text: `No schedule found for ${currentDay}. Please check the schedule settings.`,
+          confirmButtonColor: "#ff9800",
+        });
+        return;
+      }
+
+      // Determine attendance type based on current time and schedule
+      const attendanceInfo = determineAttendanceType(
+        relevantSchedule,
+        currentDay
+      );
+
+      if (attendanceInfo.type === "outside") {
+        await Swal.fire({
+          icon: "warning",
+          title: "Outside Attendance Hours",
+          text: attendanceInfo.message,
+          confirmButtonColor: "#ff9800",
+        });
+        return;
+      }
+
+      const attendanceType = attendanceInfo.type;
       const parentId = parent.uid;
       const qrDataString = JSON.stringify({
         type: "parent",
@@ -568,86 +637,89 @@ const AttendanceContent = () => {
         attendanceType,
       });
 
-      // Special handling for timeOut QR codes - make database changes but don't update status
-      if (attendanceType === "timeOut") {
-        // Still process the attendance to record time-out in database
-        const result = await markAttendanceViaQR(
-          qrDataString,
-          parentId,
-          attendanceType,
-          "Timed out via RFID scan"
+      // Process attendance
+      const result = await markAttendanceViaQR(
+        qrDataString,
+        parentId,
+        attendanceType
+      );
+
+      if (result.success) {
+        // Calculate attendance status based on actual time vs scheduled time
+        const currentTime = new Date().toLocaleTimeString("en-US", {
+          hour12: true,
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        // Get the scheduled time based on attendance type
+        const scheduledTime =
+          attendanceType === "timeIn"
+            ? relevantSchedule.timeInStart
+            : relevantSchedule.timeOutStart;
+
+        const statusResult = calculateAttendanceStatus(
+          scheduledTime,
+          currentTime
         );
+        const status = statusResult.status;
+        const message = formatAttendanceMessage(statusResult, attendanceType);
 
-        if (result.success) {
-          Swal.fire({
-            icon: "success",
-            title: "Successfully Timed Out",
-            text: "Student has been successfully timed out and recorded.",
-            confirmButtonColor: "#2196f3",
-            timer: 3000,
-            timerProgressBar: true,
-          });
-        } else {
-          Swal.fire({
-            icon: "error",
-            title: "Time-Out Failed",
-            text: result.error || "Failed to record time-out.",
-            confirmButtonColor: "#d33",
-          });
-        }
-        return; // Exit early after processing
-      }
+        // Prepare data for the success modal
+        const modalData = {
+          child: result.data?.child || {
+            firstName: parent.childFirstName || "Unknown",
+            lastName: parent.childLastName || "Student",
+          },
+          parent: {
+            firstName: parent.firstName,
+            lastName: parent.lastName,
+            email: parent.email,
+          },
+          schedule: {
+            sectionName: getSectionNameByScheduleId(relevantSchedule.sectionId),
+            timeInStart: relevantSchedule.timeInStart,
+            timeInEnd: relevantSchedule.timeInEnd,
+            timeOutStart: relevantSchedule.timeOutStart,
+            timeOutEnd: relevantSchedule.timeOutEnd,
+          },
+          attendance: result.attendance,
+        };
 
-      // Calculate attendance status based on current time and schedule
-      let attendanceStatus = "present";
-      let statusMessage = "";
+        // Show success modal
+        const modalDataToShow = {
+          ...modalData,
+          attendanceType,
+          status,
+          message,
+        };
 
-      try {
-        const result = await markAttendanceViaQR(
-          qrDataString,
-          parentId,
+        console.log(
+          "🔍 AttendanceContent Debug - Setting modal data:",
+          modalDataToShow
+        );
+        console.log("🔍 AttendanceContent Debug - Status:", status);
+        console.log(
+          "🔍 AttendanceContent Debug - AttendanceType:",
           attendanceType
         );
 
-        if (result.success) {
-          const { status, message } = calculateAttendanceStatus(
-            result.attendance,
-            result.schedule
-          );
-          attendanceStatus = status;
-          statusMessage = message;
+        setRfidModalData(modalDataToShow);
+        setRfidModalOpen(true);
 
-          Swal.fire({
-            icon: "success",
-            title: "Attendance Recorded",
-            text: formatAttendanceMessage(attendanceStatus, statusMessage),
-            confirmButtonColor: "#4caf50",
-            timer: 3000,
-            timerProgressBar: true,
-          });
-
-          // Refresh attendance data to show updated records
-          await loadAttendanceData();
-        } else {
-          Swal.fire({
-            icon: "error",
-            title: "Attendance Failed",
-            text: result.error || "Failed to record attendance.",
-            confirmButtonColor: "#d33",
-          });
-        }
-      } catch (error) {
-        console.error("Error processing attendance:", error);
-        Swal.fire({
+        // Refresh attendance data to show updated records
+        await loadAttendanceData();
+      } else {
+        await Swal.fire({
           icon: "error",
-          title: "Error",
-          text: "Failed to process attendance. Please try again.",
+          title: "Attendance Failed",
+          text: result.error || "Failed to record attendance.",
           confirmButtonColor: "#d33",
         });
       }
     } catch (error) {
       console.error("Error processing RFID:", error);
-      Swal.fire({
+      await Swal.fire({
         icon: "error",
         title: "RFID Scan Failed",
         text: "The RFID could not be processed. Please try again.",
@@ -1329,6 +1401,16 @@ const AttendanceContent = () => {
         open={qrScannerOpen}
         onClose={() => setQrScannerOpen(false)}
         onScan={(value) => handleScanRFID(value, "timeIn")}
+      />
+
+      {/* RFID Success Modal */}
+      <RFIDSuccessModal
+        open={rfidModalOpen}
+        onClose={handleCloseRfidModal}
+        attendanceData={rfidModalData}
+        attendanceType={rfidModalData?.attendanceType}
+        status={rfidModalData?.status}
+        message={rfidModalData?.message}
       />
     </Box>
   );

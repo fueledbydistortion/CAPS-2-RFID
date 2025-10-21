@@ -1,5 +1,5 @@
-import { API_BASE_URL } from '../config/api';
-import { auth } from './firebase-config';
+import { API_BASE_URL } from "../config/api";
+import { auth } from "./firebase-config";
 
 /**
  * Get Firebase ID token
@@ -8,13 +8,16 @@ import { auth } from './firebase-config';
 const getAuthToken = async (forceRefresh = false) => {
   const user = auth.currentUser;
   if (!user) {
-    throw new Error('User not authenticated');
+    console.error("No authenticated user found");
+    throw new Error("User not authenticated");
   }
   try {
-    return await user.getIdToken(forceRefresh);
+    const token = await user.getIdToken(forceRefresh);
+    console.log("Auth token obtained successfully");
+    return token;
   } catch (error) {
-    console.error('Error getting auth token:', error);
-    throw new Error('Failed to get authentication token');
+    console.error("Error getting auth token:", error);
+    throw new Error("Failed to get authentication token");
   }
 };
 
@@ -25,26 +28,26 @@ export const createNotification = async (notificationData) => {
   try {
     const token = await getAuthToken();
     const response = await fetch(`${API_BASE_URL}/notifications`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(notificationData)
+      body: JSON.stringify(notificationData),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to create notification');
+      throw new Error(data.error || "Failed to create notification");
     }
 
     return data;
   } catch (error) {
-    console.error('Error creating notification:', error);
+    console.error("Error creating notification:", error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 };
@@ -52,24 +55,30 @@ export const createNotification = async (notificationData) => {
 /**
  * Get all notifications for a user
  */
-export const getUserNotifications = async (userId, params = {}, retryCount = 0) => {
+export const getUserNotifications = async (
+  userId,
+  params = {},
+  retryCount = 0
+) => {
   try {
     const token = await getAuthToken(retryCount > 0);
     const queryParams = new URLSearchParams();
-    
-    if (params.unreadOnly) queryParams.append('unreadOnly', params.unreadOnly);
-    if (params.limit) queryParams.append('limit', params.limit);
-    if (params.type) queryParams.append('type', params.type);
+
+    if (params.unreadOnly) queryParams.append("unreadOnly", params.unreadOnly);
+    if (params.limit) queryParams.append("limit", params.limit);
+    if (params.type) queryParams.append("type", params.type);
 
     const queryString = queryParams.toString();
-    const url = `${API_BASE_URL}/notifications/user/${userId}${queryString ? '?' + queryString : ''}`;
+    const url = `${API_BASE_URL}/notifications/user/${userId}${
+      queryString ? "?" + queryString : ""
+    }`;
 
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      }
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     if (!response.ok) {
@@ -77,18 +86,22 @@ export const getUserNotifications = async (userId, params = {}, retryCount = 0) 
       if (response.status === 401 && retryCount === 0) {
         return getUserNotifications(userId, params, 1);
       }
-      const data = await response.json().catch(() => ({ error: 'Failed to fetch notifications' }));
-      throw new Error(data.error || `Failed to fetch notifications (${response.status})`);
+      const data = await response
+        .json()
+        .catch(() => ({ error: "Failed to fetch notifications" }));
+      throw new Error(
+        data.error || `Failed to fetch notifications (${response.status})`
+      );
     }
 
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    console.error("Error fetching notifications:", error);
     return {
       success: false,
       error: error.message,
-      data: []
+      data: [],
     };
   }
 };
@@ -98,32 +111,50 @@ export const getUserNotifications = async (userId, params = {}, retryCount = 0) 
  */
 export const getUnreadCount = async (userId, retryCount = 0) => {
   try {
+    console.log(
+      `Getting unread count for user: ${userId}, retry: ${retryCount}`
+    );
     const token = await getAuthToken(retryCount > 0);
-    const response = await fetch(`${API_BASE_URL}/notifications/user/${userId}/unread-count`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+    console.log("Token obtained, making request...");
+
+    const response = await fetch(
+      `${API_BASE_URL}/notifications/user/${userId}/unread-count`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       }
-    });
+    );
+
+    console.log(`Response status: ${response.status}`);
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API Error: ${response.status} - ${errorText}`);
+
       // Retry once with fresh token if we get 401
       if (response.status === 401 && retryCount === 0) {
+        console.log("Retrying with fresh token...");
         return getUnreadCount(userId, 1);
       }
-      const data = await response.json().catch(() => ({ error: 'Failed to fetch unread count' }));
-      throw new Error(data.error || `Failed to fetch unread count (${response.status})`);
+      const data = await response
+        .json()
+        .catch(() => ({ error: "Failed to fetch unread count" }));
+      throw new Error(
+        data.error || `Failed to fetch unread count (${response.status})`
+      );
     }
 
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('Error fetching unread count:', error);
+    console.error("Error fetching unread count:", error);
     return {
       success: false,
       error: error.message,
-      count: 0
+      count: 0,
     };
   }
 };
@@ -134,26 +165,29 @@ export const getUnreadCount = async (userId, retryCount = 0) => {
 export const markAsRead = async (notificationId) => {
   try {
     const token = await getAuthToken();
-    const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}/read`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+    const response = await fetch(
+      `${API_BASE_URL}/notifications/${notificationId}/read`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       }
-    });
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to mark notification as read');
+      throw new Error(data.error || "Failed to mark notification as read");
     }
 
     return data;
   } catch (error) {
-    console.error('Error marking notification as read:', error);
+    console.error("Error marking notification as read:", error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 };
@@ -164,26 +198,29 @@ export const markAsRead = async (notificationId) => {
 export const markAllAsRead = async (userId) => {
   try {
     const token = await getAuthToken();
-    const response = await fetch(`${API_BASE_URL}/notifications/user/${userId}/read-all`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+    const response = await fetch(
+      `${API_BASE_URL}/notifications/user/${userId}/read-all`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       }
-    });
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to mark all notifications as read');
+      throw new Error(data.error || "Failed to mark all notifications as read");
     }
 
     return data;
   } catch (error) {
-    console.error('Error marking all notifications as read:', error);
+    console.error("Error marking all notifications as read:", error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 };
@@ -194,26 +231,29 @@ export const markAllAsRead = async (userId) => {
 export const deleteNotification = async (notificationId) => {
   try {
     const token = await getAuthToken();
-    const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+    const response = await fetch(
+      `${API_BASE_URL}/notifications/${notificationId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       }
-    });
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to delete notification');
+      throw new Error(data.error || "Failed to delete notification");
     }
 
     return data;
   } catch (error) {
-    console.error('Error deleting notification:', error);
+    console.error("Error deleting notification:", error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 };
@@ -224,26 +264,29 @@ export const deleteNotification = async (notificationId) => {
 export const deleteAllNotifications = async (userId) => {
   try {
     const token = await getAuthToken();
-    const response = await fetch(`${API_BASE_URL}/notifications/user/${userId}/all`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+    const response = await fetch(
+      `${API_BASE_URL}/notifications/user/${userId}/all`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       }
-    });
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to delete all notifications');
+      throw new Error(data.error || "Failed to delete all notifications");
     }
 
     return data;
   } catch (error) {
-    console.error('Error deleting all notifications:', error);
+    console.error("Error deleting all notifications:", error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 };
@@ -255,27 +298,26 @@ export const broadcastNotification = async (notificationData) => {
   try {
     const token = await getAuthToken();
     const response = await fetch(`${API_BASE_URL}/notifications/broadcast`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(notificationData)
+      body: JSON.stringify(notificationData),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to broadcast notification');
+      throw new Error(data.error || "Failed to broadcast notification");
     }
 
     return data;
   } catch (error) {
-    console.error('Error broadcasting notification:', error);
+    console.error("Error broadcasting notification:", error);
     return {
       success: false,
-      error: error.message
+      error: error.message,
     };
   }
 };
-

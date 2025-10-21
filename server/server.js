@@ -32,8 +32,19 @@ const testNotificationRoutes = require("./routes/testNotificationRoutes");
 
 const PORT = process.env.PORT || 3001;
 
-// Enable CORS for all routes
-app.use(cors());
+// Enable CORS for all routes with specific origins
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173', // Vite dev server
+    'https://smart-child-care-app.vercel.app',
+    'https://smart-child-care-z13s.vercel.app'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 
 // Parse JSON bodies
 app.use(express.json());
@@ -48,6 +59,16 @@ if (!process.env.VERCEL) {
 
 // API Routes
 console.log("🔍 DEBUG: Mounting API routes...");
+
+// Add a simple health check route first (for faster cold starts)
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "OK",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+
 app.use("/api/sections", sectionRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/schedules", scheduleRoutes);

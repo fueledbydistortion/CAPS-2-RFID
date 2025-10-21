@@ -276,8 +276,29 @@ const SectionForm = ({
   };
 
   const getAvailableStudents = () => {
+    if (!students.length || !allSections.length) {
+      return students.filter(
+        (student) => !assignedStudents.includes(student.uid)
+      );
+    }
+
+    // Get parent IDs that are already assigned to other sections
+    const assignedParentIds = allSections
+      .filter((section) => {
+        // Exclude current section if editing
+        if (sectionData && section.id === sectionData.id) {
+          return false;
+        }
+        return section.assignedStudents && section.assignedStudents.length > 0;
+      })
+      .flatMap((section) => section.assignedStudents);
+
+    // Filter out parents who are already assigned to other daycare centers
+    // and also filter out parents already assigned to current section
     return students.filter(
-      (student) => !assignedStudents.includes(student.uid)
+      (student) =>
+        !assignedStudents.includes(student.uid) &&
+        !assignedParentIds.includes(student.uid)
     );
   };
 
@@ -473,9 +494,14 @@ const SectionForm = ({
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Search and select parent (with child)"
+                          label={
+                            getAvailableStudents().length === 0
+                              ? "No available parents (all assigned to other daycare centers)"
+                              : "Search and select parent (with child)"
+                          }
                           size="small"
                           sx={{ minWidth: 450, maxWidth: 600 }}
+                          disabled={getAvailableStudents().length === 0}
                         />
                       )}
                       renderOption={(props, option) => {
@@ -510,7 +536,11 @@ const SectionForm = ({
                     <Button
                       variant="contained"
                       onClick={handleAddStudent}
-                      disabled={!selectedStudent || loadingStudents}
+                      disabled={
+                        !selectedStudent ||
+                        loadingStudents ||
+                        getAvailableStudents().length === 0
+                      }
                       size="small"
                       sx={{
                         background:
@@ -536,6 +566,27 @@ const SectionForm = ({
                       Select All
                     </Button>
                   </Box>
+
+                  {/* Show message when no parents are available */}
+                  {getAvailableStudents().length === 0 && (
+                    <Box
+                      sx={{
+                        p: 2,
+                        border: "1px solid #ff9800",
+                        borderRadius: 1,
+                        backgroundColor: "rgba(255, 152, 0, 0.05)",
+                        textAlign: "center",
+                      }}>
+                      <Typography
+                        variant="body2"
+                        color="warning.main"
+                        sx={{ fontWeight: 500 }}>
+                        All parents are already assigned to other daycare
+                        centers. Cannot assign parents to multiple daycare
+                        centers.
+                      </Typography>
+                    </Box>
+                  )}
 
                   {/* Students Table */}
                   {loadingStudents ? (

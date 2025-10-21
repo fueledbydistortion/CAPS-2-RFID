@@ -139,10 +139,15 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start the server
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server is listening on port ${PORT}`);
-  console.log(`Server accessible at:`);
-  console.log(`  - Local: http://localhost:${PORT}`);
-  console.log(`  - Network: http://192.168.1.27:${PORT}`);
-});
+// Start the server only if not in Vercel environment
+if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server is listening on port ${PORT}`);
+    console.log(`Server accessible at:`);
+    console.log(`  - Local: http://localhost:${PORT}`);
+    console.log(`  - Network: http://192.168.1.27:${PORT}`);
+  });
+}
+
+// Export the app for Vercel
+module.exports = app;

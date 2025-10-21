@@ -21,7 +21,7 @@ const databaseURL =
   process.env.FIREBASE_DATABASE_URL ||
   "https://smartchild-2e350-default-rtdb.firebaseio.com"; // sensible default for this project
 const storageBucket =
-  process.env.FIREBASE_STORAGE_BUCKET || "smartchild-2e350.appspot.com"; // typical Firebase bucket domain
+  process.env.FIREBASE_STORAGE_BUCKET || "smartchild-2e350.firebasestorage.app"; // Firebase Storage bucket domain
 
 if (!admin.apps.length) {
   try {

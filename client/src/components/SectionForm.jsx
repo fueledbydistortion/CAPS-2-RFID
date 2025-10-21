@@ -258,7 +258,7 @@ const SectionForm = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        {sectionData ? "Edit Daycare Level" : "Add New Daycare Level"}
+        {sectionData ? "Edit Daycare Centers" : "Add New Daycare Centers"}
       </DialogTitle>
       <Formik
         initialValues={initialValues}
@@ -279,12 +279,12 @@ const SectionForm = ({
                           fullWidth
                           required
                           error={meta.touched && Boolean(meta.error)}>
-                          <InputLabel>Daycare Level *</InputLabel>
-                          <Select {...field} label="Daycare Level *">
-                            <MenuItem value="Daycare 1">Daycare 1</MenuItem>
-                            <MenuItem value="Daycare 2">Daycare 2</MenuItem>
-                            <MenuItem value="Daycare 3">Daycare 3</MenuItem>
-                            <MenuItem value="Daycare 4">Daycare 4</MenuItem>
+                          <InputLabel>Daycare Centers *</InputLabel>
+                          <Select {...field} label="Daycare Centers *">
+                            <MenuItem value="Daycare 1">K1</MenuItem>
+                            <MenuItem value="Daycare 2">K2</MenuItem>
+                            <MenuItem value="Daycare 3">K3</MenuItem>
+                            <MenuItem value="Daycare 4">K4</MenuItem>
                           </Select>
                           {meta.touched && meta.error && (
                             <Typography

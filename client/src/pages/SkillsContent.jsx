@@ -841,7 +841,7 @@ const SkillsContent = () => {
                                   />
                                   <Tab
                                     icon={<School fontSize="small" />}
-                                    label={`Daycare Level (${
+                                    label={`Daycare Centers (${
                                       skillSections[skill.id]?.length || 0
                                     })`}
                                     iconPosition="start"
@@ -1383,7 +1383,7 @@ const SkillsContent = () => {
                                   </Box>
                                 )}
 
-                                {/* Daycare Level Tab */}
+                                {/* Daycare Centers Tab */}
                                 {activeTabs[skill.id] === 2 && (
                                   <Box>
                                     <Box
@@ -1400,7 +1400,7 @@ const SkillsContent = () => {
                                           handleAssignSections(skill)
                                         }
                                         sx={{ borderRadius: "8px" }}>
-                                        Assign Daycare Level
+                                        Assign Daycare Centers
                                       </Button>
                                     </Box>
 
@@ -1410,7 +1410,7 @@ const SkillsContent = () => {
                                         color="text.secondary"
                                         sx={{ textAlign: "center", py: 4 }}>
                                         No sections assigned to this skill.
-                                        Click "Assign Daycare Level" to assign
+                                        Click "Assign Daycare Centers" to assign
                                         sections.
                                       </Typography>
                                     ) : (
@@ -1434,7 +1434,7 @@ const SkillsContent = () => {
                                                     "Plus Jakarta Sans, sans-serif",
                                                   fontWeight: 600,
                                                 }}>
-                                                Daycare Level
+                                                Daycare Centers
                                               </TableCell>
                                               <TableCell
                                                 sx={{
@@ -1500,7 +1500,7 @@ const SkillsContent = () => {
                                                         "Plus Jakarta Sans, sans-serif",
                                                     }}
                                                     align="center">
-                                                    <Tooltip title="Manage Daycare Level">
+                                                    <Tooltip title="Manage Daycare Centers">
                                                       <IconButton
                                                         size="small"
                                                         onClick={() =>

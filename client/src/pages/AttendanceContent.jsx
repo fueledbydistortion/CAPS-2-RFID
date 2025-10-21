@@ -399,7 +399,7 @@ const AttendanceContent = () => {
 
       const sectionName =
         selectedSectionFilter === "all"
-          ? "All Daycare Level"
+          ? "All Daycare Centers"
           : sections.find((s) => s.id === selectedSectionFilter)?.name ||
             "Unknown";
 
@@ -454,7 +454,7 @@ const AttendanceContent = () => {
 
       const sectionName =
         selectedSectionFilter === "all"
-          ? "All Daycare Level"
+          ? "All Daycare Centers"
           : sections.find((s) => s.id === selectedSectionFilter)?.name ||
             "Unknown";
 
@@ -1023,7 +1023,7 @@ const AttendanceContent = () => {
                     label="Section Filter"
                     onChange={(e) => setSectionFilter(e.target.value)}
                     sx={{ borderRadius: "12px" }}>
-                    <MenuItem value="all">All Daycare Level</MenuItem>
+                    <MenuItem value="all">All Daycare Centers</MenuItem>
                     {sections.map((section) => (
                       <MenuItem key={section.id} value={section.id}>
                         {section.name}
@@ -1301,7 +1301,7 @@ const AttendanceContent = () => {
               <Typography variant="body2">
                 <strong>Section:</strong>{" "}
                 {sectionFilter === "all"
-                  ? "All Daycare Level"
+                  ? "All Daycare Centers"
                   : sections.find((s) => s.id === sectionFilter)?.name ||
                     "Unknown"}
               </Typography>
@@ -1354,7 +1354,7 @@ const AttendanceContent = () => {
 
             {sectionFilter === "all" && (
               <Alert severity="info" sx={{ mt: 2 }}>
-                Exporting "All Daycare Level" will create separate files for
+                Exporting "All Daycare Centers" will create separate files for
                 each section plus one combined file.
               </Alert>
             )}

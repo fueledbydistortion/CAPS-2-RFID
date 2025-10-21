@@ -388,7 +388,7 @@ const ParentSectionContent = () => {
               {content.sections?.length || 0}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Daycare Level
+              Daycare Centers
             </Typography>
           </Card>
           <Card

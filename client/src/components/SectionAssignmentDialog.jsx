@@ -162,7 +162,7 @@ const SectionAssignmentDialog = ({
           fontWeight: 700,
           fontSize: "1.5rem",
         }}>
-        Assign Daycare Level to Skill: {skillName}
+        Assign Daycare Centers to Skill: {skillName}
       </DialogTitle>
 
       <DialogContent sx={{ p: 3 }}>
@@ -264,7 +264,7 @@ const SectionAssignmentDialog = ({
           />
         </Box>
 
-        {/* Assigned Daycare Level */}
+        {/* Assigned Daycare Centers */}
         <Box>
           <Typography
             variant="h6"
@@ -276,7 +276,7 @@ const SectionAssignmentDialog = ({
               fontFamily: "Plus Jakarta Sans, sans-serif",
               fontWeight: 700,
             }}>
-            Assigned Daycare Level ({assignedSections.length})
+            Assigned Daycare Centers ({assignedSections.length})
           </Typography>
 
           {assignedSections.length === 0 ? (
@@ -311,7 +311,7 @@ const SectionAssignmentDialog = ({
                   <TableRow sx={{ backgroundColor: "rgba(31, 120, 80, 0.05)" }}>
                     <TableCell
                       sx={{ fontWeight: 600, color: "hsl(152, 65%, 28%)" }}>
-                      Daycare Level
+                      Daycare Centers
                     </TableCell>
                     <TableCell
                       sx={{ fontWeight: 600, color: "hsl(152, 65%, 28%)" }}>

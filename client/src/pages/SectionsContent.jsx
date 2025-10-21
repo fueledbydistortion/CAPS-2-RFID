@@ -725,7 +725,7 @@ const SectionsContent = () => {
                       fontFamily: "Plus Jakarta Sans, sans-serif",
                       fontWeight: 600,
                     }}>
-                    Daycare Level
+                    Daycare Centers
                   </TableCell>
                   <TableCell
                     sx={{

@@ -87,7 +87,7 @@ function Dashboard() {
     if (location.pathname === "/dashboard/parent-content")
       return "Learning Content";
     if (location.pathname === "/dashboard/skills") return "Lessons";
-    if (location.pathname === "/dashboard/sections") return "Daycare Level";
+    if (location.pathname === "/dashboard/sections") return "Daycare Centers";
     if (location.pathname === "/dashboard/attendance") return "Attendance";
     if (location.pathname === "/dashboard/calendar") return "Calendar";
     if (location.pathname === "/dashboard/badges") return "Badges";
@@ -115,7 +115,7 @@ function Dashboard() {
     if (location.pathname === "/dashboard/skills")
       return "Smart Child Care - Lessons Module";
     if (location.pathname === "/dashboard/sections")
-      return "Smart Child Care - Daycare Level Module";
+      return "Smart Child Care - Daycare Centers Module";
     if (location.pathname === "/dashboard/attendance")
       return "Smart Child Care - Attendance Module";
     if (location.pathname === "/dashboard/calendar") {
@@ -217,7 +217,7 @@ function Dashboard() {
       case "Lessons":
         navigate("/dashboard/skills");
         break;
-      case "Daycare Level":
+      case "Daycare Centers":
         navigate("/dashboard/sections");
         break;
       case "Attendance":
@@ -300,7 +300,7 @@ function Dashboard() {
         },
       ];
     } else {
-      // Reorganized menu items in requested order: Dashboard, Users, Students, Daycare Level, Schedules, Calendar, Attendance, Skills, Messaging, Reports
+      // Reorganized menu items in requested order: Dashboard, Users, Students, Daycare Centers, Schedules, Calendar, Attendance, Skills, Messaging, Reports
       const menuGroups = {
         main: [
           {
@@ -317,9 +317,9 @@ function Dashboard() {
             active: activeMenu === "Students",
           },
           {
-            text: "Daycare Level",
+            text: "Daycare Centers",
             icon: <School />,
-            active: activeMenu === "Daycare Level",
+            active: activeMenu === "Daycare Centers",
           },
         ],
         academic: [

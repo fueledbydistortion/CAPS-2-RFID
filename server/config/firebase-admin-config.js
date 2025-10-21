@@ -1,70 +1,68 @@
 var admin = require("firebase-admin");
 const path = require("path");
 
-// Try to load credentials from JSON file first, then fall back to environment variables
+// Prefer env vars on Vercel; optionally allow a bundled credentials.json for local dev
 let serviceAccount = null;
-
-// Check if credentials.json exists
 const credentialsPath = path.join(__dirname, "../credentials.json");
 try {
   serviceAccount = require(credentialsPath);
   console.log("✅ Loaded Firebase credentials from JSON file");
 } catch (error) {
-  console.log("⚠️ No credentials.json found, trying environment variables...");
+  console.log("ℹ️ credentials.json not found, using environment variables...");
 }
 
-// Check for environment variables
-var hasEnvCreds =
-  process.env.FIREBASE_PROJECT_ID &&
-  process.env.FIREBASE_CLIENT_EMAIL &&
-  process.env.FIREBASE_PRIVATE_KEY;
+const hasEnvCreds =
+  !!process.env.FIREBASE_PROJECT_ID &&
+  !!process.env.FIREBASE_CLIENT_EMAIL &&
+  !!process.env.FIREBASE_PRIVATE_KEY;
+
+// Configurable URLs (must be set on Vercel)
+const databaseURL =
+  process.env.FIREBASE_DATABASE_URL ||
+  "https://smartchild-2e350-default-rtdb.firebaseio.com"; // sensible default for this project
+const storageBucket =
+  process.env.FIREBASE_STORAGE_BUCKET || "smartchild-2e350.appspot.com"; // typical Firebase bucket domain
 
 if (!admin.apps.length) {
-  if (serviceAccount) {
-    // Use JSON file credentials
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      databaseURL: "https://smartchild-2e350-default-rtdb.firebaseio.com",
-      storageBucket: "gs://smartchild-2e350.firebasestorage.app",
-    });
-    console.log("✅ Firebase Admin initialized with JSON credentials");
-  } else if (hasEnvCreds) {
-    // Use environment variables
-    var normalizedPrivateKey = process.env.FIREBASE_PRIVATE_KEY.replace(
-      /\\n/g,
-      "\n"
-    );
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: normalizedPrivateKey,
-      }),
-      databaseURL: "https://smartchild-2e350-default-rtdb.firebaseio.com",
-      storageBucket: "gs://smartchild-2e350.firebasestorage.app",
-    });
-    console.log("✅ Firebase Admin initialized with environment variables");
-  } else {
-    // Fall back to Application Default Credentials
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      databaseURL: "https://smartchild-2e350-default-rtdb.firebaseio.com",
-      storageBucket: "gs://smartchild-2e350.firebasestorage.app",
-    });
-    console.log(
-      "✅ Firebase Admin initialized with Application Default Credentials"
-    );
+  try {
+    if (serviceAccount) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        databaseURL,
+        storageBucket,
+      });
+      console.log("✅ Firebase Admin initialized with JSON credentials");
+    } else if (hasEnvCreds) {
+      // Normalize escaped \n in private key when coming from env
+      const normalizedPrivateKey = process.env.FIREBASE_PRIVATE_KEY.replace(
+        /\\n/g,
+        "\n"
+      );
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: normalizedPrivateKey,
+        }),
+        databaseURL,
+        storageBucket,
+      });
+      console.log("✅ Firebase Admin initialized with environment variables");
+    } else {
+      // On Vercel there is no ADC; fail fast with a clear error to avoid 500 mystery
+      console.error(
+        "❌ Firebase credentials not provided. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY (and optional FIREBASE_DATABASE_URL, FIREBASE_STORAGE_BUCKET) in your environment."
+      );
+      throw new Error("Firebase Admin credentials missing");
+    }
+  } catch (e) {
+    console.error("❌ Failed to initialize Firebase Admin:", e);
+    throw e;
   }
 }
 
-// Get the Realtime Database instance
+// Safe accessors
 const db = admin.database();
-
-// Get the Storage instance
 const bucket = admin.storage().bucket();
 
-module.exports = {
-  admin,
-  db,
-  bucket,
-};
+module.exports = { admin, db, bucket };

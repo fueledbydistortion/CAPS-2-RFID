@@ -151,6 +151,41 @@ const SectionForm = ({
     );
   };
 
+  // Get available daycare levels (those that haven't been created yet)
+  const getAvailableDaycareLevels = () => {
+    if (!allSections.length) {
+      // If no sections exist, all levels are available
+      return [
+        { value: "Daycare Center K1", label: "K1" },
+        { value: "Daycare Center K2", label: "K2" },
+        { value: "Daycare Center K3", label: "K3" },
+        { value: "Daycare Center K4", label: "K4" },
+      ];
+    }
+
+    // Get existing daycare level names
+    const existingLevels = allSections
+      .filter((section) => {
+        // Exclude current section if editing
+        if (sectionData && section.id === sectionData.id) {
+          return false;
+        }
+        return section.name && section.name.trim() !== "";
+      })
+      .map((section) => section.name);
+
+    // Define all possible daycare levels
+    const allLevels = [
+      { value: "Daycare Center K1", label: "K1" },
+      { value: "Daycare Center K2", label: "K2" },
+      { value: "Daycare Center K3", label: "K3" },
+      { value: "Daycare Center K4", label: "K4" },
+    ];
+
+    // Filter out levels that already exist
+    return allLevels.filter((level) => !existingLevels.includes(level.value));
+  };
+
   const handleAddStudent = async () => {
     if (selectedStudent && !assignedStudents.includes(selectedStudent.uid)) {
       // If editing existing section, use backend API
@@ -247,6 +282,12 @@ const SectionForm = ({
   };
 
   const handleSubmit = async (values, { setSubmitting }) => {
+    // Prevent submission if no daycare levels are available (for new sections)
+    if (!sectionData && getAvailableDaycareLevels().length === 0) {
+      setSubmitting(false);
+      return;
+    }
+
     const submissionData = {
       ...values,
       assignedStudents: assignedStudents,
@@ -281,10 +322,17 @@ const SectionForm = ({
                           error={meta.touched && Boolean(meta.error)}>
                           <InputLabel>Daycare Centers *</InputLabel>
                           <Select {...field} label="Daycare Centers *">
-                            <MenuItem value="Daycare 1">K1</MenuItem>
-                            <MenuItem value="Daycare 2">K2</MenuItem>
-                            <MenuItem value="Daycare 3">K3</MenuItem>
-                            <MenuItem value="Daycare 4">K4</MenuItem>
+                            {getAvailableDaycareLevels().length === 0 ? (
+                              <MenuItem value="" disabled>
+                                <em>All daycare levels have been created</em>
+                              </MenuItem>
+                            ) : (
+                              getAvailableDaycareLevels().map((level) => (
+                                <MenuItem key={level.value} value={level.value}>
+                                  {level.label}
+                                </MenuItem>
+                              ))
+                            )}
                           </Select>
                           {meta.touched && meta.error && (
                             <Typography
@@ -292,6 +340,15 @@ const SectionForm = ({
                               color="error"
                               sx={{ mt: 0.5, ml: 1.75 }}>
                               {meta.error}
+                            </Typography>
+                          )}
+                          {getAvailableDaycareLevels().length === 0 && (
+                            <Typography
+                              variant="caption"
+                              color="warning.main"
+                              sx={{ mt: 0.5, ml: 1.75 }}>
+                              All daycare levels have been created. Cannot
+                              create duplicates.
                             </Typography>
                           )}
                         </FormControl>
@@ -564,7 +621,11 @@ const SectionForm = ({
               <Button
                 type="submit"
                 variant="contained"
-                disabled={loading || isSubmitting}
+                disabled={
+                  loading ||
+                  isSubmitting ||
+                  (!sectionData && getAvailableDaycareLevels().length === 0)
+                }
                 sx={{
                   background:
                     "linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))",

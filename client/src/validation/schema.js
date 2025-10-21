@@ -264,7 +264,12 @@ export const sectionSchema = yup.object({
     .string()
     .required("Daycare level is required")
     .oneOf(
-      ["Daycare 1", "Daycare 2", "Daycare 3", "Daycare 4"],
+      [
+        "Daycare Center K1",
+        "Daycare Center K2",
+        "Daycare Center K3",
+        "Daycare Center K4",
+      ],
       "Please select a valid daycare level"
     ),
 

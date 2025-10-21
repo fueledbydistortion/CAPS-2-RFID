@@ -518,7 +518,7 @@ const SectionsContent = () => {
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
             }}>
-            Section Management
+            Daycare Centers Management
           </Typography>
           <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
             {/* Only show Add Section button for non-teacher users */}
@@ -531,7 +531,7 @@ const SectionsContent = () => {
                   background:
                     "linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))",
                 }}>
-                Add Section
+                Add Daycare Center
               </Button>
             )}
           </Box>
@@ -548,7 +548,7 @@ const SectionsContent = () => {
           }}>
           <TextField
             size="small"
-            placeholder="Search sections..."
+            placeholder="Search daycare centers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
@@ -589,15 +589,15 @@ const SectionsContent = () => {
               <Box sx={{ width: "100%", textAlign: "center", py: 4 }}>
                 <Typography variant="h6" color="text.secondary">
                   {userProfile && userProfile.role === "teacher"
-                    ? "No sections assigned to you yet"
-                    : "No sections found"}
+                    ? "No daycare centers assigned to you yet"
+                    : "No daycare centers found"}
                 </Typography>
                 {userProfile && userProfile.role === "teacher" && (
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     sx={{ mt: 1 }}>
-                    Contact your administrator to get sections assigned to you.
+                    Contact your administrator to get daycare centers assigned to you.
                   </Typography>
                 )}
               </Box>
@@ -782,8 +782,8 @@ const SectionsContent = () => {
                         color="text.secondary"
                         sx={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}>
                         {userProfile && userProfile.role === "teacher"
-                          ? "No sections assigned to you yet"
-                          : "No sections found"}
+                          ? "No daycare centers assigned to you yet"
+                          : "No daycare centers found"}
                       </Typography>
                       {userProfile && userProfile.role === "teacher" && (
                         <Typography
@@ -794,7 +794,7 @@ const SectionsContent = () => {
                             mt: 1,
                             fontFamily: "Plus Jakarta Sans, sans-serif",
                           }}>
-                          Contact your administrator to get sections assigned to
+                          Contact your administrator to get daycare centers assigned to
                           you.
                         </Typography>
                       )}

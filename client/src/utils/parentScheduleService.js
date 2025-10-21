@@ -111,6 +111,13 @@ export const markAttendanceViaQR = async (
       minute: "2-digit",
     });
 
+    console.log("Client time generation:", {
+      currentTime,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      dateObject: new Date(),
+      localTimeString: new Date().toLocaleTimeString(),
+    });
+
     console.log(
       "🔍 DEBUG: Client - Making RFID request to:",
       "/schedules/parent/attendance/rfid-mark"

@@ -1,19 +1,19 @@
 import {
-  AccessTime,
-  CheckCircle,
-  Person,
-  Schedule,
-  School,
+    AccessTime,
+    CheckCircle,
+    Person,
+    Schedule,
+    School,
 } from "@mui/icons-material";
 import {
-  Avatar,
-  Box,
-  Chip,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  Typography,
+    Avatar,
+    Box,
+    Chip,
+    Dialog,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    Typography,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
@@ -259,7 +259,7 @@ const RFIDSuccessModal = ({
                   Time
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {new Date().toLocaleTimeString("en-US", {
+                  {attendance?.timeIn || attendance?.timeOut || new Date().toLocaleTimeString("en-US", {
                     hour: "2-digit",
                     minute: "2-digit",
                     hour12: true,

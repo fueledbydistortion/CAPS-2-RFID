@@ -650,8 +650,10 @@ const markAttendanceViaQR = async (req, res) => {
 
     if (clientTime) {
       // Use client-provided time (already in their timezone)
+      // Ensure the time is properly formatted and not converted
       currentTime = clientTime;
       console.log("Using client-provided time:", clientTime);
+      console.log("Client time type:", typeof clientTime);
     } else {
       // Fallback to server time if no client time provided
       currentTime = new Date().toLocaleTimeString("en-US", {
@@ -754,12 +756,25 @@ const markAttendanceViaQR = async (req, res) => {
     // Add time in/out based on attendance type from QR code data
     if (qrAttendanceType === "timeIn") {
       attendanceData.timeIn = currentTime;
+      console.log("Setting timeIn in attendanceData:", {
+        qrAttendanceType,
+        currentTime,
+        timeInValue: attendanceData.timeIn
+      });
     }
     // Note: timeOut is already added above in the timeOut branch
+
+    console.log("Final attendanceData before database save:", {
+      timeIn: attendanceData.timeIn,
+      timeOut: attendanceData.timeOut,
+      qrAttendanceType,
+      currentTime,
+    });
 
     if (attendanceId) {
       // Update existing attendance
       await db.ref(`attendance/${attendanceId}`).update(attendanceData);
+      console.log("Updated existing attendance record:", attendanceId);
     } else {
       // Create new attendance record
       attendanceData.createdAt = admin.database.ServerValue.TIMESTAMP;
@@ -769,6 +784,7 @@ const markAttendanceViaQR = async (req, res) => {
         id: attendanceId,
         ...attendanceData,
       });
+      console.log("Created new attendance record:", attendanceId);
     }
 
     // Send SMS notification (async, don't wait for it)

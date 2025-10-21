@@ -6,8 +6,11 @@ const { createNotificationInternal } = require("./notificationController");
 const formatTo12Hour = (timeStr) => {
   if (!timeStr) return null;
 
+  console.log("formatTo12Hour input:", { timeStr, type: typeof timeStr });
+
   // If already in 12-hour format (contains AM/PM), return as is
   if (timeStr.includes("AM") || timeStr.includes("PM")) {
+    console.log("Already in 12-hour format, returning as is:", timeStr);
     return timeStr;
   }
 
@@ -17,9 +20,12 @@ const formatTo12Hour = (timeStr) => {
     const hour24 = parseInt(hours);
     const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
     const ampm = hour24 >= 12 ? "PM" : "AM";
-    return `${hour12}:${minutes} ${ampm}`;
+    const result = `${hour12}:${minutes} ${ampm}`;
+    console.log("Converted 24-hour to 12-hour:", { hour24, hour12, ampm, result });
+    return result;
   }
 
+  console.log("No conversion needed, returning original:", timeStr);
   return timeStr;
 };
 
@@ -300,6 +306,14 @@ const markAttendance = async (req, res) => {
       }),
     });
 
+    // Log the actual time values being processed
+    console.log("Time values being processed:", {
+      timeIn: timeIn,
+      timeOut: timeOut,
+      timeInType: typeof timeIn,
+      timeOutType: typeof timeOut,
+    });
+
     // Validate required fields
     if (!scheduleId || !studentId) {
       return res.status(400).json({
@@ -400,19 +414,23 @@ const markAttendance = async (req, res) => {
 
       // Only update timeIn if provided, otherwise keep existing
       if (timeIn !== null && timeIn !== undefined) {
-        updateData.timeIn = formatTo12Hour(timeIn);
+        const formattedTimeIn = formatTo12Hour(timeIn);
+        updateData.timeIn = formattedTimeIn;
         console.log("Updating timeIn:", {
           original: timeIn,
-          formatted: formatTo12Hour(timeIn),
+          formatted: formattedTimeIn,
+          originalType: typeof timeIn,
         });
       }
 
       // Only update timeOut if provided, otherwise keep existing
       if (timeOut !== null && timeOut !== undefined) {
-        updateData.timeOut = formatTo12Hour(timeOut);
+        const formattedTimeOut = formatTo12Hour(timeOut);
+        updateData.timeOut = formattedTimeOut;
         console.log("Updating timeOut:", {
           original: timeOut,
-          formatted: formatTo12Hour(timeOut),
+          formatted: formattedTimeOut,
+          originalType: typeof timeOut,
         });
       }
 
@@ -432,8 +450,16 @@ const markAttendance = async (req, res) => {
       };
 
       console.log("Creating new attendance record:", {
-        timeIn: { original: timeIn, formatted: formatTo12Hour(timeIn) },
-        timeOut: { original: timeOut, formatted: formatTo12Hour(timeOut) },
+        timeIn: { 
+          original: timeIn, 
+          formatted: formatTo12Hour(timeIn),
+          originalType: typeof timeIn
+        },
+        timeOut: { 
+          original: timeOut, 
+          formatted: formatTo12Hour(timeOut),
+          originalType: typeof timeOut
+        },
       });
 
       const attendanceRef = db.ref("attendance").push();

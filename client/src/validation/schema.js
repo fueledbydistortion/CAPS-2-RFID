@@ -262,11 +262,11 @@ export const skillSchema = yup.object({
 export const sectionSchema = yup.object({
   name: yup
     .string()
-    .required("Section name is required")
-    .min(2, "Name must be at least 2 characters")
-    .max(50, "Name must be less than 50 characters")
-    .matches(/^[a-zA-Z\s]+$/, "Name can only contain letters and spaces")
-    .trim(),
+    .required("Daycare level is required")
+    .oneOf(
+      ["Daycare 1", "Daycare 2", "Daycare 3", "Daycare 4"],
+      "Please select a valid daycare level"
+    ),
 
   capacity: yup
     .number()

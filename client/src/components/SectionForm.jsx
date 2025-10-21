@@ -240,14 +240,26 @@ const SectionForm = ({
                   <Box sx={{ flex: "1 1 200px", minWidth: "200px" }}>
                     <Field name="name">
                       {({ field, meta }) => (
-                        <TextField
-                          {...field}
+                        <FormControl
                           fullWidth
-                          label="Daycare Level"
-                          error={meta.touched && Boolean(meta.error)}
-                          helperText={meta.touched && meta.error}
                           required
-                        />
+                          error={meta.touched && Boolean(meta.error)}>
+                          <InputLabel>Daycare Level *</InputLabel>
+                          <Select {...field} label="Daycare Level *">
+                            <MenuItem value="Daycare 1">Daycare 1</MenuItem>
+                            <MenuItem value="Daycare 2">Daycare 2</MenuItem>
+                            <MenuItem value="Daycare 3">Daycare 3</MenuItem>
+                            <MenuItem value="Daycare 4">Daycare 4</MenuItem>
+                          </Select>
+                          {meta.touched && meta.error && (
+                            <Typography
+                              variant="caption"
+                              color="error"
+                              sx={{ mt: 0.5, ml: 1.75 }}>
+                              {meta.error}
+                            </Typography>
+                          )}
+                        </FormControl>
                       )}
                     </Field>
                   </Box>

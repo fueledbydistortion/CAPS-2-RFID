@@ -53,10 +53,15 @@ if (!admin.apps.length) {
       console.error(
         "❌ Firebase credentials not provided. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY (and optional FIREBASE_DATABASE_URL, FIREBASE_STORAGE_BUCKET) in your environment."
       );
+      console.error(
+        "Available env vars:",
+        Object.keys(process.env).filter((key) => key.startsWith("FIREBASE"))
+      );
       throw new Error("Firebase Admin credentials missing");
     }
   } catch (e) {
     console.error("❌ Failed to initialize Firebase Admin:", e);
+    console.error("Error details:", e.message);
     throw e;
   }
 }

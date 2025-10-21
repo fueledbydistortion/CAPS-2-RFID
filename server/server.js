@@ -41,8 +41,10 @@ app.use(express.json());
 // Parse URL-encoded bodies
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from uploads directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Serve static files from uploads directory (only in non-Vercel environments)
+if (!process.env.VERCEL) {
+  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+}
 
 // API Routes
 console.log("🔍 DEBUG: Mounting API routes...");

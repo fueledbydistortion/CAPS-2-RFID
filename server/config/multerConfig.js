@@ -6,12 +6,15 @@ const fs = require('fs');
 const uploadsDir = path.join(__dirname, '../uploads');
 const attachmentsDir = path.join(uploadsDir, 'attachments');
 
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// Ensure uploads directory exists (for backward compatibility) - only in non-Vercel environments
+if (!process.env.VERCEL) {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
 
-if (!fs.existsSync(attachmentsDir)) {
-  fs.mkdirSync(attachmentsDir, { recursive: true });
+  if (!fs.existsSync(attachmentsDir)) {
+    fs.mkdirSync(attachmentsDir, { recursive: true });
+  }
 }
 
 // Use memory storage for Firebase Storage uploads

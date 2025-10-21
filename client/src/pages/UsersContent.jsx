@@ -1,4 +1,4 @@
-import { 
+import {
   Add,
   CheckCircle,
   Delete,
@@ -27,15 +27,15 @@ import {
   List,
   ListItem,
   ListItemText,
-  Paper, 
+  Paper,
   Snackbar,
-  Tab, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
+  Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Tabs,
   TextField,
   Tooltip,
@@ -49,10 +49,10 @@ import ConfirmDialog from "../components/ConfirmDialog";
 import UserForm from "../components/UserForm";
 import { useAuth } from "../contexts/AuthContext";
 import { generateQRCode } from "../utils/qrService";
-import { 
+import {
   bulkImportParents,
-  createUser, 
-  deleteUserById, 
+  createUser,
+  deleteUserById,
   getAllUsers,
   subscribeToAllUsers,
   updateUser,
@@ -65,7 +65,7 @@ const UsersContent = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState([]);
-  
+
   // Dialog states
   const [userFormOpen, setUserFormOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -74,7 +74,7 @@ const UsersContent = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
   const [changingPasswordUser, setChangingPasswordUser] = useState(null);
-  
+
   // Notification states
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -125,6 +125,25 @@ const UsersContent = () => {
   useEffect(() => {
     const unsubscribe = subscribeToAllUsers((result) => {
       if (result.success) {
+        // Debug: Log real-time users to check for RFID data
+        console.log(
+          "[UsersContent] Real-time users count:",
+          result.data.length
+        );
+        const usersWithRFID = result.data.filter(
+          (user) => user.childRFID && user.childRFID.trim() !== ""
+        );
+        console.log(
+          "[UsersContent] Real-time users with RFID:",
+          usersWithRFID.length
+        );
+        if (usersWithRFID.length > 0) {
+          console.log(
+            "[UsersContent] Real-time first user with RFID:",
+            usersWithRFID[0]
+          );
+        }
+
         setUsers(result.data);
       } else {
         showSnackbar("Error loading users: " + result.error, "error");
@@ -139,9 +158,9 @@ const UsersContent = () => {
     if (searchTerm.trim()) {
       const filtered = users.filter(
         (user) =>
-        user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchTerm.toLowerCase())
+          user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchTerm.toLowerCase())
       );
       setFilteredUsers(filtered);
     } else {
@@ -154,6 +173,16 @@ const UsersContent = () => {
     try {
       const result = await getAllUsers();
       if (result.success) {
+        // Debug: Log loaded users to check for RFID data
+        console.log("[UsersContent] Loaded users count:", result.data.length);
+        const usersWithRFID = result.data.filter(
+          (user) => user.childRFID && user.childRFID.trim() !== ""
+        );
+        console.log("[UsersContent] Users with RFID:", usersWithRFID.length);
+        if (usersWithRFID.length > 0) {
+          console.log("[UsersContent] First user with RFID:", usersWithRFID[0]);
+        }
+
         setUsers(result.data);
       } else {
         showSnackbar("Error loading users: " + result.error, "error");
@@ -247,7 +276,7 @@ const UsersContent = () => {
 
   const handleConfirmDelete = async () => {
     if (!deletingUser) return;
-    
+
     setLoading(true);
     try {
       const result = await deleteUserById(deletingUser.uid);
@@ -348,8 +377,9 @@ const UsersContent = () => {
         const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
+
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        
+
         // Map the Excel columns to our data structure
         const mappedData = jsonData.map((row) => {
           const mappedRow = {
@@ -366,6 +396,15 @@ const UsersContent = () => {
             password: row["User's Password"] || row["password"] || "",
             confirmPassword:
               row["User's Confirm Password"] || row["confirmPassword"] || "",
+            childRFID: (
+              row["Child RFID"] ||
+              row["childRFID"] ||
+              row["ChildRFID"] ||
+              row["RFID"] ||
+              ""
+            )
+              .toString()
+              .trim(),
             childFirstName:
               row["Child's First Name"] || row["childFirstName"] || "",
             childMiddleName:
@@ -423,7 +462,7 @@ const UsersContent = () => {
               row["motherEducation"] ||
               "",
           };
-        
+
           return mappedRow;
         });
 
@@ -437,7 +476,7 @@ const UsersContent = () => {
       }
     };
     reader.readAsArrayBuffer(file);
-    
+
     // Reset the file input
     event.target.value = "";
   };
@@ -450,14 +489,52 @@ const UsersContent = () => {
 
     setImportLoading(true);
     try {
+      // Debug: summarize payload before sending to server
+      try {
+        const sample = importedData.slice(0, 3).map((p) => ({
+          firstName: p.firstName,
+          lastName: p.lastName,
+          email: p.email,
+          childRFID: p.childRFID,
+        }));
+        console.log("[Import] Submitting parents payload (sample):", sample);
+        console.log("[Import] Payload stats:", {
+          total: importedData.length,
+          withRFID: importedData.filter(
+            (p) => (p.childRFID || "").toString().trim() !== ""
+          ).length,
+        });
+      } catch (e) {
+        console.warn("[Import] Failed to generate payload debug summary:", e);
+      }
+
       const result = await bulkImportParents(importedData);
       if (result.success) {
+        // Debug: Log the import results to see if RFID is included
+        console.log("[Import] Import results:", result.data);
+        console.log(
+          "[Import] First successful import:",
+          result.data.successfulImports?.[0]
+        );
+        if (result.data.successfulImports?.[0]) {
+          console.log(
+            "[Import] First success RFID:",
+            result.data.successfulImports[0].childRFID
+          );
+        }
+
         setImportResults(result.data);
         setShowImportResults(true);
         showSnackbar(
           `Import completed: ${result.data.successCount} successful, ${result.data.failedCount} failed`,
           result.data.failedCount > 0 ? "warning" : "success"
         );
+
+        // Debug: Refresh users after import to see if RFID data is loaded
+        console.log("[Import] Refreshing users after import...");
+        setTimeout(() => {
+          loadUsers();
+        }, 1000);
       } else {
         showSnackbar("Error importing parents: " + result.error, "error");
       }
@@ -479,6 +556,7 @@ const UsersContent = () => {
         "User's Email": "juan.delacruz@email.com",
         "User's Phone": "09171234567",
         "User's Password": "Password123",
+        "Child RFID": "RFID123456",
         "Child's First Name": "Maria",
         "Child's Middle Name": "Santos",
         "Child's Last Name": "Dela Cruz",
@@ -515,15 +593,15 @@ const UsersContent = () => {
     const worksheet = XLSX.utils.json_to_sheet(templateData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Parent Import Template");
-    
+
     // Auto-size columns
     const maxWidth = 25;
     const cols = Object.keys(templateData[0]).map(() => ({ wch: maxWidth }));
     worksheet["!cols"] = cols;
-    
+
     // Generate filename
     const filename = "Parent_Import_Template.xlsx";
-    
+
     // Download file
     XLSX.writeFile(workbook, filename);
     showSnackbar(
@@ -547,7 +625,7 @@ const UsersContent = () => {
     }
 
     let exportData = [];
-    
+
     // Format data based on role
     if (role === "parent") {
       // Include all parent and child information
@@ -556,7 +634,7 @@ const UsersContent = () => {
         const parentName = [user.firstName, user.middleName, user.lastName]
           .filter(Boolean)
           .join(" ");
-        
+
         // Build full child name
         const childName = [
           user.childFirstName,
@@ -565,7 +643,7 @@ const UsersContent = () => {
         ]
           .filter(Boolean)
           .join(" ");
-        
+
         return {
           "Parent Name": parentName || "",
           "Child Name": childName || "",
@@ -577,6 +655,7 @@ const UsersContent = () => {
           "User's Phone": user.phone || "",
           "User's Password": user.password || "",
           Role: user.role || "",
+          "Child RFID": user.childRFID || "",
           "Child's First Name": user.childFirstName || "",
           "Child's Middle Name": user.childMiddleName || "",
           "Child's Last Name": user.childLastName || "",
@@ -621,6 +700,7 @@ const UsersContent = () => {
         Phone: user.phone || "",
         Password: user.password || "",
         Role: user.role || "",
+        RFID: user.childRFID || "",
         "Created At": user.createdAt || "",
         "Last Login": user.lastLogin || "",
       }));
@@ -630,18 +710,18 @@ const UsersContent = () => {
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, roleLabels[role]);
-    
+
     // Auto-size columns
     const maxWidth = 20;
     const cols = Object.keys(exportData[0] || {}).map(() => ({
       wch: maxWidth,
     }));
     worksheet["!cols"] = cols;
-    
+
     // Generate filename with date
     const dateStr = new Date().toISOString().split("T")[0];
     const filename = `${roleLabels[role]}_${dateStr}.xlsx`;
-    
+
     // Download file
     XLSX.writeFile(workbook, filename);
     showSnackbar(
@@ -658,10 +738,10 @@ const UsersContent = () => {
     const parentName = qrPreviewParent
       ? `${qrPreviewParent.firstName} ${qrPreviewParent.lastName}`
       : "";
-    
+
     // Ensure both QR codes are generated
     const qrCodes = await ensureParentQRCodes(qrPreviewParent);
-    
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -905,7 +985,7 @@ const UsersContent = () => {
             </Tooltip>
           </Box>
         </Box>
-        
+
         <Tabs
           value={userTab}
           onChange={(e, newValue) => setUserTab(newValue)}
@@ -917,8 +997,8 @@ const UsersContent = () => {
 
         {roles.map(
           (role, index) =>
-          userTab === index && (
-            <Box key={role}>
+            userTab === index && (
+              <Box key={role}>
                 <Box
                   sx={{
                     display: "flex",
@@ -933,20 +1013,20 @@ const UsersContent = () => {
                       fontWeight: 600,
                       color: "hsl(152, 65%, 28%)",
                     }}>
-                  {roleLabels[role]} ({getCurrentUsers().length})
-                </Typography>
-                {/* Show Add button for non-teachers or for teachers when managing parents */}
+                    {roleLabels[role]} ({getCurrentUsers().length})
+                  </Typography>
+                  {/* Show Add button for non-teachers or for teachers when managing parents */}
                   {(!userProfile ||
                     userProfile.role !== "teacher" ||
                     role === "parent") && (
                     <Box sx={{ display: "flex", gap: 2 }}>
-                    {/* Show Download button for all tabs */}
-                    <Button 
-                      variant="outlined" 
-                      startIcon={<Download />} 
-                      onClick={() => handleDownloadUsers(role)}
-                      disabled={getCurrentUsers().length === 0}
-                      sx={{ 
+                      {/* Show Download button for all tabs */}
+                      <Button
+                        variant="outlined"
+                        startIcon={<Download />}
+                        onClick={() => handleDownloadUsers(role)}
+                        disabled={getCurrentUsers().length === 0}
+                        sx={{
                           borderColor: "hsl(152, 65%, 28%)",
                           color: "hsl(152, 65%, 28%)",
                           "&:hover": {
@@ -954,16 +1034,16 @@ const UsersContent = () => {
                             backgroundColor: "rgba(21, 101, 192, 0.04)",
                           },
                         }}>
-                      Download Excel
-                    </Button>
-                    {/* Show Import and Template buttons only for parents tab */}
+                        Download Excel
+                      </Button>
+                      {/* Show Import and Template buttons only for parents tab */}
                       {role === "parent" && (
-                      <>
-                        <Button 
-                          variant="outlined" 
-                          startIcon={<Download />} 
-                          onClick={handleDownloadTemplate}
-                          sx={{ 
+                        <>
+                          <Button
+                            variant="outlined"
+                            startIcon={<Download />}
+                            onClick={handleDownloadTemplate}
+                            sx={{
                               borderColor: "hsl(152, 65%, 28%)",
                               color: "hsl(152, 65%, 28%)",
                               "&:hover": {
@@ -971,13 +1051,13 @@ const UsersContent = () => {
                                 backgroundColor: "rgba(21, 101, 192, 0.04)",
                               },
                             }}>
-                          Download Template
-                        </Button>
-                        <Button 
-                          variant="outlined" 
-                          startIcon={<Upload />} 
-                          onClick={handleImportClick}
-                          sx={{ 
+                            Download Template
+                          </Button>
+                          <Button
+                            variant="outlined"
+                            startIcon={<Upload />}
+                            onClick={handleImportClick}
+                            sx={{
                               borderColor: "hsl(152, 65%, 28%)",
                               color: "hsl(152, 65%, 28%)",
                               "&:hover": {
@@ -985,33 +1065,33 @@ const UsersContent = () => {
                                 backgroundColor: "rgba(21, 101, 192, 0.04)",
                               },
                             }}>
-                          Import Excel
-                        </Button>
-                      </>
-                    )}
-                    <Button 
-                      variant="contained" 
-                      startIcon={<Add />} 
-                      onClick={handleAddUser}
+                            Import Excel
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={handleAddUser}
                         sx={{
                           background:
                             "linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))",
                         }}>
-                      Add {roleLabels[role].slice(0, -1)}
-                    </Button>
-                  </Box>
-                )}
-              </Box>
-              
-              {loading ? (
-                  <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-                  <CircularProgress />
+                        Add {roleLabels[role].slice(0, -1)}
+                      </Button>
+                    </Box>
+                  )}
                 </Box>
-              ) : (
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
+
+                {loading ? (
+                  <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+                    <CircularProgress />
+                  </Box>
+                ) : (
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
                           <TableCell
                             sx={{
                               fontFamily: "Plus Jakarta Sans, sans-serif",
@@ -1069,11 +1149,11 @@ const UsersContent = () => {
                             align="center">
                             Actions
                           </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {getCurrentUsers().length === 0 ? (
-                        <TableRow>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {getCurrentUsers().length === 0 ? (
+                          <TableRow>
                             <TableCell
                               colSpan={
                                 (userProfile && userProfile.role === "admin") ||
@@ -1095,142 +1175,157 @@ const UsersContent = () => {
                                 sx={{
                                   fontFamily: "Plus Jakarta Sans, sans-serif",
                                 }}>
-                              No {roleLabels[role].toLowerCase()} found
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        getCurrentUsers().map((user) => (
-                          <TableRow key={user.uid}>
-                              <TableCell
-                                sx={{
-                                  fontFamily: "Plus Jakarta Sans, sans-serif",
-                                }}>
-                                {user.firstName} {user.lastName}
-                                {user.suffix ? ` ${user.suffix}` : ""}
+                                No {roleLabels[role].toLowerCase()} found
+                              </Typography>
                             </TableCell>
-                              <TableCell
-                                sx={{
-                                  fontFamily: "Plus Jakarta Sans, sans-serif",
-                                }}>
-                                {user.email}
-                              </TableCell>
-                              <TableCell
-                                sx={{
-                                  fontFamily: "Plus Jakarta Sans, sans-serif",
-                                }}>
-                                {user.phone || "-"}
-                              </TableCell>
-                            {/* Show Password cell only for admin users */}
-                              {((userProfile && userProfile.role === "admin") ||
-                                (userProfile &&
-                                  userProfile.role === "teacher")) && (
+                          </TableRow>
+                        ) : (
+                          getCurrentUsers().map((user) => {
+                            // Debug: Log each user being rendered
+                            if (user.role === "parent") {
+                              console.log("[UsersContent] Rendering parent:", {
+                                name: `${user.firstName} ${user.lastName}`,
+                                email: user.email,
+                                childRFID: user.childRFID,
+                                hasChildRFID: "childRFID" in user,
+                                userKeys: Object.keys(user),
+                              });
+                            }
+
+                            return (
+                              <TableRow key={user.uid}>
                                 <TableCell
                                   sx={{
                                     fontFamily: "Plus Jakarta Sans, sans-serif",
                                   }}>
-                                <Typography 
-                                  variant="body2" 
-                                  sx={{ 
-                                      fontFamily:
-                                        "Plus Jakarta Sans, sans-serif",
-                                      color: "#ff6f00",
-                                    fontWeight: 600,
-                                      letterSpacing: "0.5px",
-                                      fontSize: "0.9rem",
-                                    }}>
-                                    {user.password || "••••••••"}
-                                </Typography>
-                              </TableCell>
-                            )}
-                            <TableCell>
-                              <Chip 
-                                  label={
-                                    user.role.charAt(0).toUpperCase() +
-                                    user.role.slice(1)
-                                  }
-                                color="primary"
-                                size="small"
-                              />
-                            </TableCell>
-                              {roles[userTab] === "parent" && (
-                              <TableCell align="center">
-                                  <Typography
-                                    variant="body2"
+                                  {user.firstName} {user.lastName}
+                                  {user.suffix ? ` ${user.suffix}` : ""}
+                                </TableCell>
+                                <TableCell
+                                  sx={{
+                                    fontFamily: "Plus Jakarta Sans, sans-serif",
+                                  }}>
+                                  {user.email}
+                                </TableCell>
+                                <TableCell
+                                  sx={{
+                                    fontFamily: "Plus Jakarta Sans, sans-serif",
+                                  }}>
+                                  {user.phone || "-"}
+                                </TableCell>
+                                {/* Show Password cell only for admin users */}
+                                {((userProfile &&
+                                  userProfile.role === "admin") ||
+                                  (userProfile &&
+                                    userProfile.role === "teacher")) && (
+                                  <TableCell
                                     sx={{
                                       fontFamily:
                                         "Plus Jakarta Sans, sans-serif",
-                                      fontWeight: 600,
                                     }}>
-                                    {user.childRFID || "-"}
-                                  </Typography>
-                              </TableCell>
-                            )}
-                            <TableCell>
-                              {/* Chat button - teachers can message parents, parents can message teachers */}
-                                {userProfile &&
-                                  ((userProfile.role === "teacher" &&
-                                    user.role === "parent") ||
-                                    (userProfile.role === "parent" &&
-                                      user.role === "teacher")) && (
-                                <ChatIconButton 
-                                  targetUser={{
-                                    id: user.uid,
-                                    name: `${user.firstName} ${user.lastName}`,
-                                        role: user.role,
-                                  }}
-                                />
-                              )}
-                              {/* Show edit button for all users that teachers can manage, but only show delete for non-teachers */}
-                                {(!userProfile ||
-                                  userProfile.role !== "teacher" ||
-                                  user.role === "parent") && (
-                                <Tooltip title="Edit">
-                                  <IconButton 
-                                    size="small" 
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontFamily:
+                                          "Plus Jakarta Sans, sans-serif",
+                                        color: "#ff6f00",
+                                        fontWeight: 600,
+                                        letterSpacing: "0.5px",
+                                        fontSize: "0.9rem",
+                                      }}>
+                                      {user.password || "••••••••"}
+                                    </Typography>
+                                  </TableCell>
+                                )}
+                                <TableCell>
+                                  <Chip
+                                    label={
+                                      user.role.charAt(0).toUpperCase() +
+                                      user.role.slice(1)
+                                    }
                                     color="primary"
-                                      onClick={() => handleEditUser(user)}>
-                                    <Edit />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              {/* Change Password button - for admins and teachers managing their users */}
-                                {(!userProfile ||
-                                  userProfile.role !== "teacher" ||
-                                  user.role === "parent") && (
-                                <Tooltip title="Change Password">
-                                  <IconButton 
-                                    size="small" 
-                                    color="secondary"
-                                      onClick={() =>
-                                        handleChangePassword(user)
-                                      }>
-                                    <VpnKey />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              {/* Only show delete button for non-teachers */}
-                                {(!userProfile ||
-                                  userProfile.role !== "teacher") && (
-                                <Tooltip title="Delete">
-                                  <IconButton 
-                                    size="small" 
-                                    color="error"
-                                      onClick={() => handleDeleteUser(user)}>
-                                    <Delete />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </Box>
-          )
+                                    size="small"
+                                  />
+                                </TableCell>
+                                {roles[userTab] === "parent" && (
+                                  <TableCell align="center">
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontFamily:
+                                          "Plus Jakarta Sans, sans-serif",
+                                        fontWeight: 600,
+                                      }}>
+                                      {user.childRFID || "-"}
+                                    </Typography>
+                                  </TableCell>
+                                )}
+                                <TableCell>
+                                  {/* Chat button - teachers can message parents, parents can message teachers */}
+                                  {userProfile &&
+                                    ((userProfile.role === "teacher" &&
+                                      user.role === "parent") ||
+                                      (userProfile.role === "parent" &&
+                                        user.role === "teacher")) && (
+                                      <ChatIconButton
+                                        targetUser={{
+                                          id: user.uid,
+                                          name: `${user.firstName} ${user.lastName}`,
+                                          role: user.role,
+                                        }}
+                                      />
+                                    )}
+                                  {/* Show edit button for all users that teachers can manage, but only show delete for non-teachers */}
+                                  {(!userProfile ||
+                                    userProfile.role !== "teacher" ||
+                                    user.role === "parent") && (
+                                    <Tooltip title="Edit">
+                                      <IconButton
+                                        size="small"
+                                        color="primary"
+                                        onClick={() => handleEditUser(user)}>
+                                        <Edit />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )}
+                                  {/* Change Password button - for admins and teachers managing their users */}
+                                  {(!userProfile ||
+                                    userProfile.role !== "teacher" ||
+                                    user.role === "parent") && (
+                                    <Tooltip title="Change Password">
+                                      <IconButton
+                                        size="small"
+                                        color="secondary"
+                                        onClick={() =>
+                                          handleChangePassword(user)
+                                        }>
+                                        <VpnKey />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )}
+                                  {/* Only show delete button for non-teachers */}
+                                  {(!userProfile ||
+                                    userProfile.role !== "teacher") && (
+                                    <Tooltip title="Delete">
+                                      <IconButton
+                                        size="small"
+                                        color="error"
+                                        onClick={() => handleDeleteUser(user)}>
+                                        <Delete />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </Box>
+            )
         )}
       </Paper>
 
@@ -1271,8 +1366,8 @@ const UsersContent = () => {
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert 
-          onClose={handleCloseSnackbar} 
+        <Alert
+          onClose={handleCloseSnackbar}
           severity={snackbar.severity}
           sx={{ width: "100%" }}>
           {snackbar.message}
@@ -1324,11 +1419,11 @@ const UsersContent = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ justifyContent: "space-between", px: 3, pb: 2 }}>
-          <Button 
-            onClick={handlePrintQR} 
-            variant="outlined" 
+          <Button
+            onClick={handlePrintQR}
+            variant="outlined"
             startIcon={<Print />}
-            sx={{ 
+            sx={{
               borderColor: qrPreviewType === "timeIn" ? "#4caf50" : "#ff9800",
               color: qrPreviewType === "timeIn" ? "#4caf50" : "#ff9800",
               "&:hover": {
@@ -1440,6 +1535,9 @@ const UsersContent = () => {
                             <strong>Password</strong>
                           </TableCell>
                           <TableCell>
+                            <strong>Child RFID</strong>
+                          </TableCell>
+                          <TableCell>
                             <strong>Child Name</strong>
                           </TableCell>
                         </TableRow>
@@ -1462,13 +1560,14 @@ const UsersContent = () => {
                             ]
                               .filter(Boolean)
                               .join(" ") || "-";
-                          
+
                           return (
                             <TableRow key={index}>
                               <TableCell>{parentName}</TableCell>
                               <TableCell>{parent.email || "-"}</TableCell>
                               <TableCell>{parent.phone || "-"}</TableCell>
                               <TableCell>{parent.password || "-"}</TableCell>
+                              <TableCell>{parent.childRFID || "-"}</TableCell>
                               <TableCell>{childName}</TableCell>
                             </TableRow>
                           );
@@ -1527,7 +1626,7 @@ const UsersContent = () => {
                       ]
                         .filter(Boolean)
                         .join(" ");
-                      
+
                       return (
                         <React.Fragment key={index}>
                           <ListItem>
@@ -1547,6 +1646,19 @@ const UsersContent = () => {
                                         color: "text.secondary",
                                       }}>
                                       Child: {childName}
+                                    </Typography>
+                                  )}
+                                  {parent.childRFID && (
+                                    <Typography
+                                      component="span"
+                                      variant="body2"
+                                      sx={{
+                                        display: "block",
+                                        fontFamily:
+                                          "Plus Jakarta Sans, sans-serif",
+                                        color: "text.secondary",
+                                      }}>
+                                      RFID: {parent.childRFID}
                                     </Typography>
                                   )}
                                   <Typography
@@ -1622,7 +1734,7 @@ const UsersContent = () => {
                       ]
                         .filter(Boolean)
                         .join(" ");
-                      
+
                       return (
                         <React.Fragment key={index}>
                           <ListItem>

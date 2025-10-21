@@ -333,6 +333,29 @@ export const bulkImportParents = async (parents) => {
 
     const token = await user.getIdToken();
 
+    // Debug: client-side payload checks before API call
+    try {
+      console.log(
+        "[Import][Client] Parents payload size:",
+        parents?.length || 0
+      );
+      const rfidCounts = {
+        withRFID: (parents || []).filter(
+          (p) => (p?.childRFID || "").toString().trim() !== ""
+        ).length,
+        withoutRFID: (parents || []).filter(
+          (p) => !p?.childRFID || p.childRFID.toString().trim() === ""
+        ).length,
+      };
+      console.log("[Import][Client] RFID stats:", rfidCounts);
+      console.log(
+        "[Import][Client] First two parents:",
+        (parents || []).slice(0, 2)
+      );
+    } catch (e) {
+      console.warn("[Import][Client] Failed to log payload summary:", e);
+    }
+
     const response = await fetch(`${API_BASE_URL}/users/bulk-import`, {
       method: "POST",
       headers: {
@@ -343,6 +366,35 @@ export const bulkImportParents = async (parents) => {
     });
 
     const result = await response.json();
+
+    // Debug: log server response for troubleshooting
+    console.log("[Import][Client] Server response status:", response.status);
+    try {
+      console.log("[Import][Client] Full server response:", result);
+      console.log("[Import][Client] Server response data (sample):", {
+        successCount: result?.data?.successCount,
+        failedCount: result?.data?.failedCount,
+        firstSuccess: result?.data?.successfulImports?.[0],
+      });
+      // Debug: Check if RFID is in the success response
+      const firstSuccess = result?.data?.successfulImports?.[0];
+      if (firstSuccess) {
+        console.log(
+          "[Import][Client] First success RFID:",
+          firstSuccess.childRFID
+        );
+        console.log(
+          "[Import][Client] First success keys:",
+          Object.keys(firstSuccess)
+        );
+        console.log(
+          "[Import][Client] First success full object:",
+          firstSuccess
+        );
+      }
+    } catch (e) {
+      console.error("[Import][Client] Debug logging error:", e);
+    }
 
     if (!response.ok) {
       throw new Error(result.error || "Failed to import parents");
@@ -391,6 +443,42 @@ export const uploadProfilePicture = async (uid, file) => {
     return { success: true, data: result.data };
   } catch (error) {
     console.error("Upload profile picture error:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+};
+
+// Delete profile picture for a user
+export const deleteProfilePicture = async (uid) => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error("Not authenticated");
+    }
+
+    const token = await user.getIdToken();
+
+    const response = await fetch(
+      `${API_BASE_URL}/files/profile-picture/${uid}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to delete profile picture");
+    }
+
+    return { success: true, data: result.data };
+  } catch (error) {
+    console.error("Delete profile picture error:", error);
     return {
       success: false,
       error: error.message,

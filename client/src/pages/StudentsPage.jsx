@@ -2,6 +2,7 @@ import {
   CalendarToday,
   CameraAlt,
   Close,
+  Delete,
   Email,
   People,
   Person,
@@ -17,7 +18,9 @@ import {
   Button,
   CircularProgress,
   Dialog,
+  DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   Divider,
   Grid,
@@ -36,7 +39,10 @@ import React, { useEffect, useState } from "react";
 import { API_BASE_URL } from "../config/api";
 import { useAuth } from "../contexts/AuthContext";
 import { generateQRCode } from "../utils/qrService";
-import { uploadProfilePicture } from "../utils/userService";
+import {
+  deleteProfilePicture,
+  uploadProfilePicture,
+} from "../utils/userService";
 
 const StudentsPage = () => {
   const { userProfile } = useAuth();
@@ -47,16 +53,22 @@ const StudentsPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [attendanceData, setAttendanceData] = useState({});
-  
+
   // QR Code states
   const [parentQrCache, setParentQrCache] = useState({});
   const [qrPreviewOpen, setQrPreviewOpen] = useState(false);
   const [qrPreviewSrc, setQrPreviewSrc] = useState("");
   const [qrPreviewType, setQrPreviewType] = useState("timeIn");
   const [qrPreviewParent, setQrPreviewParent] = useState(null);
-  
+
   // Profile picture upload states
   const [uploadingPicture, setUploadingPicture] = useState(false);
+  const [deletingPicture, setDeletingPicture] = useState(false);
+
+  // Confirmation modal states
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     if (
@@ -79,7 +91,7 @@ const StudentsPage = () => {
 
       const auth = (await import("firebase/auth")).getAuth();
       const currentUser = auth.currentUser;
-      
+
       if (!currentUser) {
         setError("User not authenticated");
         setLoading(false);
@@ -87,7 +99,7 @@ const StudentsPage = () => {
       }
 
       const token = await currentUser.getIdToken();
-      
+
       // Fetch all users with parent role from users collection (parents are the students)
       const response = await fetch(`${API_BASE_URL}/users/role/parent`, {
         headers: {
@@ -122,7 +134,7 @@ const StudentsPage = () => {
         const response = await fetch(
           `${API_BASE_URL}/attendance/student/${student.uid}`,
           {
-          headers: {
+            headers: {
               Authorization: `Bearer ${token}`,
             },
           }
@@ -138,7 +150,7 @@ const StudentsPage = () => {
             totalDays > 0
               ? ((presentDays / totalDays) * 100).toFixed(1)
               : "0.0";
-          
+
           attendanceMap[student.uid] = {
             totalDays,
             presentDays,
@@ -226,13 +238,17 @@ const StudentsPage = () => {
       "image/webp",
     ];
     if (!allowedTypes.includes(file.type)) {
-      alert("Please select a valid image file (JPEG, PNG, GIF, WEBP)");
+      setSuccessMessage(
+        "Please select a valid image file (JPEG, PNG, GIF, WEBP)"
+      );
+      setSuccessModalOpen(true);
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+      setSuccessMessage("File size must be less than 5MB");
+      setSuccessModalOpen(true);
       return;
     }
 
@@ -245,26 +261,75 @@ const StudentsPage = () => {
           ...prev,
           photoURL: result.data.photoURL,
         }));
-        
+
         // Update the student in the list
         setStudents((prev) =>
           prev.map((s) =>
-          s.uid === selectedStudent.uid 
-            ? { ...s, photoURL: result.data.photoURL }
-            : s
+            s.uid === selectedStudent.uid
+              ? { ...s, photoURL: result.data.photoURL }
+              : s
           )
         );
-        
-        alert("Profile picture uploaded successfully!");
+
+        setSuccessMessage("Profile picture uploaded successfully!");
+        setSuccessModalOpen(true);
       } else {
-        alert("Failed to upload profile picture: " + result.error);
+        setSuccessMessage("Failed to upload profile picture: " + result.error);
+        setSuccessModalOpen(true);
       }
     } catch (error) {
-      alert("Error uploading profile picture: " + error.message);
+      setSuccessMessage("Error uploading profile picture: " + error.message);
+      setSuccessModalOpen(true);
     } finally {
       setUploadingPicture(false);
       // Reset file input
       event.target.value = "";
+    }
+  };
+
+  // Profile picture delete handler
+  const handleProfilePictureDelete = async () => {
+    if (!selectedStudent || !selectedStudent.photoURL) {
+      setSuccessMessage("No profile picture to delete");
+      setSuccessModalOpen(true);
+      return;
+    }
+
+    // Open confirmation modal
+    setDeleteConfirmOpen(true);
+  };
+
+  // Confirm delete profile picture
+  const confirmDeleteProfilePicture = async () => {
+    setDeleteConfirmOpen(false);
+    setDeletingPicture(true);
+    try {
+      const result = await deleteProfilePicture(selectedStudent.uid);
+      if (result.success) {
+        // Update the selected student's photo URL to null
+        setSelectedStudent((prev) => ({
+          ...prev,
+          photoURL: null,
+        }));
+
+        // Update the student in the list
+        setStudents((prev) =>
+          prev.map((s) =>
+            s.uid === selectedStudent.uid ? { ...s, photoURL: null } : s
+          )
+        );
+
+        setSuccessMessage("Profile picture deleted successfully!");
+        setSuccessModalOpen(true);
+      } else {
+        setSuccessMessage("Failed to delete profile picture: " + result.error);
+        setSuccessModalOpen(true);
+      }
+    } catch (error) {
+      setSuccessMessage("Error deleting profile picture: " + error.message);
+      setSuccessModalOpen(true);
+    } finally {
+      setDeletingPicture(false);
     }
   };
 
@@ -285,10 +350,10 @@ const StudentsPage = () => {
           .filter(Boolean)
           .join(" ")
       : "";
-    
+
     // Ensure both QR codes are generated
     const qrCodes = await ensureParentQRCodes(qrPreviewParent);
-    
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -451,10 +516,10 @@ const StudentsPage = () => {
   return (
     <Box>
       {/* Header */}
-      <Paper 
-        sx={{ 
-          p: 3, 
-          mb: 4, 
+      <Paper
+        sx={{
+          p: 3,
+          mb: 4,
           background: "linear-gradient(135deg, #001f3f 0%, #003366 100%)",
           color: "white",
           borderRadius: 2,
@@ -462,9 +527,9 @@ const StudentsPage = () => {
         }}>
         <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
           <People sx={{ fontSize: 40, mr: 2, color: "white" }} />
-          <Typography 
-            variant="h4" 
-            sx={{ 
+          <Typography
+            variant="h4"
+            sx={{
               fontFamily: "Plus Jakarta Sans, sans-serif",
               fontWeight: 700,
               color: "white",
@@ -473,9 +538,9 @@ const StudentsPage = () => {
             Students Overview
           </Typography>
         </Box>
-        <Typography 
-          variant="body1" 
-          sx={{ 
+        <Typography
+          variant="body1"
+          sx={{
             opacity: 0.95,
             fontSize: "1.1rem",
             color: "white",
@@ -578,10 +643,10 @@ const StudentsPage = () => {
                       student.lastName || ""
                     }`.trim();
                   return (
-                    <TableRow 
-                      key={student.uid} 
+                    <TableRow
+                      key={student.uid}
                       hover
-                      sx={{ 
+                      sx={{
                         "&:hover": {
                           backgroundColor: "rgba(31, 120, 80, 0.05)",
                         },
@@ -593,9 +658,9 @@ const StudentsPage = () => {
                             alignItems: "center",
                             gap: 2,
                           }}>
-                          <Avatar 
+                          <Avatar
                             src={student.photoURL || ""}
-                            sx={{ 
+                            sx={{
                               background: student.photoURL
                                 ? "transparent"
                                 : "linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))",
@@ -640,7 +705,7 @@ const StudentsPage = () => {
                       <TableCell>
                         <Typography
                           variant="body2"
-                              sx={{ 
+                          sx={{
                             fontFamily: "Plus Jakarta Sans, sans-serif",
                             fontWeight: 600,
                           }}>
@@ -648,9 +713,9 @@ const StudentsPage = () => {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Tooltip title="View Profile">
-                          <IconButton 
-                            size="small" 
+                        <Tooltip title="Edit Profile">
+                          <IconButton
+                            size="small"
                             color="primary"
                             onClick={() => handleViewProfile(student)}>
                             <Visibility />
@@ -688,9 +753,9 @@ const StudentsPage = () => {
           }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Box sx={{ position: "relative" }}>
-              <Avatar 
+              <Avatar
                 src={selectedStudent?.photoURL || ""}
-                sx={{ 
+                sx={{
                   width: 50,
                   height: 50,
                   background: selectedStudent?.photoURL
@@ -713,19 +778,15 @@ const StudentsPage = () => {
                     return (childName || selectedStudent?.firstName || "S")
                       .charAt(0)
                       .toUpperCase();
-                })()}
+                  })()}
               </Avatar>
-              <input
-                accept="image/*"
-                style={{ display: "none" }}
-                id="profile-picture-upload"
-                type="file"
-                onChange={handleProfilePictureUpload}
-              />
-              <label htmlFor="profile-picture-upload">
+
+              {/* Profile Picture Action Button */}
+              {selectedStudent?.photoURL ? (
+                // Delete button - shown when profile picture exists
                 <IconButton
-                  component="span"
-                  disabled={uploadingPicture}
+                  onClick={handleProfilePictureDelete}
+                  disabled={deletingPicture || uploadingPicture}
                   sx={{
                     position: "absolute",
                     bottom: -4,
@@ -734,22 +795,55 @@ const StudentsPage = () => {
                     width: 24,
                     height: 24,
                     "&:hover": {
-                      backgroundColor: "#f5f5f5",
+                      backgroundColor: "#ffebee",
                     },
                   }}>
-                  {uploadingPicture ? (
+                  {deletingPicture ? (
                     <CircularProgress size={14} />
                   ) : (
-                    <CameraAlt
-                      sx={{ fontSize: 14, color: "hsl(152, 65%, 28%)" }}
-                    />
+                    <Delete sx={{ fontSize: 14, color: "#f44336" }} />
                   )}
                 </IconButton>
-              </label>
+              ) : (
+                // Upload button - shown when no profile picture
+                <>
+                  <input
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    id="profile-picture-upload"
+                    type="file"
+                    onChange={handleProfilePictureUpload}
+                  />
+                  <label htmlFor="profile-picture-upload">
+                    <IconButton
+                      component="span"
+                      disabled={uploadingPicture || deletingPicture}
+                      sx={{
+                        position: "absolute",
+                        bottom: -4,
+                        right: -4,
+                        backgroundColor: "white",
+                        width: 24,
+                        height: 24,
+                        "&:hover": {
+                          backgroundColor: "#f5f5f5",
+                        },
+                      }}>
+                      {uploadingPicture ? (
+                        <CircularProgress size={14} />
+                      ) : (
+                        <CameraAlt
+                          sx={{ fontSize: 14, color: "hsl(152, 65%, 28%)" }}
+                        />
+                      )}
+                    </IconButton>
+                  </label>
+                </>
+              )}
             </Box>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 600, color: "white" }}>
-                Student Profile
+                Edit Student Profile
               </Typography>
               <Typography variant="body2" sx={{ opacity: 0.9, color: "white" }}>
                 {(() => {
@@ -781,7 +875,7 @@ const StudentsPage = () => {
             <Close />
           </IconButton>
         </DialogTitle>
-        
+
         <DialogContent sx={{ p: 3, mt: 2 }}>
           {profileLoading ? (
             <Box
@@ -795,24 +889,24 @@ const StudentsPage = () => {
             </Box>
           ) : (
             selectedStudent && (
-            <Box>
-              {/* Basic Information */}
+              <Box>
+                {/* Basic Information */}
                 <Typography
                   variant="h6"
                   sx={{
-                fontWeight: 600, 
+                    fontWeight: 600,
                     color: "hsl(152, 65%, 28%)",
-                mb: 2,
+                    mb: 2,
                     display: "flex",
                     alignItems: "center",
                     gap: 1,
-              }}>
-                <Person /> Basic Information
-              </Typography>
-              
-              <Grid container spacing={3} sx={{ mb: 3 }}>
-                {/* Child Information */}
-                {(() => {
+                  }}>
+                  <Person /> Basic Information
+                </Typography>
+
+                <Grid container spacing={3} sx={{ mb: 3 }}>
+                  {/* Child Information */}
+                  {(() => {
                     const childName = selectedStudent
                       ? [
                           selectedStudent.childFirstName,
@@ -824,7 +918,7 @@ const StudentsPage = () => {
                       : "";
                     return (
                       childName && (
-                    <Grid item xs={12} sm={6}>
+                        <Grid item xs={12} sm={6}>
                           <Box
                             sx={{
                               display: "flex",
@@ -833,24 +927,24 @@ const StudentsPage = () => {
                               mb: 2,
                             }}>
                             <Person sx={{ color: "hsl(152, 65%, 28%)" }} />
-                        <Box>
+                            <Box>
                               <Typography
                                 variant="caption"
                                 color="text.secondary">
-                            Child Name
-                          </Typography>
-                          <Typography variant="body1" fontWeight={500}>
-                            {childName}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
+                                Child Name
+                              </Typography>
+                              <Typography variant="body1" fontWeight={500}>
+                                {childName}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Grid>
                       )
-                  );
-                })()}
+                    );
+                  })()}
 
-                {selectedStudent.childSex && (
-                  <Grid item xs={12} sm={6}>
+                  {selectedStudent.childSex && (
+                    <Grid item xs={12} sm={6}>
                       <Box
                         sx={{
                           display: "flex",
@@ -859,22 +953,22 @@ const StudentsPage = () => {
                           mb: 2,
                         }}>
                         <Person sx={{ color: "hsl(152, 65%, 28%)" }} />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Gender
-                        </Typography>
-                        <Typography variant="body1" fontWeight={500}>
-                          {selectedStudent.childSex}
-                        </Typography>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Gender
+                          </Typography>
+                          <Typography variant="body1" fontWeight={500}>
+                            {selectedStudent.childSex}
+                          </Typography>
+                        </Box>
                       </Box>
-                    </Box>
-                  </Grid>
-                )}
+                    </Grid>
+                  )}
 
                   {(selectedStudent.childBirthMonth ||
                     selectedStudent.childBirthDay ||
                     selectedStudent.childBirthYear) && (
-                  <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={6}>
                       <Box
                         sx={{
                           display: "flex",
@@ -883,12 +977,12 @@ const StudentsPage = () => {
                           mb: 2,
                         }}>
                         <CalendarToday sx={{ color: "hsl(152, 65%, 28%)" }} />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Date of Birth
-                        </Typography>
-                        <Typography variant="body1" fontWeight={500}>
-                          {(() => {
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Date of Birth
+                          </Typography>
+                          <Typography variant="body1" fontWeight={500}>
+                            {(() => {
                               const months = [
                                 "January",
                                 "February",
@@ -903,10 +997,10 @@ const StudentsPage = () => {
                                 "November",
                                 "December",
                               ];
-                            const monthName = selectedStudent.childBirthMonth 
+                              const monthName = selectedStudent.childBirthMonth
                                 ? typeof selectedStudent.childBirthMonth ===
                                   "number"
-                                  ? months[selectedStudent.childBirthMonth - 1] 
+                                  ? months[selectedStudent.childBirthMonth - 1]
                                   : selectedStudent.childBirthMonth
                                 : "";
                               return `${monthName} ${
@@ -914,15 +1008,15 @@ const StudentsPage = () => {
                               }, ${selectedStudent.childBirthYear || ""}`
                                 .trim()
                                 .replace(/,\s*$/, "");
-                          })()}
-                        </Typography>
+                            })()}
+                          </Typography>
+                        </Box>
                       </Box>
-                    </Box>
-                  </Grid>
-                )}
+                    </Grid>
+                  )}
 
-                {/* Parent Information */}
-                <Grid item xs={12} sm={6}>
+                  {/* Parent Information */}
+                  <Grid item xs={12} sm={6}>
                     <Box
                       sx={{
                         display: "flex",
@@ -931,20 +1025,20 @@ const StudentsPage = () => {
                         mb: 2,
                       }}>
                       <Person sx={{ color: "hsl(152, 65%, 28%)" }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Parent Name
-                      </Typography>
-                      <Typography variant="body1" fontWeight={500}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Parent Name
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500}>
                           {`${selectedStudent.firstName || ""} ${
                             selectedStudent.lastName || ""
                           }`.trim() || "N/A"}
-                      </Typography>
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                </Grid>
+                  </Grid>
 
-                <Grid item xs={12} sm={6}>
+                  <Grid item xs={12} sm={6}>
                     <Box
                       sx={{
                         display: "flex",
@@ -953,18 +1047,18 @@ const StudentsPage = () => {
                         mb: 2,
                       }}>
                       <Email sx={{ color: "hsl(152, 65%, 28%)" }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Email Address
-                      </Typography>
-                      <Typography variant="body1" fontWeight={500}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Email Address
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500}>
                           {selectedStudent.email || "N/A"}
-                      </Typography>
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                </Grid>
+                  </Grid>
 
-                <Grid item xs={12} sm={6}>
+                  <Grid item xs={12} sm={6}>
                     <Box
                       sx={{
                         display: "flex",
@@ -973,19 +1067,19 @@ const StudentsPage = () => {
                         mb: 2,
                       }}>
                       <Phone sx={{ color: "hsl(152, 65%, 28%)" }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Phone Number
-                      </Typography>
-                      <Typography variant="body1" fontWeight={500}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">
+                          Phone Number
+                        </Typography>
+                        <Typography variant="body1" fontWeight={500}>
                           {selectedStudent.phone || "N/A"}
-                      </Typography>
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                </Grid>
+                  </Grid>
 
-                {selectedStudent.address && (
-                  <Grid item xs={12}>
+                  {selectedStudent.address && (
+                    <Grid item xs={12}>
                       <Box
                         sx={{
                           display: "flex",
@@ -994,12 +1088,12 @@ const StudentsPage = () => {
                           mb: 2,
                         }}>
                         <School sx={{ color: "hsl(152, 65%, 28%)", mt: 0.5 }} />
-                      <Box>
-                        <Typography variant="caption" color="text.secondary">
-                          Address
-                        </Typography>
-                        <Typography variant="body1" fontWeight={500}>
-                          {selectedStudent.address}
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Address
+                          </Typography>
+                          <Typography variant="body1" fontWeight={500}>
+                            {selectedStudent.address}
                             {selectedStudent.barangay &&
                               `, ${selectedStudent.barangay}`}
                             {selectedStudent.municipality &&
@@ -1008,32 +1102,32 @@ const StudentsPage = () => {
                               `, ${selectedStudent.province}`}
                             {selectedStudent.region &&
                               `, ${selectedStudent.region}`}
-                        </Typography>
+                          </Typography>
+                        </Box>
                       </Box>
-                    </Box>
-                  </Grid>
-                )}
-              </Grid>
+                    </Grid>
+                  )}
+                </Grid>
 
-              {/* Attendance Summary */}
-              {attendanceData[selectedStudent.uid] && (
-                <>
-                  <Divider sx={{ my: 3 }} />
-                  <Box>
+                {/* Attendance Summary */}
+                {attendanceData[selectedStudent.uid] && (
+                  <>
+                    <Divider sx={{ my: 3 }} />
+                    <Box>
                       <Typography
                         variant="h6"
                         sx={{
-                      fontWeight: 600, 
+                          fontWeight: 600,
                           color: "hsl(152, 65%, 28%)",
-                      mb: 2,
+                          mb: 2,
                           display: "flex",
                           alignItems: "center",
                           gap: 1,
-                    }}>
-                      <CalendarToday /> Attendance Summary
-                    </Typography>
-                    <Grid container spacing={2}>
-                      <Grid item xs={4}>
+                        }}>
+                        <CalendarToday /> Attendance Summary
+                      </Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={4}>
                           <Paper
                             sx={{
                               p: 2,
@@ -1051,15 +1145,15 @@ const StudentsPage = () => {
                                   .attendanceRate
                               }
                               %
-                          </Typography>
+                            </Typography>
                             <Typography
                               variant="caption"
                               color="text.secondary">
-                            Attendance Rate
-                          </Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={4}>
+                              Attendance Rate
+                            </Typography>
+                          </Paper>
+                        </Grid>
+                        <Grid item xs={4}>
                           <Paper
                             sx={{
                               p: 2,
@@ -1069,16 +1163,16 @@ const StudentsPage = () => {
                             <Typography
                               variant="h4"
                               sx={{ fontWeight: 700, color: "#4caf50" }}>
-                            {attendanceData[selectedStudent.uid].presentDays}
-                          </Typography>
+                              {attendanceData[selectedStudent.uid].presentDays}
+                            </Typography>
                             <Typography
                               variant="caption"
                               color="text.secondary">
-                            Present Days
-                          </Typography>
-                        </Paper>
-                      </Grid>
-                      <Grid item xs={4}>
+                              Present Days
+                            </Typography>
+                          </Paper>
+                        </Grid>
+                        <Grid item xs={4}>
                           <Paper
                             sx={{
                               p: 2,
@@ -1088,20 +1182,20 @@ const StudentsPage = () => {
                             <Typography
                               variant="h4"
                               sx={{ fontWeight: 700, color: "#ff9800" }}>
-                            {attendanceData[selectedStudent.uid].totalDays}
-                          </Typography>
+                              {attendanceData[selectedStudent.uid].totalDays}
+                            </Typography>
                             <Typography
                               variant="caption"
                               color="text.secondary">
-                            Total Days
-                          </Typography>
-                        </Paper>
+                              Total Days
+                            </Typography>
+                          </Paper>
+                        </Grid>
                       </Grid>
-                    </Grid>
-                  </Box>
-                </>
-              )}
-            </Box>
+                    </Box>
+                  </>
+                )}
+              </Box>
             )
           )}
         </DialogContent>
@@ -1129,7 +1223,7 @@ const StudentsPage = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-        }}>
+          }}>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 600, color: "white" }}>
               {qrPreviewType === "timeIn" ? "Time In" : "Time Out"} QR Code
@@ -1161,7 +1255,7 @@ const StudentsPage = () => {
             <Close />
           </IconButton>
         </DialogTitle>
-        
+
         <DialogContent
           sx={{
             p: 4,
@@ -1171,9 +1265,9 @@ const StudentsPage = () => {
           }}>
           {qrPreviewSrc && (
             <>
-              <Box 
-                sx={{ 
-                  p: 2, 
+              <Box
+                sx={{
+                  p: 2,
                   border:
                     qrPreviewType === "timeIn"
                       ? "4px solid #4caf50"
@@ -1182,15 +1276,15 @@ const StudentsPage = () => {
                   mb: 3,
                   background: "white",
                 }}>
-                <img 
-                  src={qrPreviewSrc} 
+                <img
+                  src={qrPreviewSrc}
                   alt={`${
                     qrPreviewType === "timeIn" ? "Time In" : "Time Out"
                   } QR Code`}
                   style={{ width: 280, height: 280, display: "block" }}
                 />
               </Box>
-              
+
               <Typography
                 variant="body2"
                 color="text.secondary"
@@ -1224,6 +1318,97 @@ const StudentsPage = () => {
             </>
           )}
         </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => setDeleteConfirmOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+          },
+        }}>
+        <DialogTitle
+          sx={{
+            background: "linear-gradient(135deg, #f44336 0%, #d32f2f 100%)",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}>
+          <Delete sx={{ color: "white" }} />
+          Confirm Delete Profile Picture
+        </DialogTitle>
+        <DialogContent sx={{ p: 3 }}>
+          <DialogContentText sx={{ fontSize: "1rem", color: "text.primary" }}>
+            Are you sure you want to delete this profile picture? This action
+            cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button
+            onClick={() => setDeleteConfirmOpen(false)}
+            variant="outlined"
+            disabled={deletingPicture}>
+            Cancel
+          </Button>
+          <Button
+            onClick={confirmDeleteProfilePicture}
+            variant="contained"
+            color="error"
+            disabled={deletingPicture}
+            startIcon={
+              deletingPicture ? <CircularProgress size={16} /> : <Delete />
+            }>
+            {deletingPicture ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Success/Error Modal */}
+      <Dialog
+        open={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+          },
+        }}>
+        <DialogTitle
+          sx={{
+            background: successMessage.includes("successfully")
+              ? "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)"
+              : "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)",
+            color: "white",
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+          }}>
+          {successMessage.includes("successfully") ? (
+            <CameraAlt sx={{ color: "white" }} />
+          ) : (
+            <Delete sx={{ color: "white" }} />
+          )}
+          {successMessage.includes("successfully") ? "Success" : "Notice"}
+        </DialogTitle>
+        <DialogContent sx={{ p: 3 }}>
+          <DialogContentText sx={{ fontSize: "1rem", color: "text.primary" }}>
+            {successMessage}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={() => setSuccessModalOpen(false)}
+            variant="contained"
+            color="primary">
+            OK
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

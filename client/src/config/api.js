@@ -8,13 +8,13 @@
 const USE_VERCEL = false;
 
 // API Base URLs
-const LOCAL_API_URL = "http://localhost:3000/api";
+const LOCAL_API_URL = "http://localhost:3001/api";
 const VERCEL_API_URL = "https://smart-childcare-server.vercel.app/api";
 
 // File upload base URLs (LEGACY - only used for old local files)
 // Note: New files use Firebase Storage with direct public URLs
 // These URLs are only for backward compatibility with old attachments
-const LOCAL_UPLOAD_URL = "http://localhost:3000/uploads/attachments";
+const LOCAL_UPLOAD_URL = "http://localhost:3001/uploads/attachments";
 const VERCEL_UPLOAD_URL =
   "https://smart-childcare-server.vercel.app/uploads/attachments";
 

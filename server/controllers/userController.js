@@ -1,31 +1,51 @@
-const admin = require('firebase-admin');
-const xlsx = require('xlsx');
-const { setDefaultPreferencesInternal } = require('./notificationPreferencesController');
+const admin = require("firebase-admin");
+const xlsx = require("xlsx");
+const {
+  setDefaultPreferencesInternal,
+} = require("./notificationPreferencesController");
 
 // Get all users
 const getAllUsers = async (req, res) => {
   try {
-    const snapshot = await admin.database().ref('users').once('value');
+    const snapshot = await admin.database().ref("users").once("value");
     const users = [];
-    
+
     if (snapshot.exists()) {
       snapshot.forEach((childSnapshot) => {
+        const userData = childSnapshot.val();
         users.push({
           uid: childSnapshot.key,
-          ...childSnapshot.val()
+          ...userData,
         });
       });
     }
-    
+
+    // Debug: Log users with RFID data
+    const usersWithRFID = users.filter(
+      (user) => user.childRFID && user.childRFID.trim() !== ""
+    );
+    console.log("[Server] getAllUsers - Total users:", users.length);
+    console.log(
+      "[Server] getAllUsers - Users with RFID:",
+      usersWithRFID.length
+    );
+    if (usersWithRFID.length > 0) {
+      console.log("[Server] getAllUsers - First user with RFID:", {
+        uid: usersWithRFID[0].uid,
+        name: `${usersWithRFID[0].firstName} ${usersWithRFID[0].lastName}`,
+        childRFID: usersWithRFID[0].childRFID,
+      });
+    }
+
     res.json({
       success: true,
-      data: users
+      data: users,
     });
   } catch (error) {
-    console.error('Error getting users:', error);
+    console.error("Error getting users:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -34,27 +54,27 @@ const getAllUsers = async (req, res) => {
 const getUserById = async (req, res) => {
   try {
     const { uid } = req.params;
-    const snapshot = await admin.database().ref(`users/${uid}`).once('value');
-    
+    const snapshot = await admin.database().ref(`users/${uid}`).once("value");
+
     if (snapshot.exists()) {
       res.json({
         success: true,
         data: {
           uid,
-          ...snapshot.val()
-        }
+          ...snapshot.val(),
+        },
       });
     } else {
       res.status(404).json({
         success: false,
-        error: 'User not found'
+        error: "User not found",
       });
     }
   } catch (error) {
-    console.error('Error getting user:', error);
+    console.error("Error getting user:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -63,30 +83,30 @@ const getUserById = async (req, res) => {
 const getUsersByRole = async (req, res) => {
   try {
     const { role } = req.params;
-    const snapshot = await admin.database().ref('users').once('value');
+    const snapshot = await admin.database().ref("users").once("value");
     const users = [];
-    
+
     if (snapshot.exists()) {
       snapshot.forEach((childSnapshot) => {
         const userData = childSnapshot.val();
         if (userData.role === role) {
           users.push({
             uid: childSnapshot.key,
-            ...userData
+            ...userData,
           });
         }
       });
     }
-    
+
     res.json({
       success: true,
-      data: users
+      data: users,
     });
   } catch (error) {
-    console.error('Error getting users by role:', error);
+    console.error("Error getting users by role:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -96,81 +116,85 @@ const createUser = async (req, res) => {
   try {
     const userData = req.body;
     const { uid, email, password, ...profileData } = userData;
-    
+
     // Create Firebase Auth user
     const userRecord = await admin.auth().createUser({
       uid: uid,
       email: email,
       password: password,
-      displayName: `${profileData.firstName} ${profileData.lastName}`
+      displayName: `${profileData.firstName} ${profileData.lastName}`,
     });
-    
+
     // ⚠️ SECURITY WARNING: Storing plain text password - NOT RECOMMENDED for production
     // Prepare user profile data with all fields
     const userProfile = {
       uid: userRecord.uid,
       firstName: profileData.firstName,
-      middleName: profileData.middleName || '',
+      middleName: profileData.middleName || "",
       lastName: profileData.lastName,
-      suffix: profileData.suffix || '',
+      suffix: profileData.suffix || "",
       email: profileData.email,
-      phone: profileData.phone || '',
-      role: profileData.role || 'user',
+      phone: profileData.phone || "",
+      role: profileData.role || "user",
       password: password, // ⚠️ STORING PLAIN TEXT PASSWORD
       createdAt: new Date().toISOString(),
       lastLogin: new Date().toISOString(),
       // Include all child and parent information for parent users
-      ...(profileData.role === 'parent' && {
+      ...(profileData.role === "parent" && {
         // Child Information - store separate fields
-        childFirstName: profileData.childFirstName || '',
-        childMiddleName: profileData.childMiddleName || '',
-        childLastName: profileData.childLastName || '',
-        childSex: profileData.childSex || '',
-        childBirthMonth: profileData.childBirthMonth || '',
-        childBirthDay: profileData.childBirthDay || '',
-        childBirthYear: profileData.childBirthYear || '',
-        address: profileData.address || '',
-        barangay: profileData.barangay || '',
-        municipality: profileData.municipality || '',
-        province: profileData.province || '',
-        region: profileData.region || '',
-        childHandedness: profileData.childHandedness || '',
-        isStudying: profileData.isStudying || '',
-        schoolName: profileData.schoolName || '',
-        numberOfSiblings: profileData.numberOfSiblings || '',
-        birthOrder: profileData.birthOrder || '',
+        childFirstName: profileData.childFirstName || "",
+        childMiddleName: profileData.childMiddleName || "",
+        childLastName: profileData.childLastName || "",
+        childRFID: profileData.childRFID || "",
+        childSex: profileData.childSex || "",
+        childBirthMonth: profileData.childBirthMonth || "",
+        childBirthDay: profileData.childBirthDay || "",
+        childBirthYear: profileData.childBirthYear || "",
+        address: profileData.address || "",
+        barangay: profileData.barangay || "",
+        municipality: profileData.municipality || "",
+        province: profileData.province || "",
+        region: profileData.region || "",
+        childHandedness: profileData.childHandedness || "",
+        isStudying: profileData.isStudying || "",
+        schoolName: profileData.schoolName || "",
+        numberOfSiblings: profileData.numberOfSiblings || "",
+        birthOrder: profileData.birthOrder || "",
         // Father Information - store separate fields
-        fatherFirstName: profileData.fatherFirstName || '',
-        fatherMiddleName: profileData.fatherMiddleName || '',
-        fatherLastName: profileData.fatherLastName || '',
-        fatherAge: profileData.fatherAge || '',
-        fatherOccupation: profileData.fatherOccupation || '',
-        fatherEducation: profileData.fatherEducation || '',
+        fatherFirstName: profileData.fatherFirstName || "",
+        fatherMiddleName: profileData.fatherMiddleName || "",
+        fatherLastName: profileData.fatherLastName || "",
+        fatherAge: profileData.fatherAge || "",
+        fatherOccupation: profileData.fatherOccupation || "",
+        fatherEducation: profileData.fatherEducation || "",
         // Mother Information - store separate fields
-        motherFirstName: profileData.motherFirstName || '',
-        motherMiddleName: profileData.motherMiddleName || '',
-        motherLastName: profileData.motherLastName || '',
-        motherAge: profileData.motherAge || '',
-        motherOccupation: profileData.motherOccupation || '',
-        motherEducation: profileData.motherEducation || ''
-      })
+        motherFirstName: profileData.motherFirstName || "",
+        motherMiddleName: profileData.motherMiddleName || "",
+        motherLastName: profileData.motherLastName || "",
+        motherAge: profileData.motherAge || "",
+        motherOccupation: profileData.motherOccupation || "",
+        motherEducation: profileData.motherEducation || "",
+      }),
     };
-    
+
     // Save user profile to database
     await admin.database().ref(`users/${userRecord.uid}`).set(userProfile);
-    
+
     // Set default notification preferences for new user
-    await setDefaultPreferencesInternal(userRecord.uid, profileData.role || 'user');
-    
+    await setDefaultPreferencesInternal(
+      userRecord.uid,
+      profileData.role || "user"
+    );
+
     res.json({
       success: true,
-      data: userProfile
+      data: userProfile,
     });
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error("Error creating user:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -180,52 +204,58 @@ const updateUser = async (req, res) => {
   try {
     const { uid } = req.params;
     const updates = req.body;
-    
+
     // Clean up updates - remove empty password field
     const cleanUpdates = { ...updates };
-    if (cleanUpdates.password === '' || cleanUpdates.password === null || cleanUpdates.password === undefined) {
+    if (
+      cleanUpdates.password === "" ||
+      cleanUpdates.password === null ||
+      cleanUpdates.password === undefined
+    ) {
       delete cleanUpdates.password;
     }
     if (cleanUpdates.confirmPassword !== undefined) {
       delete cleanUpdates.confirmPassword; // Don't store confirmPassword
     }
-    
+
     // ⚠️ SECURITY WARNING: Updating plain text password - NOT RECOMMENDED for production
     // Update user profile in database (including password if provided)
     await admin.database().ref(`users/${uid}`).update(cleanUpdates);
-    
+
     // Prepare Firebase Auth updates
     const authUpdates = {};
-    
+
     // If updating email, add to Firebase Auth updates
     if (cleanUpdates.email) {
       authUpdates.email = cleanUpdates.email;
     }
-    
+
     // If updating password, add to Firebase Auth updates
-    if (cleanUpdates.password && cleanUpdates.password.trim() !== '') {
+    if (cleanUpdates.password && cleanUpdates.password.trim() !== "") {
       authUpdates.password = cleanUpdates.password;
     }
-    
+
     // If updating name, add displayName to Firebase Auth updates
     if (cleanUpdates.firstName || cleanUpdates.lastName) {
-      authUpdates.displayName = `${cleanUpdates.firstName || ''} ${cleanUpdates.lastName || ''}`.trim();
+      authUpdates.displayName = `${cleanUpdates.firstName || ""} ${
+        cleanUpdates.lastName || ""
+      }`.trim();
     }
-    
+
     // Update Firebase Auth if there are any auth-related changes
     if (Object.keys(authUpdates).length > 0) {
       await admin.auth().updateUser(uid, authUpdates);
     }
-    
+
     res.json({
       success: true,
-      message: 'User updated successfully'
+      message: "User updated successfully",
     });
   } catch (error) {
-    console.error('Error updating user:', error);
+    console.error("Error updating user:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -234,9 +264,9 @@ const updateUser = async (req, res) => {
 const deleteUser = async (req, res) => {
   try {
     const { uid } = req.params;
-    
+
     console.log(`Attempting to delete user with UID: ${uid}`);
-    
+
     // Delete from Firebase Auth first
     try {
       await admin.auth().deleteUser(uid);
@@ -244,24 +274,24 @@ const deleteUser = async (req, res) => {
     } catch (authError) {
       console.error(`Error deleting from Firebase Auth:`, authError);
       // If user doesn't exist in Auth, continue to delete from database
-      if (authError.code !== 'auth/user-not-found') {
+      if (authError.code !== "auth/user-not-found") {
         throw authError;
       }
     }
-    
+
     // Delete from database
     await admin.database().ref(`users/${uid}`).remove();
     console.log(`Successfully deleted user from database: ${uid}`);
-    
+
     res.json({
       success: true,
-      message: 'User deleted successfully from both Firebase Auth and Database'
+      message: "User deleted successfully from both Firebase Auth and Database",
     });
   } catch (error) {
-    console.error('Error deleting user:', error);
+    console.error("Error deleting user:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -270,14 +300,14 @@ const deleteUser = async (req, res) => {
 const searchUsers = async (req, res) => {
   try {
     const { q } = req.query;
-    const snapshot = await admin.database().ref('users').once('value');
+    const snapshot = await admin.database().ref("users").once("value");
     const users = [];
-    
+
     if (snapshot.exists()) {
       snapshot.forEach((childSnapshot) => {
         const userData = childSnapshot.val();
         const searchTerm = q.toLowerCase();
-        
+
         if (
           userData.firstName?.toLowerCase().includes(searchTerm) ||
           userData.lastName?.toLowerCase().includes(searchTerm) ||
@@ -286,21 +316,21 @@ const searchUsers = async (req, res) => {
         ) {
           users.push({
             uid: childSnapshot.key,
-            ...userData
+            ...userData,
           });
         }
       });
     }
-    
+
     res.json({
       success: true,
-      data: users
+      data: users,
     });
   } catch (error) {
-    console.error('Error searching users:', error);
+    console.error("Error searching users:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -309,51 +339,61 @@ const searchUsers = async (req, res) => {
 const bulkImportParents = async (req, res) => {
   try {
     const { parents } = req.body;
-    
+
     if (!parents || !Array.isArray(parents) || parents.length === 0) {
       return res.status(400).json({
         success: false,
-        error: 'No parent data provided'
+        error: "No parent data provided",
       });
     }
 
     const results = {
       success: [],
-      failed: []
+      failed: [],
     };
 
     // Process each parent
     for (const parentData of parents) {
       try {
-        // Debug logging for birth month
-        console.log('Processing parent data:', {
-          firstName: parentData.firstName,
-          lastName: parentData.lastName,
-          childBirthMonth: parentData.childBirthMonth,
-          allParentKeys: Object.keys(parentData)
-        });
+        // Debug logging for payload snapshot including RFID
+        try {
+          console.log("[Import][Server] Processing parent:", {
+            firstName: parentData.firstName,
+            lastName: parentData.lastName,
+            email: parentData.email,
+            childRFID: parentData.childRFID,
+            keys: Object.keys(parentData || {}),
+          });
+          console.log("[Import][Server] Full parentData object:", parentData);
+        } catch (e) {
+          console.error("[Import][Server] Error logging parent data:", e);
+        }
 
         // Validate required fields
-        if (!parentData.email || !parentData.firstName || !parentData.lastName) {
+        if (
+          !parentData.email ||
+          !parentData.firstName ||
+          !parentData.lastName
+        ) {
           results.failed.push({
             data: parentData,
-            error: 'Missing required fields (email, firstName, lastName)'
+            error: "Missing required fields (email, firstName, lastName)",
           });
           continue;
         }
 
         // Validate password is provided
-        if (!parentData.password || parentData.password.trim() === '') {
+        if (!parentData.password || parentData.password.trim() === "") {
           results.failed.push({
             data: parentData,
-            error: 'Password is required'
+            error: "Password is required",
           });
           continue;
         }
 
         // Use the password provided in the Excel file
         const password = parentData.password;
-        
+
         // Check if user already exists
         let userExists = false;
         try {
@@ -366,7 +406,7 @@ const bulkImportParents = async (req, res) => {
         if (userExists) {
           results.failed.push({
             data: parentData,
-            error: 'User with this email already exists'
+            error: "User with this email already exists",
           });
           continue;
         }
@@ -375,96 +415,183 @@ const bulkImportParents = async (req, res) => {
         const userRecord = await admin.auth().createUser({
           email: parentData.email,
           password: password,
-          displayName: `${parentData.firstName} ${parentData.lastName}`
+          displayName: `${parentData.firstName} ${parentData.lastName}`,
         });
-        
+
+        // Normalize RFID from possible fields and coerce to trimmed string
+        try {
+          console.log(
+            "[Import][Server] Incoming parent keys:",
+            Object.keys(parentData || {})
+          );
+          console.log("[Import][Server] Incoming RFID candidates:", {
+            childRFID: parentData?.childRFID,
+            Child_RFID: parentData?.["Child RFID"],
+            childRfid: parentData?.childRfid,
+            ChildRFID: parentData?.ChildRFID,
+            RFID: parentData?.RFID,
+            rfid: parentData?.rfid,
+          });
+        } catch (e) {}
+
+        // Normalize RFID from possible fields and coerce to trimmed string
+        const normalizedRFID = (() => {
+          const candidates = [
+            parentData.childRFID,
+            parentData["Child RFID"],
+            parentData.childRfid,
+            parentData.ChildRFID,
+            parentData.RFID,
+            parentData.rfid,
+          ];
+          const found = candidates.find(
+            (v) => v !== undefined && v !== null && `${v}`.trim() !== ""
+          );
+          return found !== undefined && found !== null ? `${found}`.trim() : "";
+        })();
+
         // ⚠️ SECURITY WARNING: Storing plain text password - NOT RECOMMENDED for production
         // Prepare user profile data
         const userProfile = {
           uid: userRecord.uid,
-          firstName: parentData.firstName || '',
-          middleName: parentData.middleName || '',
-          lastName: parentData.lastName || '',
-          suffix: parentData.suffix || '',
+          firstName: parentData.firstName || "",
+          middleName: parentData.middleName || "",
+          lastName: parentData.lastName || "",
+          suffix: parentData.suffix || "",
           email: parentData.email,
-          phone: parentData.phone || '',
-          role: 'parent',
+          phone: parentData.phone || "",
+          role: "parent",
           password: password, // ⚠️ STORING PLAIN TEXT PASSWORD
           createdAt: new Date().toISOString(),
           lastLogin: new Date().toISOString(),
           // Child Information - store separate fields
-          childFirstName: parentData.childFirstName || '',
-          childMiddleName: parentData.childMiddleName || '',
-          childLastName: parentData.childLastName || '',
-          childSex: parentData.childSex || '',
-          childBirthMonth: parentData.childBirthMonth || '',
-          childBirthDay: parentData.childBirthDay || '',
-          childBirthYear: parentData.childBirthYear || '',
-          address: parentData.address || '',
-          barangay: parentData.barangay || '',
-          municipality: parentData.municipality || '',
-          province: parentData.province || '',
-          region: parentData.region || '',
-          childHandedness: parentData.childHandedness || '',
-          isStudying: parentData.isStudying || '',
-          schoolName: parentData.schoolName || '',
-          numberOfSiblings: parentData.numberOfSiblings || '',
-          birthOrder: parentData.birthOrder || '',
+          childFirstName: parentData.childFirstName || "",
+          childMiddleName: parentData.childMiddleName || "",
+          childLastName: parentData.childLastName || "",
+          childRFID: normalizedRFID,
+          childSex: parentData.childSex || "",
+          childBirthMonth: parentData.childBirthMonth || "",
+          childBirthDay: parentData.childBirthDay || "",
+          childBirthYear: parentData.childBirthYear || "",
+          address: parentData.address || "",
+          barangay: parentData.barangay || "",
+          municipality: parentData.municipality || "",
+          province: parentData.province || "",
+          region: parentData.region || "",
+          childHandedness: parentData.childHandedness || "",
+          isStudying: parentData.isStudying || "",
+          schoolName: parentData.schoolName || "",
+          numberOfSiblings: parentData.numberOfSiblings || "",
+          birthOrder: parentData.birthOrder || "",
           // Father Information - store separate fields
-          fatherFirstName: parentData.fatherFirstName || '',
-          fatherMiddleName: parentData.fatherMiddleName || '',
-          fatherLastName: parentData.fatherLastName || '',
-          fatherAge: parentData.fatherAge || '',
-          fatherOccupation: parentData.fatherOccupation || '',
-          fatherEducation: parentData.fatherEducation || '',
+          fatherFirstName: parentData.fatherFirstName || "",
+          fatherMiddleName: parentData.fatherMiddleName || "",
+          fatherLastName: parentData.fatherLastName || "",
+          fatherAge: parentData.fatherAge || "",
+          fatherOccupation: parentData.fatherOccupation || "",
+          fatherEducation: parentData.fatherEducation || "",
           // Mother Information - store separate fields
-          motherFirstName: parentData.motherFirstName || '',
-          motherMiddleName: parentData.motherMiddleName || '',
-          motherLastName: parentData.motherLastName || '',
-          motherAge: parentData.motherAge || '',
-          motherOccupation: parentData.motherOccupation || '',
-          motherEducation: parentData.motherEducation || ''
+          motherFirstName: parentData.motherFirstName || "",
+          motherMiddleName: parentData.motherMiddleName || "",
+          motherLastName: parentData.motherLastName || "",
+          motherAge: parentData.motherAge || "",
+          motherOccupation: parentData.motherOccupation || "",
+          motherEducation: parentData.motherEducation || "",
         };
-        
-        // Debug logging for what's being saved
-        console.log('Saving user profile to database:', {
-          uid: userRecord.uid,
-          childBirthMonth: userProfile.childBirthMonth,
-          childBirthDay: userProfile.childBirthDay,
-          childBirthYear: userProfile.childBirthYear
-        });
+
+        // Debug logging for what's being saved including RFID
+        try {
+          console.log("[Import][Server] Saving profile:", {
+            uid: userRecord.uid,
+            email: userProfile.email,
+            childRFID: userProfile.childRFID,
+            normalizedRFID,
+          });
+        } catch (e) {}
 
         // Save user profile to database
         await admin.database().ref(`users/${userRecord.uid}`).set(userProfile);
-        
+
+        // Force-write RFID explicitly to avoid any omission by schema transforms
+        try {
+          await admin
+            .database()
+            .ref(`users/${userRecord.uid}/childRFID`)
+            .set(normalizedRFID || "");
+          console.log(
+            "[Import][Server] Forced childRFID write:",
+            normalizedRFID
+          );
+        } catch (e) {
+          console.warn(
+            "[Import][Server] Failed forced childRFID write:",
+            e?.message
+          );
+        }
+
         // Set default notification preferences for new parent
-        await setDefaultPreferencesInternal(userRecord.uid, 'parent');
-        
+        await setDefaultPreferencesInternal(userRecord.uid, "parent");
+
+        // Debug: Log what's being pushed to results
+        try {
+          console.log("[Import][Server] Pushing to results:", {
+            uid: userProfile.uid,
+            email: userProfile.email,
+            childRFID: userProfile.childRFID,
+            hasChildRFID: "childRFID" in userProfile,
+            userProfileKeys: Object.keys(userProfile),
+          });
+          console.log(
+            "[Import][Server] Full userProfile being pushed:",
+            userProfile
+          );
+        } catch (e) {
+          console.error("[Import][Server] Error logging userProfile:", e);
+        }
+
         results.success.push({
-          ...userProfile
+          ...userProfile,
         });
       } catch (error) {
         results.failed.push({
           data: parentData,
-          error: error.message
+          error: error.message,
         });
       }
     }
-    
+
+    // Debug: Log final response before sending
+    try {
+      console.log("[Import][Server] Final response summary:", {
+        successCount: results.success.length,
+        failedCount: results.failed.length,
+        firstSuccess: results.success[0]
+          ? {
+              uid: results.success[0].uid,
+              email: results.success[0].email,
+              childRFID: results.success[0].childRFID,
+              hasChildRFID: "childRFID" in results.success[0],
+            }
+          : null,
+      });
+    } catch (e) {
+      console.error("[Import][Server] Error logging final response:", e);
+    }
+
     res.json({
       success: true,
       data: {
         successCount: results.success.length,
         failedCount: results.failed.length,
         successfulImports: results.success,
-        failedImports: results.failed
-      }
+        failedImports: results.failed,
+      },
     });
   } catch (error) {
-    console.error('Error bulk importing parents:', error);
+    console.error("Error bulk importing parents:", error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -477,5 +604,5 @@ module.exports = {
   updateUser,
   deleteUser,
   searchUsers,
-  bulkImportParents
+  bulkImportParents,
 };

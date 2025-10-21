@@ -30,7 +30,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const notificationPreferencesRoutes = require("./routes/notificationPreferencesRoutes");
 const testNotificationRoutes = require("./routes/testNotificationRoutes");
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3001;
 
 // Enable CORS for all routes
 app.use(cors());

@@ -28,14 +28,6 @@ if (!admin.apps.length) {
     const appConfig = {
       databaseURL,
       storageBucket,
-      // Optimize for serverless environments
-      databaseAuthVariableOverride: null,
-      // Set connection timeout
-      httpAgent: {
-        timeout: 10000, // 10 seconds timeout
-        keepAlive: true,
-        keepAliveMsecs: 30000,
-      },
     };
 
     if (serviceAccount) {

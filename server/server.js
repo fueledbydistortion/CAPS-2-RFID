@@ -6,8 +6,14 @@ const cors = require("cors");
 const path = require("path");
 const app = express();
 
-// Import Firebase Admin config
-require("./config/firebase-admin-config");
+// Import Firebase Admin config with error handling
+try {
+  require("./config/firebase-admin-config");
+  console.log("✅ Firebase Admin config loaded successfully");
+} catch (error) {
+  console.error("❌ Failed to load Firebase Admin config:", error.message);
+  // Don't throw here - let the server start and handle Firebase errors in routes
+}
 
 // Import routes
 const sectionRoutes = require("./routes/sectionRoutes");
@@ -86,7 +92,27 @@ app.get("/api/health", (req, res) => {
 
 // Add a super simple test route for debugging
 app.get("/api/test", (req, res) => {
-  res.json({ message: "Backend is working!", timestamp: Date.now() });
+  res.json({
+    message: "Backend is working!",
+    timestamp: Date.now(),
+    environment: process.env.NODE_ENV,
+    hasFirebase: !!process.env.FIREBASE_PROJECT_ID,
+  });
+});
+
+// Add a debug route to check environment variables
+app.get("/api/debug", (req, res) => {
+  res.json({
+    environment: process.env.NODE_ENV,
+    hasFirebaseProjectId: !!process.env.FIREBASE_PROJECT_ID,
+    hasFirebaseClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+    hasFirebasePrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+    hasFirebaseDatabaseUrl: !!process.env.FIREBASE_DATABASE_URL,
+    hasFirebaseStorageBucket: !!process.env.FIREBASE_STORAGE_BUCKET,
+    availableEnvVars: Object.keys(process.env).filter((key) =>
+      key.startsWith("FIREBASE")
+    ),
+  });
 });
 
 app.use("/api/sections", sectionRoutes);

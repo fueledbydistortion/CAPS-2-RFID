@@ -35,13 +35,13 @@ const PORT = process.env.PORT || 3001;
 // Enable CORS for all routes with specific origins
 const corsOptions = {
   origin: [
-    'http://localhost:3000',
-    'http://localhost:5173', // Vite dev server
-    'https://smart-child-care-app.vercel.app',
-    'https://smart-child-care-z13s.vercel.app'
+    "http://localhost:3000",
+    "http://localhost:5173", // Vite dev server
+    "https://smart-child-care-app.vercel.app",
+    "https://smart-child-care-z13s.vercel.app",
   ],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));

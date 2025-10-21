@@ -116,6 +116,13 @@ export const markAttendanceViaQR = async (
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       dateObject: new Date(),
       localTimeString: new Date().toLocaleTimeString(),
+      utcTime: new Date().toISOString(),
+      utcTimeString: new Date().toLocaleTimeString("en-US", {
+        hour12: true,
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "UTC",
+      }),
     });
 
     console.log(

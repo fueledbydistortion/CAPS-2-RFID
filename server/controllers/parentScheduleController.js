@@ -650,10 +650,24 @@ const markAttendanceViaQR = async (req, res) => {
 
     if (clientTime) {
       // Use client-provided time (already in their timezone)
-      // Ensure the time is properly formatted and not converted
+      // IMPORTANT: Use client time as-is without any timezone conversion
       currentTime = clientTime;
-      console.log("Using client-provided time:", clientTime);
+      console.log("Using client-provided time (no conversion):", clientTime);
       console.log("Client time type:", typeof clientTime);
+
+      // Debug: Compare server time with client time
+      const serverTime = new Date().toLocaleTimeString("en-US", {
+        hour12: true,
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      console.log("Time comparison:", {
+        clientTime,
+        serverTime,
+        serverDate: new Date().toString(),
+        serverTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        note: "Using client time as-is to avoid timezone conversion issues",
+      });
     } else {
       // Fallback to server time if no client time provided
       currentTime = new Date().toLocaleTimeString("en-US", {
@@ -759,7 +773,7 @@ const markAttendanceViaQR = async (req, res) => {
       console.log("Setting timeIn in attendanceData:", {
         qrAttendanceType,
         currentTime,
-        timeInValue: attendanceData.timeIn
+        timeInValue: attendanceData.timeIn,
       });
     }
     // Note: timeOut is already added above in the timeOut branch
@@ -769,6 +783,8 @@ const markAttendanceViaQR = async (req, res) => {
       timeOut: attendanceData.timeOut,
       qrAttendanceType,
       currentTime,
+      attendanceDataKeys: Object.keys(attendanceData),
+      fullAttendanceData: attendanceData,
     });
 
     if (attendanceId) {
@@ -808,19 +824,29 @@ const markAttendanceViaQR = async (req, res) => {
       }`;
     }
 
+    const responseData = {
+      id: attendanceId,
+      ...attendanceData,
+      child: child,
+      schedule: schedule,
+      statusResult: qrAttendanceType === "timeOut" ? null : statusResult, // Only include for time-in
+      statusMessage:
+        qrAttendanceType === "timeOut"
+          ? "Timed out via QR scan"
+          : statusMessage,
+    };
+
+    console.log("Server response data:", {
+      timeIn: responseData.timeIn,
+      timeOut: responseData.timeOut,
+      qrAttendanceType,
+      currentTime,
+      responseKeys: Object.keys(responseData),
+    });
+
     res.json({
       success: true,
-      data: {
-        id: attendanceId,
-        ...attendanceData,
-        child: child,
-        schedule: schedule,
-        statusResult: qrAttendanceType === "timeOut" ? null : statusResult, // Only include for time-in
-        statusMessage:
-          qrAttendanceType === "timeOut"
-            ? "Timed out via QR scan"
-            : statusMessage,
-      },
+      data: responseData,
       message: responseMessage,
     });
   } catch (error) {

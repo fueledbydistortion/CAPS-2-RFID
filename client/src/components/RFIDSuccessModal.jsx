@@ -1,19 +1,19 @@
 import {
-    AccessTime,
-    CheckCircle,
-    Person,
-    Schedule,
-    School,
+  AccessTime,
+  CheckCircle,
+  Person,
+  Schedule,
+  School,
 } from "@mui/icons-material";
 import {
-    Avatar,
-    Box,
-    Chip,
-    Dialog,
-    DialogContent,
-    DialogTitle,
-    Divider,
-    Typography,
+  Avatar,
+  Box,
+  Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Typography,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
@@ -80,6 +80,16 @@ const RFIDSuccessModal = ({
   });
 
   const { child, parent, schedule, attendance } = attendanceData;
+
+  // Debug: Log the attendance data structure
+  console.log("🔍 RFIDSuccessModal - Attendance data structure:", {
+    attendance,
+    attendanceData,
+    timeIn: attendance?.timeIn,
+    timeOut: attendance?.timeOut,
+    attendanceDataTimeIn: attendanceData?.timeIn,
+    attendanceDataTimeOut: attendanceData?.timeOut,
+  });
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -259,11 +269,15 @@ const RFIDSuccessModal = ({
                   Time
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {attendance?.timeIn || attendance?.timeOut || new Date().toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  })}
+                  {attendance?.timeIn ||
+                    attendance?.timeOut ||
+                    attendanceData?.timeIn ||
+                    attendanceData?.timeOut ||
+                    new Date().toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
                 </Typography>
               </Box>
             </Box>

@@ -1,12 +1,14 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { onAuthStateChange, getCurrentUser, getUserProfile } from '../utils/firebase-auth';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { getUserProfile, onAuthStateChange } from "../utils/firebase-auth";
 
 const AuthContext = createContext();
+
+export { AuthContext };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -27,7 +29,7 @@ export const AuthProvider = ({ children }) => {
             setUserProfile(profileResult.data);
           }
         } catch (error) {
-          console.error('Error fetching user profile:', error);
+          console.error("Error fetching user profile:", error);
         }
       } else {
         setCurrentUser(null);
@@ -43,7 +45,7 @@ export const AuthProvider = ({ children }) => {
     currentUser,
     userProfile,
     loading,
-    setUserProfile
+    setUserProfile,
   };
 
   return (

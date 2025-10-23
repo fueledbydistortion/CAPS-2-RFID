@@ -72,7 +72,7 @@ function Home() {
               opacity: 0.9
             }}
           >
-            Web-based Management System for Kapitbahayan Child Development Center with QRCode
+            Web-based Management System for Kapitbahayan Child Development Center with RFID
           </Typography>
           
           <Typography

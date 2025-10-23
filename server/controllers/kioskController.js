@@ -71,9 +71,13 @@ const createKioskSession = async (req, res) => {
     const sessionData = {
       sessionId,
       scheduleId,
-      scheduleName: `${scheduleData.day || 'Unknown Day'} - ${scheduleData.sectionName || 'Unknown Section'}`,
+      scheduleName: `${scheduleData.day || "Unknown Day"} - ${
+        scheduleData.sectionName || "Unknown Section"
+      }`,
       createdBy: userId,
-      createdByName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+      createdByName: `${userData.firstName || ""} ${
+        userData.lastName || ""
+      }`.trim(),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
       isActive: true,

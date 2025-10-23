@@ -904,7 +904,7 @@ const DashboardContent = () => {
                     background: "linear-gradient(45deg, #4caf50, #8bc34a)",
                   }}>
                   <People sx={{ fontSize: "2rem" }} />
-            </Avatar>
+                </Avatar>
                 <Typography
                   variant="h4"
                   sx={{
@@ -914,7 +914,7 @@ const DashboardContent = () => {
                     mb: 1,
                   }}>
                   {loading ? "..." : dashboardStats.totalChildren}
-            </Typography>
+                </Typography>
                 <Typography
                   variant="body2"
                   sx={{
@@ -923,8 +923,8 @@ const DashboardContent = () => {
                   }}>
                   Enrolled Children
                 </Typography>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
             <Card
               sx={{
@@ -951,7 +951,7 @@ const DashboardContent = () => {
                     background: "linear-gradient(45deg, #ff9800, #ffc107)",
                   }}>
                   <School sx={{ fontSize: "2rem" }} />
-            </Avatar>
+                </Avatar>
                 <Typography
                   variant="h4"
                   sx={{
@@ -961,7 +961,7 @@ const DashboardContent = () => {
                     mb: 1,
                   }}>
                   {loading ? "..." : dashboardStats.totalTeachers}
-            </Typography>
+                </Typography>
                 <Typography
                   variant="body2"
                   sx={{
@@ -970,8 +970,8 @@ const DashboardContent = () => {
                   }}>
                   Teachers
                 </Typography>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
             <Card
               sx={{
@@ -998,7 +998,7 @@ const DashboardContent = () => {
                     background: "linear-gradient(45deg, #9c27b0, #e91e63)",
                   }}>
                   <Assessment sx={{ fontSize: "2rem" }} />
-            </Avatar>
+                </Avatar>
                 <Typography
                   variant="h4"
                   sx={{
@@ -1008,7 +1008,7 @@ const DashboardContent = () => {
                     mb: 1,
                   }}>
                   {loading ? "..." : dashboardStats.totalSkills}
-            </Typography>
+                </Typography>
                 <Typography
                   variant="body2"
                   sx={{
@@ -1017,10 +1017,10 @@ const DashboardContent = () => {
                   }}>
                   Learning Skills
                 </Typography>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        {/* New Attendance Rate Card */}
+            {/* New Attendance Rate Card */}
             <Card
               sx={{
                 flex: "1 1 250px",
@@ -1046,7 +1046,7 @@ const DashboardContent = () => {
                     background: "linear-gradient(45deg, #00bcd4, #26c6da)",
                   }}>
                   <CheckCircle sx={{ fontSize: "2rem" }} />
-            </Avatar>
+                </Avatar>
                 <Typography
                   variant="h4"
                   sx={{
@@ -1056,7 +1056,7 @@ const DashboardContent = () => {
                     mb: 1,
                   }}>
                   {loading ? "..." : `${dashboardStats.attendanceRate}%`}
-            </Typography>
+                </Typography>
                 <Typography
                   variant="body2"
                   sx={{
@@ -1065,16 +1065,16 @@ const DashboardContent = () => {
                   }}>
                   Today's Attendance Rate
                 </Typography>
-          </CardContent>
-        </Card>
-      </Box>
+              </CardContent>
+            </Card>
+          </Box>
 
-      {/* Today's Attendance Section */}
+          {/* Today's Attendance Section */}
           <Paper
             sx={{
-        p: 4, 
-        mb: 4,
-        mt: 4,
+              p: 4,
+              mb: 4,
+              mt: 4,
               background: "rgba(255, 255, 255, 0.95)",
               backdropFilter: "blur(15px)",
               border: "2px solid rgba(31, 120, 80, 0.2)",
@@ -1095,15 +1095,15 @@ const DashboardContent = () => {
                   sx={{ fontWeight: 600, color: "hsl(152, 65%, 28%)" }}>
                   Today's Attendance Overview
                 </Typography>
-          </Box>
+              </Box>
               <IconButton
                 onClick={loadDashboardStats}
                 disabled={loading}
                 size="small">
-            <Refresh />
-          </IconButton>
-        </Box>
-        
+                <Refresh />
+              </IconButton>
+            </Box>
+
             <Box
               sx={{
                 display: "grid",
@@ -1114,7 +1114,7 @@ const DashboardContent = () => {
                 },
                 gap: 2,
               }}>
-          {/* Present Students */}
+              {/* Present Students */}
               <Box
                 sx={{
                   p: 3,
@@ -1133,8 +1133,8 @@ const DashboardContent = () => {
                     color: "#2e7d32",
                     mb: 0.5,
                   }}>
-              {dashboardStats.todayAttendance.present}
-            </Typography>
+                  {dashboardStats.todayAttendance.present}
+                </Typography>
                 <Typography
                   variant="body2"
                   sx={{
@@ -1142,16 +1142,16 @@ const DashboardContent = () => {
                     color: "#388e3c",
                     fontWeight: 500,
                   }}>
-              Present
-            </Typography>
+                  Present
+                </Typography>
                 <Typography
                   variant="caption"
                   sx={{ color: "#388e3c", opacity: 0.8 }}>
-              On time or within grace period
-            </Typography>
-          </Box>
+                  On time or within grace period
+                </Typography>
+              </Box>
 
-          {/* Late Students */}
+              {/* Late Students */}
               <Box
                 sx={{
                   p: 3,
@@ -1168,8 +1168,8 @@ const DashboardContent = () => {
                     color: "#f57c00",
                     mb: 0.5,
                   }}>
-              {dashboardStats.todayAttendance.late}
-            </Typography>
+                  {dashboardStats.todayAttendance.late}
+                </Typography>
                 <Typography
                   variant="body2"
                   sx={{
@@ -1177,16 +1177,16 @@ const DashboardContent = () => {
                     color: "#ef6c00",
                     fontWeight: 500,
                   }}>
-              Late
-            </Typography>
+                  Late
+                </Typography>
                 <Typography
                   variant="caption"
                   sx={{ color: "#ef6c00", opacity: 0.8 }}>
-              After grace period
-            </Typography>
-          </Box>
+                  After grace period
+                </Typography>
+              </Box>
 
-          {/* Absent Students */}
+              {/* Absent Students */}
               <Box
                 sx={{
                   p: 3,
@@ -1203,8 +1203,8 @@ const DashboardContent = () => {
                     color: "#c62828",
                     mb: 0.5,
                   }}>
-              {dashboardStats.todayAttendance.absent}
-            </Typography>
+                  {dashboardStats.todayAttendance.absent}
+                </Typography>
                 <Typography
                   variant="body2"
                   sx={{
@@ -1212,16 +1212,16 @@ const DashboardContent = () => {
                     color: "#d32f2f",
                     fontWeight: 500,
                   }}>
-              Absent
-            </Typography>
+                  Absent
+                </Typography>
                 <Typography
                   variant="caption"
                   sx={{ color: "#d32f2f", opacity: 0.8 }}>
-              No attendance record
-            </Typography>
-          </Box>
+                  No attendance record
+                </Typography>
+              </Box>
 
-          {/* Total Attendance */}
+              {/* Total Attendance */}
               <Box
                 sx={{
                   p: 3,
@@ -1240,8 +1240,8 @@ const DashboardContent = () => {
                     color: "hsl(152, 65%, 28%)",
                     mb: 0.5,
                   }}>
-              {dashboardStats.todayAttendance.total}
-            </Typography>
+                  {dashboardStats.todayAttendance.total}
+                </Typography>
                 <Typography
                   variant="body2"
                   sx={{
@@ -1249,16 +1249,16 @@ const DashboardContent = () => {
                     color: "hsl(220, 60%, 25%)",
                     fontWeight: 500,
                   }}>
-              Total Records
-            </Typography>
+                  Total Records
+                </Typography>
                 <Typography
                   variant="caption"
                   sx={{ color: "hsl(220, 60%, 25%)", opacity: 0.8 }}>
-              Students tracked today
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
+                  Students tracked today
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
         </>
       )}
 
@@ -1331,14 +1331,14 @@ const DashboardContent = () => {
                   Center.
                 </Typography>
               </Box>
-              <IconButton 
+              <IconButton
                 onClick={() => {
                   loadParentProgress();
                   loadAttendanceData();
-                }} 
+                }}
                 disabled={parentDashboardLoading}
                 size="small"
-                sx={{ 
+                sx={{
                   color: "hsl(152, 65%, 28%)",
                   "&:hover": { backgroundColor: "rgba(21, 101, 192, 0.1)" },
                 }}>
@@ -1370,16 +1370,208 @@ const DashboardContent = () => {
               Quick Actions
             </Typography>
             <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-              <StartChatButton 
-                buttonText="Message Teacher" 
-                variant="contained" 
+              <StartChatButton
+                buttonText="Message Teacher"
+                variant="contained"
                 size="medium"
               />
             </Box>
           </Paper>
 
+          {!(
+            parentDashboardLoading &&
+            !progressData.parentProgress.length &&
+            !attendanceData.length
+          ) && (
+            <Paper
+              sx={{
+                p: 4,
+                mb: 4,
+                background: "rgba(255, 255, 255, 0.95)",
+                backdropFilter: "blur(15px)",
+                border: "2px solid rgba(31, 120, 80, 0.2)",
+                borderRadius: "20px",
+                boxShadow: "0 8px 32px rgba(31, 120, 80, 0.2)",
+              }}>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                <School sx={{ color: "hsl(152, 65%, 28%)", mr: 2 }} />
+                <Typography
+                  variant="h5"
+                  sx={{ fontWeight: 600, color: "hsl(152, 65%, 28%)" }}>
+                  Your Child's Learning Progress
+                </Typography>
+              </Box>
+
+              {parentDashboardLoading ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    py: 8,
+                  }}>
+                  <Box sx={{ textAlign: "center" }}>
+                    <CircularProgress
+                      size={60}
+                      sx={{ color: "hsl(152, 65%, 28%)", mb: 2 }}
+                    />
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: "Plus Jakarta Sans, sans-serif",
+                        fontWeight: 600,
+                        color: "hsl(152, 65%, 28%)",
+                        fontWeight: 500,
+                      }}>
+                      Loading your child's progress...
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: "Plus Jakarta Sans, sans-serif",
+                        color: "text.secondary",
+                        mt: 1,
+                      }}>
+                      Please wait while we fetch the latest data
+                    </Typography>
+                  </Box>
+                </Box>
+              ) : progressData &&
+                progressData.parentProgress &&
+                progressData.parentProgress.length > 0 ? (
+                <Box>
+                  {/* Progress Summary */}
+                  {progressData.parentProgress.map((student, index) => (
+                    <Card
+                      key={index}
+                      sx={{
+                        mb: 3,
+                        p: 3,
+                        background: "rgba(76, 175, 80, 0.05)",
+                        border: "2px solid rgba(76, 175, 80, 0.2)",
+                      }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          mb: 2,
+                        }}>
+                        <Box>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 600,
+                              fontFamily: "Plus Jakarta Sans, sans-serif",
+                              fontWeight: 600,
+                              color: "#2e7d32",
+                            }}>
+                            {student.studentName}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "Plus Jakarta Sans, sans-serif",
+                              color: "#388e3c",
+                            }}>
+                            {student.sections?.map((s) => s.name).join(", ") ||
+                              "No sections assigned"}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          label={`${student.averageProgress}% Complete`}
+                          color="success"
+                          sx={{ fontWeight: 600 }}
+                        />
+                      </Box>
+
+                      <Box sx={{ display: "flex", gap: 3, mb: 2 }}>
+                        <Box sx={{ textAlign: "center", flex: 1 }}>
+                          <Typography
+                            variant="h4"
+                            sx={{
+                              fontFamily: "Plus Jakarta Sans, sans-serif",
+                              fontWeight: 700,
+                              color: "#2e7d32",
+                              mb: 1,
+                            }}>
+                            {student.totalLessons}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Total Lessons
+                          </Typography>
+                        </Box>
+                        <Box sx={{ textAlign: "center", flex: 1 }}>
+                          <Typography
+                            variant="h4"
+                            sx={{
+                              fontFamily: "Plus Jakarta Sans, sans-serif",
+                              fontWeight: 700,
+                              color: "hsl(152, 65%, 28%)",
+                              mb: 1,
+                            }}>
+                            {student.completedLessons}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Completed
+                          </Typography>
+                        </Box>
+                        <Box sx={{ textAlign: "center", flex: 1 }}>
+                          <Typography
+                            variant="h4"
+                            sx={{
+                              fontFamily: "Plus Jakarta Sans, sans-serif",
+                              fontWeight: 700,
+                              color: "#ff9800",
+                              mb: 1,
+                            }}>
+                            {student.totalLessons - student.completedLessons}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            Remaining
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      {/* Progress Bar */}
+                      <LinearProgress
+                        variant="determinate"
+                        value={student.averageProgress}
+                        sx={{
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: "rgba(76, 175, 80, 0.2)",
+                          "& .MuiLinearProgress-bar": {
+                            backgroundColor: "#4caf50",
+                          },
+                        }}
+                      />
+                    </Card>
+                  ))}
+                </Box>
+              ) : (
+                <Box sx={{ textAlign: "center", py: 4 }}>
+                  <School
+                    sx={{
+                      fontSize: 64,
+                      color: "rgba(31, 120, 80, 0.3)",
+                      mb: 2,
+                    }}
+                  />
+                  <Typography variant="h6" color="text.secondary">
+                    No progress data available
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Progress records will appear here as your child completes
+                    lessons
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+          )}
+
           {/* Today's Tasks/Requirements Due */}
-          <Paper
+          {/* <Paper
             sx={{
               p: 3,
               mb: 4,
@@ -1463,7 +1655,7 @@ const DashboardContent = () => {
                 </Typography>
               </Box>
             )}
-          </Paper>
+          </Paper> */}
 
           {/* Enhanced Dashboard Section for Parents */}
           <Box
@@ -1512,7 +1704,7 @@ const DashboardContent = () => {
                       </IconButton>
                     </Box>
                   </Box>
-                  
+
                   {announcements[currentAnnouncementIndex] && (
                     <Box
                       sx={{
@@ -1542,9 +1734,9 @@ const DashboardContent = () => {
                           justifyContent: "space-between",
                           alignItems: "center",
                         }}>
-                        <Chip 
-                          label={announcements[currentAnnouncementIndex].type} 
-                          size="small" 
+                        <Chip
+                          label={announcements[currentAnnouncementIndex].type}
+                          size="small"
                           sx={{
                             backgroundColor: "hsl(152, 65%, 28%)",
                             color: "white",
@@ -1558,7 +1750,7 @@ const DashboardContent = () => {
                       </Box>
                     </Box>
                   )}
-                  
+
                   <Box
                     sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
                     {announcements.map((_, index) => (
@@ -1603,7 +1795,7 @@ const DashboardContent = () => {
                     Today's Schedule
                   </Typography>
                 </Box>
-                
+
                 {todayEvents.length > 0 ? (
                   <List>
                     {todayEvents.map((event, index) => (
@@ -1663,7 +1855,7 @@ const DashboardContent = () => {
                     Calendar
                   </Typography>
                 </Box>
-                
+
                 {/* Simple Calendar Grid */}
                 <Box
                   sx={{
@@ -1685,7 +1877,7 @@ const DashboardContent = () => {
                     </Typography>
                   ))}
                 </Box>
-                
+
                 <Box
                   sx={{
                     display: "grid",
@@ -1704,7 +1896,7 @@ const DashboardContent = () => {
                         ).getDate();
                     const isToday = day === new Date().getDate();
                     const hasEvents = isCurrentMonth && hasEventsOnDate(day);
-                    
+
                     return (
                       <Box
                         key={i}
@@ -1769,7 +1961,7 @@ const DashboardContent = () => {
                     Upcoming Events
                   </Typography>
                 </Box>
-                
+
                 {upcomingEvents.length > 0 ? (
                   <List>
                     {upcomingEvents.slice(0, 5).map((event, index) => (
@@ -1819,8 +2011,8 @@ const DashboardContent = () => {
           {parentDashboardLoading &&
             !progressData.parentProgress.length &&
             !attendanceData.length && (
-            <Box sx={{ mb: 4 }}>
-              {/* Loading Skeleton for Progress Section */}
+              <Box sx={{ mb: 4 }}>
+                {/* Loading Skeleton for Progress Section */}
                 <Paper
                   sx={{
                     p: 4,
@@ -1838,7 +2030,7 @@ const DashboardContent = () => {
                       sx={{ fontWeight: 600, color: "hsl(152, 65%, 28%)" }}>
                       Your Child's Learning Progress
                     </Typography>
-                </Box>
+                  </Box>
                   <Box
                     sx={{
                       display: "flex",
@@ -1859,8 +2051,8 @@ const DashboardContent = () => {
                           color: "hsl(152, 65%, 28%)",
                           fontWeight: 500,
                         }}>
-                      Loading your child's progress...
-                    </Typography>
+                        Loading your child's progress...
+                      </Typography>
                       <Typography
                         variant="body2"
                         sx={{
@@ -1868,13 +2060,13 @@ const DashboardContent = () => {
                           color: "text.secondary",
                           mt: 1,
                         }}>
-                      Please wait while we fetch the latest data
-                    </Typography>
+                        Please wait while we fetch the latest data
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              </Paper>
+                </Paper>
 
-              {/* Loading Skeleton for Attendance Section */}
+                {/* Loading Skeleton for Attendance Section */}
                 <Paper
                   sx={{
                     p: 4,
@@ -1892,7 +2084,7 @@ const DashboardContent = () => {
                       sx={{ fontWeight: 600, color: "hsl(152, 65%, 28%)" }}>
                       Your Child's Attendance
                     </Typography>
-                </Box>
+                  </Box>
                   <Box
                     sx={{
                       display: "flex",
@@ -1913,8 +2105,8 @@ const DashboardContent = () => {
                           color: "hsl(152, 65%, 28%)",
                           fontWeight: 500,
                         }}>
-                      Loading attendance records...
-                    </Typography>
+                        Loading attendance records...
+                      </Typography>
                       <Typography
                         variant="body2"
                         sx={{
@@ -1922,206 +2114,15 @@ const DashboardContent = () => {
                           color: "text.secondary",
                           mt: 1,
                         }}>
-                      Please wait while we fetch the latest data
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-            </Box>
-          )}
-
-          {/* Child's Progress Overview - Only show if not in initial loading */}
-          {!(
-            parentDashboardLoading &&
-            !progressData.parentProgress.length &&
-            !attendanceData.length
-          ) && (
-            <Paper
-              sx={{
-                p: 4,
-                mb: 4,
-                background: "rgba(255, 255, 255, 0.95)",
-                backdropFilter: "blur(15px)",
-                border: "2px solid rgba(31, 120, 80, 0.2)",
-                borderRadius: "20px",
-                boxShadow: "0 8px 32px rgba(31, 120, 80, 0.2)",
-              }}>
-              <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-                <School sx={{ color: "hsl(152, 65%, 28%)", mr: 2 }} />
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 600, color: "hsl(152, 65%, 28%)" }}>
-                  Your Child's Learning Progress
-                </Typography>
-              </Box>
-
-              {parentDashboardLoading ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    py: 8,
-                  }}>
-                  <Box sx={{ textAlign: "center" }}>
-                    <CircularProgress
-                      size={60}
-                      sx={{ color: "hsl(152, 65%, 28%)", mb: 2 }}
-                    />
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontFamily: "Plus Jakarta Sans, sans-serif",
-                        fontWeight: 600,
-                        color: "hsl(152, 65%, 28%)",
-                        fontWeight: 500,
-                      }}>
-                      Loading your child's progress...
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: "Plus Jakarta Sans, sans-serif",
-                        color: "text.secondary",
-                        mt: 1,
-                      }}>
-                      Please wait while we fetch the latest data
-                    </Typography>
-                  </Box>
-                </Box>
-              ) : progressData &&
-                progressData.parentProgress &&
-                progressData.parentProgress.length > 0 ? (
-              <Box>
-                {/* Progress Summary */}
-                {progressData.parentProgress.map((student, index) => (
-                    <Card
-                      key={index}
-                      sx={{
-                        mb: 3,
-                        p: 3,
-                        background: "rgba(76, 175, 80, 0.05)",
-                        border: "2px solid rgba(76, 175, 80, 0.2)",
-                      }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          mb: 2,
-                        }}>
-                      <Box>
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              fontWeight: 600,
-                              fontFamily: "Plus Jakarta Sans, sans-serif",
-                              fontWeight: 600,
-                              color: "#2e7d32",
-                            }}>
-                          {student.studentName}
-                        </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "Plus Jakarta Sans, sans-serif",
-                              color: "#388e3c",
-                            }}>
-                            {student.sections?.map((s) => s.name).join(", ") ||
-                              "No sections assigned"}
-                        </Typography>
-                      </Box>
-                      <Chip
-                        label={`${student.averageProgress}% Complete`}
-                        color="success"
-                        sx={{ fontWeight: 600 }}
-                      />
+                        Please wait while we fetch the latest data
+                      </Typography>
                     </Box>
-
-                      <Box sx={{ display: "flex", gap: 3, mb: 2 }}>
-                        <Box sx={{ textAlign: "center", flex: 1 }}>
-                          <Typography
-                            variant="h4"
-                            sx={{
-                              fontFamily: "Plus Jakarta Sans, sans-serif",
-                              fontWeight: 700,
-                              color: "#2e7d32",
-                              mb: 1,
-                            }}>
-                          {student.totalLessons}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Total Lessons
-                        </Typography>
-                      </Box>
-                        <Box sx={{ textAlign: "center", flex: 1 }}>
-                          <Typography
-                            variant="h4"
-                            sx={{
-                              fontFamily: "Plus Jakarta Sans, sans-serif",
-                              fontWeight: 700,
-                              color: "hsl(152, 65%, 28%)",
-                              mb: 1,
-                            }}>
-                          {student.completedLessons}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Completed
-                        </Typography>
-                      </Box>
-                        <Box sx={{ textAlign: "center", flex: 1 }}>
-                          <Typography
-                            variant="h4"
-                            sx={{
-                              fontFamily: "Plus Jakarta Sans, sans-serif",
-                              fontWeight: 700,
-                              color: "#ff9800",
-                              mb: 1,
-                            }}>
-                          {student.totalLessons - student.completedLessons}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Remaining
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    {/* Progress Bar */}
-                    <LinearProgress
-                      variant="determinate"
-                      value={student.averageProgress}
-                      sx={{
-                        height: 8,
-                        borderRadius: 4,
-                          backgroundColor: "rgba(76, 175, 80, 0.2)",
-                          "& .MuiLinearProgress-bar": {
-                            backgroundColor: "#4caf50",
-                          },
-                      }}
-                    />
-                  </Card>
-                ))}
-              </Box>
-            ) : (
-                <Box sx={{ textAlign: "center", py: 4 }}>
-                  <School
-                    sx={{
-                      fontSize: 64,
-                      color: "rgba(31, 120, 80, 0.3)",
-                      mb: 2,
-                    }}
-                  />
-                <Typography variant="h6" color="text.secondary">
-                  No progress data available
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                    Progress records will appear here as your child completes
-                    lessons
-                </Typography>
+                  </Box>
+                </Paper>
               </Box>
             )}
-            </Paper>
-          )}
+
+          {/* Child's Progress Overview - Only show if not in initial loading */}
 
           {/* Child's Attendance Overview - Only show if not in initial loading */}
           {!(
@@ -2183,12 +2184,12 @@ const DashboardContent = () => {
                   </Box>
                 </Box>
               ) : attendanceData && attendanceData.length > 0 ? (
-              <Box>
-                {/* Attendance Summary */}
+                <Box>
+                  {/* Attendance Summary */}
                   <Box sx={{ display: "flex", gap: 3, mb: 3 }}>
                     <Box
                       sx={{
-                    flex: 1, 
+                        flex: 1,
                         textAlign: "center",
                         p: 3,
                         background: "rgba(76, 175, 80, 0.1)",
@@ -2207,7 +2208,7 @@ const DashboardContent = () => {
                           attendanceData.filter((a) => a.status === "present")
                             .length
                         }
-                    </Typography>
+                      </Typography>
                       <Typography
                         variant="body2"
                         sx={{
@@ -2215,12 +2216,12 @@ const DashboardContent = () => {
                           color: "#388e3c",
                           fontWeight: 500,
                         }}>
-                      Present
-                    </Typography>
-                  </Box>
+                        Present
+                      </Typography>
+                    </Box>
                     <Box
                       sx={{
-                    flex: 1, 
+                        flex: 1,
                         textAlign: "center",
                         p: 3,
                         background: "rgba(255, 152, 0, 0.1)",
@@ -2239,7 +2240,7 @@ const DashboardContent = () => {
                           attendanceData.filter((a) => a.status === "late")
                             .length
                         }
-                    </Typography>
+                      </Typography>
                       <Typography
                         variant="body2"
                         sx={{
@@ -2247,12 +2248,12 @@ const DashboardContent = () => {
                           color: "#ef6c00",
                           fontWeight: 500,
                         }}>
-                      Late
-                    </Typography>
-                  </Box>
+                        Late
+                      </Typography>
+                    </Box>
                     <Box
                       sx={{
-                    flex: 1, 
+                        flex: 1,
                         textAlign: "center",
                         p: 3,
                         background: "rgba(244, 67, 54, 0.1)",
@@ -2271,7 +2272,7 @@ const DashboardContent = () => {
                           attendanceData.filter((a) => a.status === "absent")
                             .length
                         }
-                    </Typography>
+                      </Typography>
                       <Typography
                         variant="body2"
                         sx={{
@@ -2279,12 +2280,12 @@ const DashboardContent = () => {
                           color: "#d32f2f",
                           fontWeight: 500,
                         }}>
-                      Absent
-                    </Typography>
+                        Absent
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
 
-                {/* Recent Attendance Records */}
+                  {/* Recent Attendance Records */}
                   <Typography
                     variant="h6"
                     sx={{
@@ -2294,14 +2295,14 @@ const DashboardContent = () => {
                       fontWeight: 600,
                       color: "hsl(152, 65%, 28%)",
                     }}>
-                  Recent Attendance Records
-                </Typography>
+                    Recent Attendance Records
+                  </Typography>
                   <TableContainer
                     component={Paper}
                     sx={{ background: "rgba(255, 255, 255, 0.8)" }}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
                           <TableCell
                             sx={{
                               fontFamily: "Plus Jakarta Sans, sans-serif",
@@ -2330,17 +2331,17 @@ const DashboardContent = () => {
                             }}>
                             Status
                           </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {attendanceData.slice(0, 10).map((record, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{record.date}</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {attendanceData.slice(0, 10).map((record, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{record.date}</TableCell>
                             <TableCell>{record.timeIn || "-"}</TableCell>
                             <TableCell>{record.timeOut || "-"}</TableCell>
-                          <TableCell>
-                            <Chip
-                              label={record.status}
+                            <TableCell>
+                              <Chip
+                                label={record.status}
                                 color={
                                   record.status === "present"
                                     ? "success"
@@ -2348,16 +2349,16 @@ const DashboardContent = () => {
                                     ? "warning"
                                     : "error"
                                 }
-                              size="small"
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Box>
-            ) : (
+                                size="small"
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              ) : (
                 <Box sx={{ textAlign: "center", py: 4 }}>
                   <People
                     sx={{
@@ -2366,15 +2367,15 @@ const DashboardContent = () => {
                       mb: 2,
                     }}
                   />
-                <Typography variant="h6" color="text.secondary">
-                  No attendance records available
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
+                  <Typography variant="h6" color="text.secondary">
+                    No attendance records available
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
                     Attendance records will appear here once your child starts
                     attending
-                </Typography>
-              </Box>
-            )}
+                  </Typography>
+                </Box>
+              )}
             </Paper>
           )}
         </>
@@ -2430,7 +2431,7 @@ const DashboardContent = () => {
                       </IconButton>
                     </Box>
                   </Box>
-                  
+
                   {announcements[currentAnnouncementIndex] && (
                     <Box
                       sx={{
@@ -2460,9 +2461,9 @@ const DashboardContent = () => {
                           justifyContent: "space-between",
                           alignItems: "center",
                         }}>
-                        <Chip 
-                          label={announcements[currentAnnouncementIndex].type} 
-                          size="small" 
+                        <Chip
+                          label={announcements[currentAnnouncementIndex].type}
+                          size="small"
                           sx={{
                             backgroundColor: "hsl(152, 65%, 28%)",
                             color: "white",
@@ -2476,7 +2477,7 @@ const DashboardContent = () => {
                       </Box>
                     </Box>
                   )}
-                  
+
                   <Box
                     sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
                     {announcements.map((_, index) => (
@@ -2521,7 +2522,7 @@ const DashboardContent = () => {
                     Today's Schedule
                   </Typography>
                 </Box>
-                
+
                 {todayEvents.length > 0 ? (
                   <List>
                     {todayEvents.map((event, index) => (
@@ -2581,7 +2582,7 @@ const DashboardContent = () => {
                     Calendar
                   </Typography>
                 </Box>
-                
+
                 {/* Simple Calendar Grid */}
                 <Box
                   sx={{
@@ -2603,7 +2604,7 @@ const DashboardContent = () => {
                     </Typography>
                   ))}
                 </Box>
-                
+
                 <Box
                   sx={{
                     display: "grid",
@@ -2622,7 +2623,7 @@ const DashboardContent = () => {
                         ).getDate();
                     const isToday = day === new Date().getDate();
                     const hasEvents = isCurrentMonth && hasEventsOnDate(day);
-                    
+
                     return (
                       <Box
                         key={i}
@@ -2687,7 +2688,7 @@ const DashboardContent = () => {
                     Upcoming Events
                   </Typography>
                 </Box>
-                
+
                 {upcomingEvents.length > 0 ? (
                   <List>
                     {upcomingEvents.slice(0, 5).map((event, index) => (
@@ -2741,8 +2742,8 @@ const DashboardContent = () => {
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
-        <Alert 
-          onClose={handleCloseSnackbar} 
+        <Alert
+          onClose={handleCloseSnackbar}
           severity={snackbar.severity}
           sx={{ width: "100%" }}>
           {snackbar.message}
@@ -2776,7 +2777,7 @@ const DashboardContent = () => {
             Choose which sections to display on your dashboard. You can always
             change these settings later.
           </Typography>
-          
+
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <FormControlLabel
               control={

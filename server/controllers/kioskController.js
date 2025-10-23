@@ -1,5 +1,4 @@
 const admin = require("firebase-admin");
-const { v4: uuidv4 } = require("uuid");
 
 // Create kiosk session
 const createKioskSession = async (req, res) => {
@@ -67,6 +66,7 @@ const createKioskSession = async (req, res) => {
     });
 
     // Create new kiosk session
+    const { v4: uuidv4 } = await import("uuid");
     const sessionId = uuidv4();
     const sessionData = {
       sessionId,

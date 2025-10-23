@@ -66,13 +66,14 @@ const createKioskSession = async (req, res) => {
     });
 
     // Create new kiosk session
-    const sessionId = 'kiosk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    const sessionId =
+      "kiosk_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
     const sessionData = {
       sessionId,
       scheduleId,
-      scheduleName: `${scheduleData.day} - ${scheduleData.sectionName}`,
+      scheduleName: `${scheduleData.day || 'Unknown Day'} - ${scheduleData.sectionName || 'Unknown Section'}`,
       createdBy: userId,
-      createdByName: `${userData.firstName} ${userData.lastName}`,
+      createdByName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
       isActive: true,
@@ -132,7 +133,19 @@ const getCurrentKioskSession = async (req, res) => {
     const sessionData = sessionDoc.data();
 
     // Check if session has expired
-    if (new Date() > sessionData.expiresAt.toDate()) {
+    let expiresAt;
+    if (sessionData.expiresAt && sessionData.expiresAt.toDate) {
+      expiresAt = sessionData.expiresAt.toDate();
+    } else if (sessionData.expiresAt instanceof Date) {
+      expiresAt = sessionData.expiresAt;
+    } else if (sessionData.expiresAt) {
+      expiresAt = new Date(sessionData.expiresAt);
+    } else {
+      // If no expiration date, consider it expired
+      expiresAt = new Date(0);
+    }
+
+    if (new Date() > expiresAt) {
       // Mark session as inactive
       await sessionDoc.ref.update({
         isActive: false,
@@ -151,7 +164,7 @@ const getCurrentKioskSession = async (req, res) => {
         sessionId: sessionData.sessionId,
         scheduleId: sessionData.scheduleId,
         scheduleName: sessionData.scheduleName,
-        expiresAt: sessionData.expiresAt,
+        expiresAt: expiresAt,
         isActive: sessionData.isActive,
       },
     });
@@ -324,4 +337,3 @@ module.exports = {
   validateKioskSession,
   getKioskSessionByToken,
 };
-

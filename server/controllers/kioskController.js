@@ -13,7 +13,7 @@ const createKioskSession = async (req, res) => {
       console.error("Firebase Admin not initialized in createKioskSession");
       return res.status(500).json({
         success: false,
-        error: "Server configuration error"
+        error: "Server configuration error",
       });
     }
 
@@ -123,12 +123,16 @@ const createKioskSession = async (req, res) => {
       message: error.message,
       stack: error.stack,
       userId: req.user?.uid,
-      scheduleId: req.body?.scheduleId
+      scheduleId: req.body?.scheduleId,
+      userRole: req.user?.role,
+      hasFirebaseAdmin: !!admin.apps.length,
+      firebaseApps: admin.apps.length
     });
     res.status(500).json({
       success: false,
       error: "Failed to create kiosk session",
-      details: process.env.NODE_ENV === "development" ? error.message : undefined
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -141,7 +145,7 @@ const getCurrentKioskSession = async (req, res) => {
       console.error("Firebase Admin not initialized in getCurrentKioskSession");
       return res.status(500).json({
         success: false,
-        error: "Server configuration error"
+        error: "Server configuration error",
       });
     }
 
@@ -204,9 +208,19 @@ const getCurrentKioskSession = async (req, res) => {
     });
   } catch (error) {
     console.error("Error getting current kiosk session:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      userId: req.user?.uid,
+      userRole: req.user?.role,
+      hasFirebaseAdmin: !!admin.apps.length,
+      firebaseApps: admin.apps.length
+    });
     res.status(500).json({
       success: false,
       error: "Failed to get kiosk session",
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };

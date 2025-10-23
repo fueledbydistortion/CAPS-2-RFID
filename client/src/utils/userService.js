@@ -85,21 +85,143 @@ export const createUser = async (userData) => {
   }
 };
 
-// Get all users from users collection
+// Get all users from server API (requires authentication)
 export const getAllUsers = async () => {
   try {
-    const snapshot = await get(ref(database, "users"));
-    if (snapshot.exists()) {
-      const users = Object.entries(snapshot.val()).map(([uid, userData]) => ({
-        uid,
-        ...userData,
-      }));
-      return { success: true, data: users };
-    } else {
-      return { success: true, data: [] };
+    console.log("🔍 [getAllUsers] Starting to fetch users from server API...");
+
+    // Get current user's auth token
+    const user = auth.currentUser;
+    if (!user) {
+      console.error("❌ [getAllUsers] No authenticated user found");
+      return { success: false, error: "Not authenticated" };
     }
+
+    const token = await user.getIdToken();
+    console.log("🔍 [getAllUsers] Got auth token, making API request...");
+
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    console.log("🔍 [getAllUsers] API response status:", response.status);
+
+    const result = await response.json();
+    console.log("🔍 [getAllUsers] API response data:", result);
+
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to fetch users");
+    }
+
+    console.log(
+      "✅ [getAllUsers] Successfully fetched users:",
+      result.data?.length || 0
+    );
+    console.log(
+      "🔍 [getAllUsers] Users with childRFID:",
+      result.data?.filter((u) => u.childRFID)?.length || 0
+    );
+
+    return { success: true, data: result.data || [] };
   } catch (error) {
-    console.error("Get all users error:", error);
+    console.error("❌ [getAllUsers] Error:", error);
+    console.error("❌ [getAllUsers] Error details:", {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+    });
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+};
+
+// Get users for RFID scanning (public endpoint, no authentication required)
+export const getUsersForRFID = async () => {
+  try {
+    console.log(
+      "🔍 [getUsersForRFID] Starting to fetch users for RFID scanning..."
+    );
+
+    const response = await fetch(`${API_BASE_URL}/users/rfid`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log("🔍 [getUsersForRFID] API response status:", response.status);
+
+    const result = await response.json();
+    console.log("🔍 [getUsersForRFID] API response data:", result);
+
+    if (!response.ok) {
+      // If the endpoint doesn't exist yet (404) or requires auth (401),
+      // fall back to the authenticated endpoint if user is logged in
+      if (response.status === 401 || response.status === 404) {
+        console.log(
+          "🔄 [getUsersForRFID] Public endpoint not available, trying authenticated endpoint..."
+        );
+
+        const user = auth.currentUser;
+        if (user) {
+          console.log(
+            "🔍 [getUsersForRFID] User is authenticated, using getAllUsers as fallback..."
+          );
+          const token = await user.getIdToken();
+
+          const authResponse = await fetch(`${API_BASE_URL}/users`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (authResponse.ok) {
+            const authResult = await authResponse.json();
+            // Filter only users with RFID data
+            const usersWithRFID = (authResult.data || []).filter(
+              (user) => user.childRFID && user.childRFID.trim() !== ""
+            );
+
+            console.log(
+              "✅ [getUsersForRFID] Fallback successful, filtered users with RFID:",
+              usersWithRFID.length
+            );
+            return { success: true, data: usersWithRFID };
+          }
+        }
+
+        // If no authenticated user or fallback failed, return the original error
+        throw new Error(result.error || "Failed to fetch users for RFID");
+      }
+
+      throw new Error(result.error || "Failed to fetch users for RFID");
+    }
+
+    console.log(
+      "✅ [getUsersForRFID] Successfully fetched users:",
+      result.data?.length || 0
+    );
+    console.log(
+      "🔍 [getUsersForRFID] Users with childRFID:",
+      result.data?.filter((u) => u.childRFID)?.length || 0
+    );
+
+    return { success: true, data: result.data || [] };
+  } catch (error) {
+    console.error("❌ [getUsersForRFID] Error:", error);
+    console.error("❌ [getUsersForRFID] Error details:", {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+    });
     return {
       success: false,
       error: error.message,

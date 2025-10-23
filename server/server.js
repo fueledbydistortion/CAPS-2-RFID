@@ -36,7 +36,6 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const notificationPreferencesRoutes = require("./routes/notificationPreferencesRoutes");
 const testNotificationRoutes = require("./routes/testNotificationRoutes");
 const healthRoutes = require("./routes/healthRoutes");
-const kioskRoutes = require("./routes/kioskRoutes");
 
 const PORT = process.env.PORT || 3001;
 
@@ -188,7 +187,6 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/notification-preferences", notificationPreferencesRoutes);
 app.use("/api/test-notifications", testNotificationRoutes);
 app.use("/api/health", healthRoutes);
-app.use("/api/kiosk", kioskRoutes);
 
 // Basic test route
 app.get("/", (req, res) => {

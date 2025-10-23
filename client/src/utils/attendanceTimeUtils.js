@@ -62,8 +62,13 @@ export const isTimeInRange = (startTime, endTime) => {
  * @returns {Object} - { type: 'timeIn'|'timeOut'|'outside', message: string }
  */
 export const determineAttendanceType = (schedule, currentDay) => {
+  console.log("⏰ [determineAttendanceType] Starting attendance type determination...");
+  console.log("⏰ [determineAttendanceType] Schedule:", schedule);
+  console.log("⏰ [determineAttendanceType] Current day:", currentDay);
+  
   // Check if it's the correct day
   if (schedule.day !== currentDay) {
+    console.log("⏰ [determineAttendanceType] Day mismatch - schedule day:", schedule.day, "current day:", currentDay);
     return {
       type: "outside",
       message: `No schedule for ${currentDay}. Schedule is for ${schedule.day}.`,
@@ -75,12 +80,18 @@ export const determineAttendanceType = (schedule, currentDay) => {
   const timeInEndMinutes = timeToMinutes(schedule.timeInEnd);
   const timeOutStartMinutes = timeToMinutes(schedule.timeOutStart);
   const timeOutEndMinutes = timeToMinutes(schedule.timeOutEnd);
+  
+  console.log("⏰ [determineAttendanceType] Time calculations:");
+  console.log("⏰ [determineAttendanceType] Current time (minutes):", currentMinutes);
+  console.log("⏰ [determineAttendanceType] Time In range:", timeInStartMinutes, "-", timeInEndMinutes);
+  console.log("⏰ [determineAttendanceType] Time Out range:", timeOutStartMinutes, "-", timeOutEndMinutes);
 
   // Check if current time is within Time In range
   if (
     currentMinutes >= timeInStartMinutes &&
     currentMinutes <= timeInEndMinutes
   ) {
+    console.log("⏰ [determineAttendanceType] Within Time In range");
     return {
       type: "timeIn",
       message: `Time In: ${schedule.timeInStart} - ${schedule.timeInEnd}`,
@@ -92,6 +103,7 @@ export const determineAttendanceType = (schedule, currentDay) => {
     currentMinutes >= timeOutStartMinutes &&
     currentMinutes <= timeOutEndMinutes
   ) {
+    console.log("⏰ [determineAttendanceType] Within Time Out range");
     return {
       type: "timeOut",
       message: `Time Out: ${schedule.timeOutStart} - ${schedule.timeOutEnd}`,
@@ -151,7 +163,15 @@ export const getCurrentDay = () => {
     "Friday",
     "Saturday",
   ];
-  return days[new Date().getDay()];
+  const currentDate = new Date();
+  const dayIndex = currentDate.getDay();
+  const currentDay = days[dayIndex];
+  
+  console.log("📅 [getCurrentDay] Current date:", currentDate);
+  console.log("📅 [getCurrentDay] Day index:", dayIndex);
+  console.log("📅 [getCurrentDay] Current day:", currentDay);
+  
+  return currentDay;
 };
 
 /**

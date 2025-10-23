@@ -596,6 +596,80 @@ const bulkImportParents = async (req, res) => {
   }
 };
 
+// Get users for RFID scanning (public endpoint, no authentication required)
+const getUsersForRFID = async (req, res) => {
+  try {
+    const snapshot = await admin.database().ref("users").once("value");
+    const users = [];
+
+    if (snapshot.exists()) {
+      snapshot.forEach((childSnapshot) => {
+        const userData = childSnapshot.val();
+        // Only include users with RFID data for scanning
+        if (userData.childRFID && userData.childRFID.trim() !== "") {
+          users.push({
+            uid: childSnapshot.key,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            childRFID: userData.childRFID,
+            role: userData.role,
+            // Include other necessary fields for attendance
+            childFirstName: userData.childFirstName,
+            childMiddleName: userData.childMiddleName,
+            childLastName: userData.childLastName,
+            childSex: userData.childSex,
+            childBirthMonth: userData.childBirthMonth,
+            childBirthDay: userData.childBirthDay,
+            childBirthYear: userData.childBirthYear,
+            address: userData.address,
+            barangay: userData.barangay,
+            municipality: userData.municipality,
+            province: userData.province,
+            region: userData.region,
+            childHandedness: userData.childHandedness,
+            isStudying: userData.isStudying,
+            schoolName: userData.schoolName,
+            numberOfSiblings: userData.numberOfSiblings,
+            birthOrder: userData.birthOrder,
+            fatherFirstName: userData.fatherFirstName,
+            fatherMiddleName: userData.fatherMiddleName,
+            fatherLastName: userData.fatherLastName,
+            fatherAge: userData.fatherAge,
+            fatherOccupation: userData.fatherOccupation,
+            fatherEducation: userData.fatherEducation,
+            motherFirstName: userData.motherFirstName,
+            motherMiddleName: userData.motherMiddleName,
+            motherLastName: userData.motherLastName,
+            motherAge: userData.motherAge,
+            motherOccupation: userData.motherOccupation,
+            motherEducation: userData.motherEducation,
+          });
+        }
+      });
+    }
+
+    console.log("[Server] getUsersForRFID - Users with RFID:", users.length);
+    if (users.length > 0) {
+      console.log("[Server] getUsersForRFID - First user with RFID:", {
+        uid: users[0].uid,
+        name: `${users[0].firstName} ${users[0].lastName}`,
+        childRFID: users[0].childRFID,
+      });
+    }
+
+    res.json({
+      success: true,
+      data: users,
+    });
+  } catch (error) {
+    console.error("Error getting users for RFID:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
@@ -605,4 +679,5 @@ module.exports = {
   deleteUser,
   searchUsers,
   bulkImportParents,
+  getUsersForRFID,
 };

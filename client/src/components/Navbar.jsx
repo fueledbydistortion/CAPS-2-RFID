@@ -27,7 +27,6 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import logo from "../assets/logo.png";
 import { useAuth } from "../contexts/AuthContext";
-import { useKiosk } from "../contexts/KioskContext";
 import RFIDScannerModal from "./RFIDScannerModal";
 
 function Navbar() {
@@ -41,20 +40,11 @@ function Navbar() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const location = useLocation();
-  const { canAccessKiosk } = useKiosk();
   const { userProfile } = useAuth();
 
   const handleStartAttendance = () => {
-    if (canAccessKiosk()) {
-      setRfidModalOpen(true);
-    } else {
-      setSnackbar({
-        open: true,
-        message:
-          "Kiosk mode is not available. Please contact your teacher or administrator.",
-        severity: "error",
-      });
-    }
+    // Check if user is teacher or admin
+   setRfidModalOpen(true);
   };
 
   const navItems = [

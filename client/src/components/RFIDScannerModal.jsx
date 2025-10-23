@@ -19,7 +19,6 @@ import {
   Typography,
 } from "@mui/material";
 import React, { useState } from "react";
-import { useKiosk } from "../contexts/KioskContext";
 import {
   determineAttendanceType,
   getCurrentDay,
@@ -30,16 +29,9 @@ import {
 } from "../utils/attendanceUtils";
 import { markAttendanceViaQR } from "../utils/parentScheduleService";
 import { getAllSchedules } from "../utils/scheduleService";
-import { getAllUsers } from "../utils/userService";
+import { getUsersForRFID } from "../utils/userService";
 
-const RFIDScannerModal = ({
-  open,
-  onClose,
-  onScanSuccess,
-  kioskSession: propKioskSession,
-}) => {
-  const { kioskSession: contextKioskSession } = useKiosk();
-  const kioskSession = propKioskSession || contextKioskSession;
+const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
   const [rfidValue, setRfidValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -63,40 +55,114 @@ const RFIDScannerModal = ({
       setError("");
       setSuccess("");
 
+      console.log("🔍 Starting RFID scan process...");
+      console.log("📱 RFID Value:", rfidValue);
+
       // Get users and schedules for validation
+      console.log("📡 Loading users and schedules...");
       const [usersResult, schedulesResult] = await Promise.all([
-        getAllUsers(),
+        getUsersForRFID(),
         getAllSchedules(),
       ]);
 
+      console.log("👥 Users Result:", usersResult);
+      console.log("📅 Schedules Result:", schedulesResult);
+
       if (!usersResult.success || !schedulesResult.success) {
+        console.error("❌ Data loading failed:");
+        console.error(
+          "Users success:",
+          usersResult.success,
+          "Error:",
+          usersResult.error
+        );
+        console.error(
+          "Schedules success:",
+          schedulesResult.success,
+          "Error:",
+          schedulesResult.error
+        );
         throw new Error("Failed to load user or schedule data");
       }
 
       const users = usersResult.data;
       const schedules = schedulesResult.data;
 
+      console.log("✅ Data loaded successfully:");
+      console.log("👥 Users count:", users?.length || 0);
+      console.log("📅 Schedules count:", schedules?.length || 0);
+      console.log("👥 Users data:", users);
+      console.log("📅 Schedules data:", schedules);
+
       // Find user by RFID
+      console.log("🔍 Looking for user with RFID:", rfidValue);
+      console.log(
+        "🔍 Available RFID values in users:",
+        users.map((u) => ({
+          uid: u.uid,
+          childRFID: u.childRFID,
+          name: u.firstName + " " + u.lastName,
+        }))
+      );
+
       const user = users.find(
         (u) => (u.childRFID || "").trim() === rfidValue.trim()
       );
+
+      console.log(
+        "👤 User found:",
+        user
+          ? {
+              uid: user.uid,
+              name: user.firstName + " " + user.lastName,
+              childRFID: user.childRFID,
+            }
+          : "No user found"
+      );
+
       if (!user) {
         throw new Error("No registered user found for this RFID");
       }
 
       // Find the relevant schedule for today
       const currentDay = getCurrentDay();
+      console.log("📅 Current day:", currentDay);
+      console.log(
+        "📅 Available schedule days:",
+        schedules.map((s) => ({
+          id: s.id,
+          day: s.day,
+          timeInStart: s.timeInStart,
+          timeOutStart: s.timeOutStart,
+        }))
+      );
+
       const relevantSchedule = schedules.find((s) => s.day === currentDay);
+
+      console.log(
+        "📅 Relevant schedule found:",
+        relevantSchedule
+          ? {
+              id: relevantSchedule.id,
+              day: relevantSchedule.day,
+              timeInStart: relevantSchedule.timeInStart,
+              timeOutStart: relevantSchedule.timeOutStart,
+            }
+          : "No schedule found"
+      );
 
       if (!relevantSchedule) {
         throw new Error(`No schedule found for ${currentDay}`);
       }
 
       // Determine attendance type based on current time and schedule
+      console.log("⏰ Determining attendance type...");
       const attendanceInfo = determineAttendanceType(
         relevantSchedule,
         currentDay
       );
+
+      console.log("⏰ Attendance info:", attendanceInfo);
 
       if (attendanceInfo.type === "outside") {
         throw new Error(attendanceInfo.message);
@@ -110,12 +176,21 @@ const RFIDScannerModal = ({
         attendanceType,
       });
 
+      console.log("📝 Attendance details:", {
+        attendanceType,
+        parentId,
+        qrDataString,
+      });
+
       // Process attendance
+      console.log("📤 Processing attendance...");
       const result = await markAttendanceViaQR(
         qrDataString,
         parentId,
         attendanceType
       );
+
+      console.log("📤 Attendance result:", result);
 
       if (result.success) {
         // Calculate attendance status
@@ -154,7 +229,13 @@ const RFIDScannerModal = ({
         throw new Error(result.error || "Failed to record attendance");
       }
     } catch (error) {
-      console.error("Error processing RFID:", error);
+      console.error("❌ Error processing RFID:", error);
+      console.error("❌ Error stack:", error.stack);
+      console.error("❌ Error details:", {
+        message: error.message,
+        name: error.name,
+        cause: error.cause,
+      });
       setError(error.message);
       onScanSuccess({
         success: false,
@@ -221,21 +302,6 @@ const RFIDScannerModal = ({
           Place the RFID card on the reader or manually enter the RFID value
           below.
         </Typography>
-
-        {kioskSession && (
-          <Alert
-            severity="info"
-            sx={{
-              mb: 3,
-              fontFamily: "Plus Jakarta Sans, sans-serif",
-              borderRadius: "12px",
-            }}>
-            <Typography variant="body2">
-              <strong>Active Session:</strong>{" "}
-              {kioskSession.scheduleName || "Current Schedule"}
-            </Typography>
-          </Alert>
-        )}
 
         <TextField
           fullWidth

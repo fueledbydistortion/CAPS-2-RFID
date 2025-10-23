@@ -17,9 +17,7 @@ import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ChatProvider } from "./contexts/ChatContext";
-import { KioskProvider } from "./contexts/KioskContext";
 import Dashboard from "./pages/Dashboard";
-import KioskPage from "./pages/KioskPage";
 
 function AppContent() {
   const location = useLocation();
@@ -40,7 +38,6 @@ function AppContent() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           {/* <Route path="/download" element={<Download />} /> */}
-          <Route path="/kiosk/:sessionId" element={<KioskPage />} />
           <Route
             path="/dashboard/*"
             element={
@@ -59,14 +56,13 @@ function AppContent() {
 }
 
 function App() {
+  console.log("App component rendering");
   return (
     <Router>
       <AuthProvider>
-        <KioskProvider>
-          <ChatProvider>
-            <AppContent />
-          </ChatProvider>
-        </KioskProvider>
+        <ChatProvider>
+          <AppContent />
+        </ChatProvider>
       </AuthProvider>
     </Router>
   );

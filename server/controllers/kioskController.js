@@ -66,8 +66,7 @@ const createKioskSession = async (req, res) => {
     });
 
     // Create new kiosk session
-    const { v4: uuidv4 } = await import("uuid");
-    const sessionId = uuidv4();
+    const sessionId = 'kiosk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     const sessionData = {
       sessionId,
       scheduleId,

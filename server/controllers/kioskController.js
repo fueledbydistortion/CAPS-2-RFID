@@ -1,8 +1,22 @@
 const admin = require("firebase-admin");
 
+// Check if Firebase admin is initialized
+if (!admin.apps.length) {
+  console.error("Firebase Admin not initialized in kiosk controller");
+}
+
 // Create kiosk session
 const createKioskSession = async (req, res) => {
   try {
+    // Check if Firebase admin is available
+    if (!admin.apps.length) {
+      console.error("Firebase Admin not initialized in createKioskSession");
+      return res.status(500).json({
+        success: false,
+        error: "Server configuration error"
+      });
+    }
+
     const { scheduleId } = req.body;
     const userId = req.user.uid;
 
@@ -122,6 +136,15 @@ const createKioskSession = async (req, res) => {
 // Get current kiosk session for user
 const getCurrentKioskSession = async (req, res) => {
   try {
+    // Check if Firebase admin is available
+    if (!admin.apps.length) {
+      console.error("Firebase Admin not initialized in getCurrentKioskSession");
+      return res.status(500).json({
+        success: false,
+        error: "Server configuration error"
+      });
+    }
+
     const userId = req.user.uid;
 
     const sessionQuery = await admin

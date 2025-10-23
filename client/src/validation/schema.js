@@ -276,6 +276,7 @@ export const sectionSchema = yup.object({
   capacity: yup
     .number()
     .min(0, "Capacity must be at least 0")
+    .max(40, "Capacity cannot exceed 40")
     .integer("Capacity must be a whole number"),
 
   teacherId: yup.string().required("Teacher must be assigned"),

@@ -48,6 +48,17 @@ const SectionForm = ({
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
 
+  // Helper function to validate and limit capacity
+  const handleCapacityChange = (e, field) => {
+    const value = parseInt(e.target.value);
+    if (isNaN(value) || value < 0) {
+      e.target.value = 0;
+    } else if (value > 40) {
+      e.target.value = 40;
+    }
+    field.onChange(e);
+  };
+
   const initialValues = {
     name: sectionData?.name || "",
     capacity: sectionData?.capacity || 0,
@@ -386,11 +397,12 @@ const SectionForm = ({
                         <TextField
                           {...field}
                           fullWidth
-                          label="Capacity"
+                          label="Capacity (Max: 40)"
                           type="number"
                           error={meta.touched && Boolean(meta.error)}
                           helperText={meta.touched && meta.error}
-                          inputProps={{ min: 0 }}
+                          inputProps={{ min: 0, max: 40 }}
+                          onChange={(e) => handleCapacityChange(e, field)}
                         />
                       )}
                     </Field>

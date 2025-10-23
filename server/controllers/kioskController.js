@@ -105,9 +105,16 @@ const createKioskSession = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating kiosk session:", error);
+    console.error("Error details:", {
+      message: error.message,
+      stack: error.stack,
+      userId: req.user?.uid,
+      scheduleId: req.body?.scheduleId
+    });
     res.status(500).json({
       success: false,
       error: "Failed to create kiosk session",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined
     });
   }
 };

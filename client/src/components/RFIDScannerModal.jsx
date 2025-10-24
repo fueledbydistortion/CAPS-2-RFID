@@ -46,7 +46,7 @@ const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
   };
 
   // Helper function to check if student is already assigned to another daycare center
-  const checkStudentDaycareAssignment = (studentId, sections) => {
+  const checkStudentDaycareAssignment = (studentId, sections, users) => {
     const student = users.find((s) => s.uid === studentId);
     if (!student) return null;
 
@@ -64,9 +64,10 @@ const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
     studentId,
     currentSchedule,
     schedules,
-    sections
+    sections,
+    users
   ) => {
-    const assignedSection = checkStudentDaycareAssignment(studentId, sections);
+    const assignedSection = checkStudentDaycareAssignment(studentId, sections, users);
 
     if (!assignedSection) {
       return {
@@ -309,7 +310,8 @@ const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
         user.uid,
         relevantSchedule,
         schedules,
-        sections
+        sections,
+        users
       );
 
       if (conflictCheck.hasConflict) {

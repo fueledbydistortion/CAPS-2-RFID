@@ -70,8 +70,25 @@ const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
 
     if (!assignedSection) {
       return {
-        hasConflict: false,
-        message: "Student is not assigned to any daycare center",
+        hasConflict: true,
+        message:
+          "Student is not assigned to any daycare center. Cannot record attendance.",
+      };
+    }
+
+    // Check if the student's assigned daycare center has any schedule for today
+    const currentDay = getCurrentDay();
+    const assignedSectionSchedules = schedules.filter(
+      (schedule) =>
+        schedule.day === currentDay && schedule.sectionId === assignedSection.id
+    );
+
+    // If the student's assigned daycare has no schedule for today, prevent attendance
+    if (assignedSectionSchedules.length === 0) {
+      return {
+        hasConflict: true,
+        message: `Student is assigned to ${assignedSection.name}, but this daycare center has no schedule set for ${currentDay}. Cannot record attendance.`,
+        conflictingSection: assignedSection.name,
       };
     }
 
@@ -84,7 +101,6 @@ const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
     }
 
     // Check if there are overlapping schedules for the same day
-    const currentDay = getCurrentDay();
     const conflictingSchedules = schedules.filter(
       (schedule) =>
         schedule.day === currentDay &&
@@ -94,8 +110,9 @@ const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
 
     if (conflictingSchedules.length === 0) {
       return {
-        hasConflict: false,
-        message: "No conflicting schedules found",
+        hasConflict: true,
+        message: `Student is assigned to ${assignedSection.name}, but this daycare center has no overlapping schedule with the current attendance time. Cannot record attendance.`,
+        conflictingSection: assignedSection.name,
       };
     }
 
@@ -115,8 +132,9 @@ const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
     }
 
     return {
-      hasConflict: false,
-      message: "No time conflicts found",
+      hasConflict: true,
+      message: `Student is assigned to ${assignedSection.name}, but this daycare center has no overlapping schedule with the current attendance time. Cannot record attendance.`,
+      conflictingSection: assignedSection.name,
     };
   };
 

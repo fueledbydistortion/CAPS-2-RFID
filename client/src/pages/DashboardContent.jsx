@@ -452,7 +452,7 @@ const DashboardContent = () => {
             type: "schedule",
             title: `Class: ${subjectName}`,
             time: `${schedule.timeIn} - ${schedule.timeOut}`,
-            description: `Section: ${sectionName}`,
+            description: `Daycare Center: ${sectionName}`,
             icon: <Schedule />,
           });
         });
@@ -791,7 +791,7 @@ const DashboardContent = () => {
       {/* Show admin dashboard content for admin users only */}
       {userProfile?.role !== "parent" && (
         <>
-          {/* Welcome Section with Edit Button */}
+          {/* Welcome Daycare Center with Edit Button */}
           <Paper
             sx={{
               p: 4,
@@ -1069,7 +1069,7 @@ const DashboardContent = () => {
             </Card>
           </Box>
 
-          {/* Today's Attendance Section */}
+          {/* Today's Attendance Daycare Center */}
           <Paper
             sx={{
               p: 4,
@@ -1265,7 +1265,7 @@ const DashboardContent = () => {
       {/* Parent Dashboard - Only for Parents */}
       {userProfile?.role === "parent" && (
         <>
-          {/* Welcome Section for Parents */}
+          {/* Welcome Daycare Center for Parents */}
           <Paper
             sx={{
               p: 4,
@@ -1657,7 +1657,7 @@ const DashboardContent = () => {
             )}
           </Paper> */}
 
-          {/* Enhanced Dashboard Section for Parents */}
+          {/* Enhanced Dashboard Daycare Center for Parents */}
           <Box
             sx={{
               display: "grid",
@@ -2012,7 +2012,7 @@ const DashboardContent = () => {
             !progressData.parentProgress.length &&
             !attendanceData.length && (
               <Box sx={{ mb: 4 }}>
-                {/* Loading Skeleton for Progress Section */}
+                {/* Loading Skeleton for Progress Daycare Center */}
                 <Paper
                   sx={{
                     p: 4,
@@ -2066,7 +2066,7 @@ const DashboardContent = () => {
                   </Box>
                 </Paper>
 
-                {/* Loading Skeleton for Attendance Section */}
+                {/* Loading Skeleton for Attendance Daycare Center */}
                 <Paper
                   sx={{
                     p: 4,
@@ -2381,10 +2381,10 @@ const DashboardContent = () => {
         </>
       )}
 
-      {/* Parent Progress Section - For Admin and Teachers */}
+      {/* Parent Progress Daycare Center - For Admin and Teachers */}
       {(userProfile?.role === "teacher" || userProfile?.role === "admin") && (
         <>
-          {/* Enhanced Dashboard Section for Teachers */}
+          {/* Enhanced Dashboard Daycare Center for Teachers */}
           <Box
             sx={{
               display: "grid",

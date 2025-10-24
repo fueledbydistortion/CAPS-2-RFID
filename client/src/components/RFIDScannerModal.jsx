@@ -29,6 +29,7 @@ import {
 } from "../utils/attendanceUtils";
 import { markAttendanceViaQR } from "../utils/parentScheduleService";
 import { getAllSchedules } from "../utils/scheduleService";
+import { getAllSections } from "../utils/sectionService";
 import { getUsersForRFID } from "../utils/userService";
 
 const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
@@ -42,6 +43,122 @@ const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
     setError("");
     setSuccess("");
     onClose();
+  };
+
+  // Helper function to check if student is already assigned to another daycare center
+  const checkStudentDaycareAssignment = (studentId, sections) => {
+    const student = users.find((s) => s.uid === studentId);
+    if (!student) return null;
+
+    // Find which section the student is assigned to
+    const assignedSection = sections.find(
+      (section) =>
+        section.assignedStudents && section.assignedStudents.includes(studentId)
+    );
+
+    return assignedSection;
+  };
+
+  // Helper function to check for schedule conflicts
+  const checkScheduleConflict = (
+    studentId,
+    currentSchedule,
+    schedules,
+    sections
+  ) => {
+    const assignedSection = checkStudentDaycareAssignment(studentId, sections);
+
+    if (!assignedSection) {
+      return {
+        hasConflict: false,
+        message: "Student is not assigned to any daycare center",
+      };
+    }
+
+    // If the student is assigned to the same section as the current schedule, no conflict
+    if (assignedSection.id === currentSchedule.sectionId) {
+      return {
+        hasConflict: false,
+        message: "Student is correctly assigned to this daycare center",
+      };
+    }
+
+    // Check if there are overlapping schedules for the same day
+    const currentDay = getCurrentDay();
+    const conflictingSchedules = schedules.filter(
+      (schedule) =>
+        schedule.day === currentDay &&
+        schedule.sectionId === assignedSection.id &&
+        schedule.id !== currentSchedule.id
+    );
+
+    if (conflictingSchedules.length === 0) {
+      return {
+        hasConflict: false,
+        message: "No conflicting schedules found",
+      };
+    }
+
+    // Check for time overlap
+    const currentScheduleTimes = getScheduleTimeRange(currentSchedule);
+    const hasTimeOverlap = conflictingSchedules.some((schedule) => {
+      const scheduleTimes = getScheduleTimeRange(schedule);
+      return isTimeOverlapping(currentScheduleTimes, scheduleTimes);
+    });
+
+    if (hasTimeOverlap) {
+      return {
+        hasConflict: true,
+        message: `Student is already assigned to ${assignedSection.name} and has a conflicting schedule at this time`,
+        conflictingSection: assignedSection.name,
+      };
+    }
+
+    return {
+      hasConflict: false,
+      message: "No time conflicts found",
+    };
+  };
+
+  // Helper function to get schedule time range
+  const getScheduleTimeRange = (schedule) => {
+    const timeInStart = schedule.timeInStart
+      ? parseTimeToMinutes(schedule.timeInStart)
+      : 0;
+    const timeOutEnd = schedule.timeOutEnd
+      ? parseTimeToMinutes(schedule.timeOutEnd)
+      : 1440; // 24:00
+
+    return {
+      start: timeInStart,
+      end: timeOutEnd,
+    };
+  };
+
+  // Helper function to parse time string to minutes
+  const parseTimeToMinutes = (timeStr) => {
+    if (!timeStr) return 0;
+
+    // Handle 12-hour format (e.g., "2:30 PM")
+    if (timeStr.includes("AM") || timeStr.includes("PM")) {
+      const [time, period] = timeStr.split(" ");
+      const [hours, minutes] = time.split(":").map(Number);
+      let hour24 = hours;
+
+      if (period === "AM" && hours === 12) hour24 = 0;
+      if (period === "PM" && hours !== 12) hour24 = hours + 12;
+
+      return hour24 * 60 + minutes;
+    }
+
+    // Handle 24-hour format (e.g., "14:30")
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+
+  // Helper function to check if two time ranges overlap
+  const isTimeOverlapping = (range1, range2) => {
+    return range1.start < range2.end && range2.start < range1.end;
   };
 
   const handleScanRFID = async () => {
@@ -60,15 +177,21 @@ const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
 
       // Get users and schedules for validation
       console.log("📡 Loading users and schedules...");
-      const [usersResult, schedulesResult] = await Promise.all([
+      const [usersResult, schedulesResult, sectionsResult] = await Promise.all([
         getUsersForRFID(),
         getAllSchedules(),
+        getAllSections(),
       ]);
 
       console.log("👥 Users Result:", usersResult);
       console.log("📅 Schedules Result:", schedulesResult);
+      console.log("🏫 Sections Result:", sectionsResult);
 
-      if (!usersResult.success || !schedulesResult.success) {
+      if (
+        !usersResult.success ||
+        !schedulesResult.success ||
+        !sectionsResult.success
+      ) {
         console.error("❌ Data loading failed:");
         console.error(
           "Users success:",
@@ -82,11 +205,18 @@ const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
           "Error:",
           schedulesResult.error
         );
-        throw new Error("Failed to load user or schedule data");
+        console.error(
+          "Sections success:",
+          sectionsResult.success,
+          "Error:",
+          sectionsResult.error
+        );
+        throw new Error("Failed to load user, schedule, or section data");
       }
 
       const users = usersResult.data;
       const schedules = schedulesResult.data;
+      const sections = sectionsResult.data;
 
       console.log("✅ Data loaded successfully:");
       console.log("👥 Users count:", users?.length || 0);
@@ -154,6 +284,24 @@ const RFIDScannerModal = ({ open, onClose, onScanSuccess }) => {
       if (!relevantSchedule) {
         throw new Error(`No schedule found for ${currentDay}`);
       }
+
+      // Check for schedule conflicts before proceeding
+      console.log("🔍 Checking for schedule conflicts...");
+      const conflictCheck = checkScheduleConflict(
+        user.uid,
+        relevantSchedule,
+        schedules,
+        sections
+      );
+
+      if (conflictCheck.hasConflict) {
+        setError(
+          `${conflictCheck.message}. Please ensure the student is attending the correct daycare center.`
+        );
+        return;
+      }
+
+      console.log("✅ No schedule conflicts found");
 
       // Determine attendance type based on current time and schedule
       console.log("⏰ Determining attendance type...");

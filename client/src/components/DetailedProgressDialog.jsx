@@ -728,7 +728,7 @@ const DetailedProgressDialog = ({
                           fontFamily: "Plus Jakarta Sans, sans-serif",
                           fontWeight: 700,
                         }}>
-                        Section Details
+                        Daycare Center Details
                       </Typography>
                     </Box>
                     <List dense>
@@ -739,7 +739,7 @@ const DetailedProgressDialog = ({
                           </ListItemIcon>
                           <ListItemText
                             primary={`${section.name} (Grade ${section.grade})`}
-                            secondary={`Section ID: ${section.id}`}
+                            secondary={`Daycare Center ID: ${section.id}`}
                           />
                         </ListItem>
                       ))}

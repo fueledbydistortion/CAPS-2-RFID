@@ -287,10 +287,10 @@ const RFIDSuccessModal = ({
               <School sx={{ color: "hsl(152, 65%, 28%)" }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  Section
+                  Daycare Center
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {schedule?.sectionName || "Unknown Section"}
+                  {schedule?.sectionName || "Unknown Daycare Center"}
                 </Typography>
               </Box>
             </Box>

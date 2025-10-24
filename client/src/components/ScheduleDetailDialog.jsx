@@ -69,7 +69,7 @@ const ScheduleDetailDialog = ({
 
   const getSectionName = (sectionId) => {
     const section = sections.find((s) => s.id === sectionId);
-    return section ? section.name : "Unknown Section";
+    return section ? section.name : "Unknown Daycare Center";
   };
 
   const handleEditScheduleClick = (schedule) => {
@@ -510,7 +510,7 @@ const ScheduleDetailDialog = ({
                                 }}
                               />
                               <Typography variant="body2">
-                                <strong>Section:</strong>{" "}
+                                <strong>Daycare Center:</strong>{" "}
                                 {getSectionName(schedule.sectionId)}
                               </Typography>
                             </Box>

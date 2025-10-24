@@ -184,7 +184,7 @@ const SectionAssignmentDialog = ({
               fontFamily: "Plus Jakarta Sans, sans-serif",
               fontWeight: 700,
             }}>
-            Add Section
+            Add Daycare Center
           </Typography>
 
           <Box sx={{ display: "flex", gap: 2, alignItems: "center", mb: 2 }}>
@@ -199,8 +199,8 @@ const SectionAssignmentDialog = ({
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Select Section"
-                  placeholder="Search sections..."
+                  label="Select Daycare Center"
+                  placeholder="Search daycare centers..."
                   variant="outlined"
                   size="small"
                   sx={{
@@ -247,7 +247,7 @@ const SectionAssignmentDialog = ({
           <TextField
             fullWidth
             size="small"
-            placeholder="Search sections by name or grade..."
+            placeholder="Search daycare centers by name or grade..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             InputProps={{
@@ -292,7 +292,7 @@ const SectionAssignmentDialog = ({
                 sx={{ fontSize: 48, color: "rgba(31, 120, 80, 0.5)", mb: 2 }}
               />
               <Typography variant="body1" color="text.secondary">
-                No sections assigned to this skill yet
+                No daycare centers assigned to this skill yet
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Use the form above to assign sections
@@ -353,7 +353,7 @@ const SectionAssignmentDialog = ({
                         </Typography>
                       </TableCell>
                       <TableCell sx={{ textAlign: "center" }}>
-                        <Tooltip title="Remove Section">
+                        <Tooltip title="Remove Daycare Center">
                           <IconButton
                             size="small"
                             color="error"

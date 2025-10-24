@@ -305,88 +305,115 @@ const LessonDetailDialog = ({
   if (!lesson) return null
 
   return (
-    <Dialog 
-      open={open} 
+    <Dialog
+      open={open}
       onClose={handleClose}
       maxWidth="md"
       fullWidth
       PaperProps={{
         sx: {
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(15px)',
-          border: '2px solid rgba(31, 120, 80, 0.2)',
-          borderRadius: '20px',
-          boxShadow: '0 8px 32px rgba(31, 120, 80, 0.2)'
-        }
-      }}
-    >
-      <DialogTitle sx={{ 
-        background: 'linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))', 
-        backgroundClip: 'text', 
-        WebkitBackgroundClip: 'text', 
-        WebkitTextFillColor: 'transparent',
-        fontWeight: 700,
-        fontSize: '1.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
+          background: "rgba(255, 255, 255, 0.95)",
+          backdropFilter: "blur(15px)",
+          border: "2px solid rgba(31, 120, 80, 0.2)",
+          borderRadius: "20px",
+          boxShadow: "0 8px 32px rgba(31, 120, 80, 0.2)",
+        },
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Book sx={{ color: 'hsl(152, 65%, 28%)' }} />
+      <DialogTitle
+        sx={{
+          background:
+            "linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))",
+          backgroundClip: "text",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          fontWeight: 700,
+          fontSize: "1.5rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <Book sx={{ color: "hsl(152, 65%, 28%)" }} />
           {lesson.title}
         </Box>
-        <IconButton onClick={handleClose} sx={{ color: 'hsl(152, 65%, 28%)' }}>
+        <IconButton onClick={handleClose} sx={{ color: "hsl(152, 65%, 28%)" }}>
           <Close />
         </IconButton>
       </DialogTitle>
 
       <DialogContent sx={{ p: 3 }}>
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError("")}>
             {error}
           </Alert>
         )}
 
         {/* Progress Section */}
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
             <CircularProgress />
           </Box>
         ) : (
-          <Card sx={{ mb: 3, background: 'rgba(31, 120, 80, 0.05)', border: '1px solid rgba(31, 120, 80, 0.2)' }}>
+          <Card
+            sx={{
+              mb: 3,
+              background: "rgba(31, 120, 80, 0.05)",
+              border: "1px solid rgba(31, 120, 80, 0.2)",
+            }}>
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6" sx={{ color: 'hsl(152, 65%, 28%)', fontWeight: 600, fontFamily: 'Plus Jakarta Sans, sans-serif' , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 2,
+                }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: "hsl(152, 65%, 28%)",
+                    fontWeight: 600,
+                    fontFamily: "Plus Jakarta Sans, sans-serif",
+                    fontFamily: "Plus Jakarta Sans, sans-serif",
+                    fontWeight: 700,
+                  }}>
                   Your Progress
                 </Typography>
-                <Chip 
+                <Chip
                   label={`${calculateAttachmentBasedProgress()}%`}
                   color={getProgressColor(calculateAttachmentBasedProgress())}
                   variant="filled"
                   sx={{ fontWeight: 600 }}
                 />
               </Box>
-              
-              <LinearProgress 
-                variant="determinate" 
-                value={calculateAttachmentBasedProgress()} 
+
+              <LinearProgress
+                variant="determinate"
+                value={calculateAttachmentBasedProgress()}
                 color={getProgressColor(calculateAttachmentBasedProgress())}
-                sx={{ 
-                  height: 8, 
-                  borderRadius: 4, 
+                sx={{
+                  height: 8,
+                  borderRadius: 4,
                   mb: 2,
-                  backgroundColor: 'rgba(31, 120, 80, 0.1)'
-                }} 
+                  backgroundColor: "rgba(31, 120, 80, 0.1)",
+                }}
               />
-              
+
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 {getProgressText(calculateAttachmentBasedProgress())}
               </Typography>
 
               {/* Progress Info */}
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                }}>
                 <Typography variant="caption" color="text.secondary">
-                  Progress is automatically calculated based on attachment viewing
+                  Progress is automatically calculated based on attachment
+                  viewing
                 </Typography>
               </Box>
             </CardContent>
@@ -395,53 +422,81 @@ const LessonDetailDialog = ({
 
         {/* Quiz Section */}
         {lesson && lesson.quizQuestions && lesson.quizQuestions.length > 0 && (
-          <Card sx={{ mb: 3, background: 'linear-gradient(135deg, rgba(31, 120, 80, 0.1), rgba(31, 120, 80, 0.05))', border: '2px solid rgba(31, 120, 80, 0.3)' }}>
+          <Card
+            sx={{
+              mb: 3,
+              background:
+                "linear-gradient(135deg, rgba(31, 120, 80, 0.1), rgba(31, 120, 80, 0.05))",
+              border: "2px solid rgba(31, 120, 80, 0.3)",
+            }}>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 2,
+                }}>
                 <Box>
-                  <Typography variant="h6" sx={{ color: 'hsl(152, 65%, 28%)', fontWeight: 600, fontFamily: 'Plus Jakarta Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 1 , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      color: "hsl(152, 65%, 28%)",
+                      fontWeight: 600,
+                      fontFamily: "Plus Jakarta Sans, sans-serif",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      fontFamily: "Plus Jakarta Sans, sans-serif",
+                      fontWeight: 700,
+                    }}>
                     <QuizOutlined />
                     Quiz Available
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {lesson.quizQuestions.length} questions • Test your knowledge
+                    {lesson.quizQuestions.length} questions • Test your
+                    knowledge
                   </Typography>
                 </Box>
                 {quizResults ? (
-                  <Chip 
+                  <Chip
                     label={`${quizResults.percentage}% - ${quizResults.correctCount}/${quizResults.totalQuestions}`}
-                    color={quizResults.percentage >= 70 ? 'success' : 'warning'}
-                    icon={quizResults.percentage >= 70 ? <CheckCircle /> : undefined}
+                    color={quizResults.percentage >= 70 ? "success" : "warning"}
+                    icon={
+                      quizResults.percentage >= 70 ? <CheckCircle /> : undefined
+                    }
                   />
                 ) : (
                   <Chip label="Not Taken" variant="outlined" />
                 )}
               </Box>
-              
+
               {quizResults && (
-                <Alert severity={quizResults.percentage >= 70 ? 'success' : 'info'} sx={{ mb: 2 }}>
-                  {quizResults.percentage >= 70 
+                <Alert
+                  severity={quizResults.percentage >= 70 ? "success" : "info"}
+                  sx={{ mb: 2 }}>
+                  {quizResults.percentage >= 70
                     ? `Great job! You scored ${quizResults.percentage}% on this quiz.`
-                    : `You scored ${quizResults.percentage}%. Try again to improve your score!`
-                  }
+                    : `You scored ${quizResults.percentage}%. Try again to improve your score!`}
                 </Alert>
               )}
-              
+
               <Button
                 variant="contained"
                 startIcon={<QuizOutlined />}
                 onClick={handleStartQuiz}
                 fullWidth
-                sx={{ 
-                  background: 'linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))',
-                  borderRadius: '12px',
+                sx={{
+                  background:
+                    "linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))",
+                  borderRadius: "12px",
                   py: 1.5,
-                  '&:hover': {
-                    background: 'linear-gradient(45deg, #0d47a1, hsl(220, 60%, 25%))',
-                  }
-                }}
-              >
-                {quizResults ? 'Retake Quiz' : 'Start Quiz'}
+                  "&:hover": {
+                    background:
+                      "linear-gradient(45deg, #0d47a1, hsl(220, 60%, 25%))",
+                  },
+                }}>
+                {quizResults ? "Retake Quiz" : "Start Quiz"}
               </Button>
             </CardContent>
           </Card>
@@ -450,33 +505,43 @@ const LessonDetailDialog = ({
         {/* Lesson Details */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Typography variant="h6" sx={{ color: 'hsl(152, 65%, 28%)', fontWeight: 600, fontFamily: 'Plus Jakarta Sans, sans-serif', mb: 2 , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
+            <Typography
+              variant="h6"
+              sx={{
+                color: "hsl(152, 65%, 28%)",
+                fontWeight: 600,
+                fontFamily: "Plus Jakarta Sans, sans-serif",
+                mb: 2,
+                fontFamily: "Plus Jakarta Sans, sans-serif",
+                fontWeight: 700,
+              }}>
               Lesson Details
             </Typography>
-            
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-              <Chip 
+
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
+              <Chip
                 icon={<School />}
-                label={`Skill: ${lesson.skillName}`} 
-                color="primary" 
-                variant="outlined" 
+                label={`Skill: ${lesson.skillName}`}
+                color="primary"
+                variant="outlined"
               />
-              <Chip 
+              <Chip
                 icon={<Person />}
-                label={`Section: ${lesson.sectionName}`} 
-                color="secondary" 
-                variant="outlined" 
+                label={`Daycare Center: ${lesson.sectionName}`}
+                color="secondary"
+                variant="outlined"
               />
-              <Chip 
+              <Chip
                 icon={<AccessTime />}
-                label={`Order: ${lesson.order}`} 
-                color="info" 
-                variant="outlined" 
+                label={`Order: ${lesson.order}`}
+                color="info"
+                variant="outlined"
               />
             </Box>
 
             <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.6 }}>
-              {lesson.description || 'No description available for this lesson.'}
+              {lesson.description ||
+                "No description available for this lesson."}
             </Typography>
           </CardContent>
         </Card>
@@ -485,50 +550,85 @@ const LessonDetailDialog = ({
         {lesson.attachments && lesson.attachments.length > 0 ? (
           <Card>
             <CardContent>
-              <Typography variant="h6" sx={{ color: 'hsl(152, 65%, 28%)', fontWeight: 600, fontFamily: 'Plus Jakarta Sans, sans-serif', mb: 2 , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
+              <Typography
+                variant="h6"
+                sx={{
+                  color: "hsl(152, 65%, 28%)",
+                  fontWeight: 600,
+                  fontFamily: "Plus Jakarta Sans, sans-serif",
+                  mb: 2,
+                  fontFamily: "Plus Jakarta Sans, sans-serif",
+                  fontWeight: 700,
+                }}>
                 Attachments ({lesson.attachments.length})
               </Typography>
-              
+
               {/* Legacy file warning */}
-              {lesson.attachments.some(att => att.name && !att.filename && !att.url && !att.blob && (att.size || att.type)) && (
+              {lesson.attachments.some(
+                (att) =>
+                  att.name &&
+                  !att.filename &&
+                  !att.url &&
+                  !att.blob &&
+                  (att.size || att.type)
+              ) && (
                 <Alert severity="warning" sx={{ mb: 2 }}>
-                  Some files are legacy format and need to be re-uploaded to access them. 
-                  Please edit the lesson and re-upload these files to make them accessible.
+                  Some files are legacy format and need to be re-uploaded to
+                  access them. Please edit the lesson and re-upload these files
+                  to make them accessible.
                 </Alert>
               )}
-              
+
               <List>
                 {lesson.attachments.map((attachment, index) => {
-                  const hasServerFile = attachment.filename && attachment.url
-                  const hasBlobFile = attachment.blob && attachment.blob instanceof Blob
-                  const hasFile = hasServerFile || hasBlobFile
-                  
+                  const hasServerFile = attachment.filename && attachment.url;
+                  const hasBlobFile =
+                    attachment.blob && attachment.blob instanceof Blob;
+                  const hasFile = hasServerFile || hasBlobFile;
+
                   // Handle legacy files that might have different structure
-                  const isLegacyFile = attachment.name && !hasFile && (attachment.size || attachment.type)
-                  
+                  const isLegacyFile =
+                    attachment.name &&
+                    !hasFile &&
+                    (attachment.size || attachment.type);
+
                   // Check if attachment has been viewed
-                  const attachmentId = attachment.id || attachment.name
-                  const isViewed = attachmentProgress[attachmentId]?.viewed || false
-                  const viewedAt = attachmentProgress[attachmentId]?.viewedAt
-                  
+                  const attachmentId = attachment.id || attachment.name;
+                  const isViewed =
+                    attachmentProgress[attachmentId]?.viewed || false;
+                  const viewedAt = attachmentProgress[attachmentId]?.viewedAt;
+
                   return (
                     <ListItem key={index} sx={{ px: 0 }}>
                       <ListItemIcon>
-                        <Attachment sx={{ color: hasFile ? 'hsl(152, 65%, 28%)' : isLegacyFile ? '#ff9800' : '#f44336' }} />
+                        <Attachment
+                          sx={{
+                            color: hasFile
+                              ? "hsl(152, 65%, 28%)"
+                              : isLegacyFile
+                              ? "#ff9800"
+                              : "#f44336",
+                          }}
+                        />
                       </ListItemIcon>
                       <ListItemText
                         primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}>
                             <Typography variant="body2" fontWeight={500}>
                               {attachment.name}
                             </Typography>
                             {isViewed && (
-                              <Chip 
-                                label="Viewed" 
-                                size="small" 
-                                color="success" 
+                              <Chip
+                                label="Viewed"
+                                size="small"
+                                color="success"
                                 variant="outlined"
-                                sx={{ fontSize: '0.7rem', height: 20 }}
+                                sx={{ fontSize: "0.7rem", height: 20 }}
                               />
                             )}
                           </Box>
@@ -536,82 +636,103 @@ const LessonDetailDialog = ({
                         secondary={
                           <Box>
                             <Typography variant="caption" display="block">
-                              {hasServerFile ? 'Server file (ready to download)' : 
-                               hasBlobFile ? 'Local file (ready to download)' : 
-                               isLegacyFile ? 'Legacy file (re-upload needed)' :
-                               'File data not available'}
+                              {hasServerFile
+                                ? "Server file (ready to download)"
+                                : hasBlobFile
+                                ? "Local file (ready to download)"
+                                : isLegacyFile
+                                ? "Legacy file (re-upload needed)"
+                                : "File data not available"}
                             </Typography>
                             {attachment.size && (
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary">
                                 {formatFileSize(attachment.size)}
                               </Typography>
                             )}
                             {attachment.type && (
-                              <Typography variant="caption" color="text.secondary" display="block">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                display="block">
                                 {attachment.type}
                               </Typography>
                             )}
                             {isViewed && viewedAt && (
-                              <Typography variant="caption" color="success.main" display="block">
+                              <Typography
+                                variant="caption"
+                                color="success.main"
+                                display="block">
                                 Viewed {new Date(viewedAt).toLocaleString()}
                               </Typography>
                             )}
                           </Box>
                         }
-                        sx={{ 
-                          '& .MuiListItemText-primary': { fontWeight: 500 },
-                          '& .MuiListItemText-secondary': { 
-                            color: hasFile ? 'text.secondary' : isLegacyFile ? '#ff9800' : '#f44336'
-                          }
+                        sx={{
+                          "& .MuiListItemText-primary": { fontWeight: 500 },
+                          "& .MuiListItemText-secondary": {
+                            color: hasFile
+                              ? "text.secondary"
+                              : isLegacyFile
+                              ? "#ff9800"
+                              : "#f44336",
+                          },
                         }}
                       />
-                      <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Box sx={{ display: "flex", gap: 1 }}>
                         {hasFile ? (
                           <>
-                            <Tooltip title={isViewed ? "View Again" : "View File"}>
-                              <IconButton 
-                                size="small" 
+                            <Tooltip
+                              title={isViewed ? "View Again" : "View File"}>
+                              <IconButton
+                                size="small"
                                 onClick={() => handleViewAttachment(attachment)}
-                                sx={{ 
-                                  color: isViewed ? '#4caf50' : 'hsl(152, 65%, 28%)',
-                                  backgroundColor: isViewed ? 'rgba(76, 175, 80, 0.1)' : 'transparent'
-                                }}
-                              >
+                                sx={{
+                                  color: isViewed
+                                    ? "#4caf50"
+                                    : "hsl(152, 65%, 28%)",
+                                  backgroundColor: isViewed
+                                    ? "rgba(76, 175, 80, 0.1)"
+                                    : "transparent",
+                                }}>
                                 <Visibility />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="Download File">
-                              <IconButton 
-                                size="small" 
-                                onClick={() => handleDownloadAttachment(attachment)}
-                                sx={{ color: '#4caf50' }}
-                              >
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  handleDownloadAttachment(attachment)
+                                }
+                                sx={{ color: "#4caf50" }}>
                                 <FileDownload />
                               </IconButton>
                             </Tooltip>
                           </>
                         ) : isLegacyFile ? (
                           <Tooltip title="Legacy file - re-upload to access">
-                            <IconButton 
-                              size="small" 
+                            <IconButton
+                              size="small"
                               disabled
-                              sx={{ color: '#ff9800' }}
-                            >
+                              sx={{ color: "#ff9800" }}>
                               <Visibility />
                             </IconButton>
                           </Tooltip>
                         ) : null}
                       </Box>
                     </ListItem>
-                  )
+                  );
                 })}
               </List>
             </CardContent>
           </Card>
         ) : (
           <Card>
-            <CardContent sx={{ textAlign: 'center', py: 4 }}>
-              <Attachment sx={{ fontSize: 48, color: 'rgba(31, 120, 80, 0.3)', mb: 2 }} />
+            <CardContent sx={{ textAlign: "center", py: 4 }}>
+              <Attachment
+                sx={{ fontSize: 48, color: "rgba(31, 120, 80, 0.3)", mb: 2 }}
+              />
               <Typography variant="body1" color="text.secondary">
                 No attachments available for this lesson
               </Typography>
@@ -621,11 +742,10 @@ const LessonDetailDialog = ({
       </DialogContent>
 
       <DialogActions sx={{ p: 3, pt: 0 }}>
-        <Button 
+        <Button
           onClick={handleClose}
           variant="outlined"
-          sx={{ borderRadius: '8px' }}
-        >
+          sx={{ borderRadius: "8px" }}>
           Close
         </Button>
       </DialogActions>
@@ -638,7 +758,7 @@ const LessonDetailDialog = ({
         onSubmit={handleQuizSubmit}
       />
     </Dialog>
-  )
+  );
 }
 
 export default LessonDetailDialog

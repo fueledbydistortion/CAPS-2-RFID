@@ -201,7 +201,7 @@ const SchedulesContent = () => {
 
   const getSectionName = (sectionId) => {
     const section = sections.find((s) => s.id === sectionId);
-    return section ? section.name : "Unknown Section";
+    return section ? section.name : "Unknown Daycare Center";
   };
 
   const showSnackbar = (message, severity = "success") => {
@@ -598,7 +598,7 @@ const SchedulesContent = () => {
                       fontFamily: "Plus Jakarta Sans, sans-serif",
                       fontWeight: 600,
                     }}>
-                    Section
+                    Daycare Center
                   </TableCell>
                   <TableCell
                     sx={{

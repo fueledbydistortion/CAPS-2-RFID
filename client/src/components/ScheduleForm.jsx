@@ -548,10 +548,10 @@ const ScheduleForm = ({
                             fullWidth
                             required
                             error={meta.touched && Boolean(meta.error)}>
-                            <InputLabel>Section</InputLabel>
+                            <InputLabel>Daycare Center</InputLabel>
                             <Select
                               {...field}
-                              label="Section"
+                              label="Daycare Center"
                               sx={{
                                 borderRadius: "12px",
                                 "&:hover .MuiOutlinedInput-notchedOutline": {

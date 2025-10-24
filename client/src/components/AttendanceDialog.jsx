@@ -203,7 +203,7 @@ const AttendanceDialog = ({
               <Typography variant="body1">
                 <strong>Day:</strong> {schedule.day} | 
                 <strong> Time:</strong> {formatTo12Hour(schedule.timeIn)} - {formatTo12Hour(schedule.timeOut)} | 
-                <strong> Section:</strong> {section.name} ({section.grade})
+                <strong> Daycare Center:</strong> {section.name} ({section.grade})
               </Typography>
             </Box>
 

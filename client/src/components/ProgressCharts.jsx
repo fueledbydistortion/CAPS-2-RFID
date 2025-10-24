@@ -228,77 +228,94 @@ const ProgressCharts = ({ progressData }) => {
   }
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      flexDirection: 'row',
-      gap: 3,
-      flexWrap: 'wrap',
-      justifyContent: 'center'
-    }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "row",
+        gap: 3,
+        flexWrap: "wrap",
+        justifyContent: "center",
+      }}>
       {/* Charts Section - Row Layout */}
-        {/* Overall Progress Distribution */}
-        <Paper sx={{ 
-          flex: '1 1 400px',
-          minWidth: '400px',
-          p: 4, 
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 248, 255, 0.95) 100%)', 
-          backdropFilter: 'blur(20px)', 
-          border: '3px solid rgba(31, 120, 80, 0.3)', 
-          borderRadius: '20px', 
-          boxShadow: '0 12px 40px rgba(31, 120, 80, 0.2)',
-          textAlign: 'center',
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            transform: 'translateY(-5px)',
-            boxShadow: '0 15px 50px rgba(31, 120, 80, 0.3)'
-          }
+      {/* Overall Progress Distribution */}
+      <Paper
+        sx={{
+          flex: "1 1 400px",
+          minWidth: "400px",
+          p: 4,
+          background:
+            "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 248, 255, 0.95) 100%)",
+          backdropFilter: "blur(20px)",
+          border: "3px solid rgba(31, 120, 80, 0.3)",
+          borderRadius: "20px",
+          boxShadow: "0 12px 40px rgba(31, 120, 80, 0.2)",
+          textAlign: "center",
+          transition: "all 0.3s ease",
+          "&:hover": {
+            transform: "translateY(-5px)",
+            boxShadow: "0 15px 50px rgba(31, 120, 80, 0.3)",
+          },
         }}>
-          <Typography variant="h6" sx={{ 
-            fontWeight: 700, fontFamily: 'Plus Jakarta Sans, sans-serif', 
-            color: 'hsl(152, 65%, 28%)', 
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 700,
+            fontFamily: "Plus Jakarta Sans, sans-serif",
+            color: "hsl(152, 65%, 28%)",
             mb: 3,
-            textShadow: '0 2px 4px rgba(31, 120, 80, 0.1)'
-          , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
-            📊 Overall Progress Distribution
-          </Typography>
-          <Box sx={{ height: 200 }}>
-            <Doughnut data={prepareProgressDistributionData()} options={doughnutOptions} />
-          </Box>
-        </Paper>
+            textShadow: "0 2px 4px rgba(31, 120, 80, 0.1)",
+            fontFamily: "Plus Jakarta Sans, sans-serif",
+            fontWeight: 700,
+          }}>
+          📊 Overall Progress Distribution
+        </Typography>
+        <Box sx={{ height: 200 }}>
+          <Doughnut
+            data={prepareProgressDistributionData()}
+            options={doughnutOptions}
+          />
+        </Box>
+      </Paper>
 
-        {/* Section Performance Comparison */}
-        <Paper sx={{ 
-          flex: '1 1 400px',
-          minWidth: '400px',
-          p: 4, 
-          background: 'rgba(255, 255, 255, 0.95)', 
-          backdropFilter: 'blur(15px)', 
-          border: '2px solid rgba(76, 175, 80, 0.3)', 
-          borderRadius: '16px', 
-          boxShadow: '0 8px 30px rgba(76, 175, 80, 0.15)',
-          transition: 'all 0.3s ease',
-          '&:hover': {
-            transform: 'translateY(-5px)',
-            boxShadow: '0 15px 40px rgba(76, 175, 80, 0.25)'
-          }
+      {/* Section Performance Comparison */}
+      <Paper
+        sx={{
+          flex: "1 1 400px",
+          minWidth: "400px",
+          p: 4,
+          background: "rgba(255, 255, 255, 0.95)",
+          backdropFilter: "blur(15px)",
+          border: "2px solid rgba(76, 175, 80, 0.3)",
+          borderRadius: "16px",
+          boxShadow: "0 8px 30px rgba(76, 175, 80, 0.15)",
+          transition: "all 0.3s ease",
+          "&:hover": {
+            transform: "translateY(-5px)",
+            boxShadow: "0 15px 40px rgba(76, 175, 80, 0.25)",
+          },
         }}>
-          <Typography variant="h6" sx={{ 
-            fontWeight: 600, fontFamily: 'Plus Jakarta Sans, sans-serif', 
-            color: '#2e7d32', 
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 600,
+            fontFamily: "Plus Jakarta Sans, sans-serif",
+            color: "#2e7d32",
             mb: 3,
-            display: 'flex',
-            alignItems: 'center',
+            display: "flex",
+            alignItems: "center",
             gap: 1,
-            justifyContent: 'center'
-          , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
-            📈 Section Performance Comparison
-          </Typography>
-          <Box sx={{ height: 200 }}>
-            <Bar data={prepareSectionComparisonData()} options={chartOptions} />
-          </Box>
-        </Paper>
+            justifyContent: "center",
+            fontFamily: "Plus Jakarta Sans, sans-serif",
+            fontWeight: 700,
+          }}>
+          📈 Daycare Center Performance Comparison
+        </Typography>
+        <Box sx={{ height: 200 }}>
+          <Bar data={prepareSectionComparisonData()} options={chartOptions} />
+        </Box>
+      </Paper>
     </Box>
-  )
+  );
 }
 
 export default ProgressCharts

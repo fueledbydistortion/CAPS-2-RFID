@@ -297,7 +297,7 @@ const AttendanceContent = () => {
 
   const getSectionNameByScheduleId = (scheduleId) => {
     const section = getSectionByScheduleId(scheduleId);
-    return section ? section.name : "Unknown Section";
+    return section ? section.name : "Unknown Daycare Center";
   };
 
   const getStatusColor = (status) => {
@@ -311,6 +311,117 @@ const AttendanceContent = () => {
       default:
         return "default";
     }
+  };
+
+  // Helper function to check if student is already assigned to another daycare center
+  const checkStudentDaycareAssignment = (studentId) => {
+    const student = students.find((s) => s.uid === studentId);
+    if (!student) return null;
+
+    // Find which section the student is assigned to
+    const assignedSection = sections.find(
+      (section) =>
+        section.assignedStudents && section.assignedStudents.includes(studentId)
+    );
+
+    return assignedSection;
+  };
+
+  // Helper function to check for schedule conflicts
+  const checkScheduleConflict = (studentId, currentSchedule) => {
+    const assignedSection = checkStudentDaycareAssignment(studentId);
+
+    if (!assignedSection) {
+      return {
+        hasConflict: false,
+        message: "Student is not assigned to any daycare center",
+      };
+    }
+
+    // If the student is assigned to the same section as the current schedule, no conflict
+    if (assignedSection.id === currentSchedule.sectionId) {
+      return {
+        hasConflict: false,
+        message: "Student is correctly assigned to this daycare center",
+      };
+    }
+
+    // Check if there are overlapping schedules for the same day
+    const currentDay = getCurrentDay();
+    const conflictingSchedules = schedules.filter(
+      (schedule) =>
+        schedule.day === currentDay &&
+        schedule.sectionId === assignedSection.id &&
+        schedule.id !== currentSchedule.id
+    );
+
+    if (conflictingSchedules.length === 0) {
+      return {
+        hasConflict: false,
+        message: "No conflicting schedules found",
+      };
+    }
+
+    // Check for time overlap
+    const currentScheduleTimes = getScheduleTimeRange(currentSchedule);
+    const hasTimeOverlap = conflictingSchedules.some((schedule) => {
+      const scheduleTimes = getScheduleTimeRange(schedule);
+      return isTimeOverlapping(currentScheduleTimes, scheduleTimes);
+    });
+
+    if (hasTimeOverlap) {
+      return {
+        hasConflict: true,
+        message: `Student is already assigned to ${assignedSection.name} and has a conflicting schedule at this time`,
+        conflictingSection: assignedSection.name,
+      };
+    }
+
+    return {
+      hasConflict: false,
+      message: "No time conflicts found",
+    };
+  };
+
+  // Helper function to get schedule time range
+  const getScheduleTimeRange = (schedule) => {
+    const timeInStart = schedule.timeInStart
+      ? parseTimeToMinutes(schedule.timeInStart)
+      : 0;
+    const timeOutEnd = schedule.timeOutEnd
+      ? parseTimeToMinutes(schedule.timeOutEnd)
+      : 1440; // 24:00
+
+    return {
+      start: timeInStart,
+      end: timeOutEnd,
+    };
+  };
+
+  // Helper function to parse time string to minutes
+  const parseTimeToMinutes = (timeStr) => {
+    if (!timeStr) return 0;
+
+    // Handle 12-hour format (e.g., "2:30 PM")
+    if (timeStr.includes("AM") || timeStr.includes("PM")) {
+      const [time, period] = timeStr.split(" ");
+      const [hours, minutes] = time.split(":").map(Number);
+      let hour24 = hours;
+
+      if (period === "AM" && hours === 12) hour24 = 0;
+      if (period === "PM" && hours !== 12) hour24 = hours + 12;
+
+      return hour24 * 60 + minutes;
+    }
+
+    // Handle 24-hour format (e.g., "14:30")
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    return hours * 60 + minutes;
+  };
+
+  // Helper function to check if two time ranges overlap
+  const isTimeOverlapping = (range1, range2) => {
+    return range1.start < range2.end && range2.start < range1.end;
   };
 
   const showSnackbar = (message, severity = "success") => {
@@ -483,7 +594,16 @@ const AttendanceContent = () => {
       // Generate table
       autoTable(doc, {
         startY: 48,
-        head: [["Date", "Student", "Section", "Status", "Time In", "Time Out"]],
+        head: [
+          [
+            "Date",
+            "Student",
+            "Daycare Center",
+            "Status",
+            "Time In",
+            "Time Out",
+          ],
+        ],
         body: tableData,
         theme: "grid",
         headStyles: { fillColor: [21, 101, 192], textColor: 255 },
@@ -609,6 +729,19 @@ const AttendanceContent = () => {
           title: "No Schedule Today",
           text: `No schedule found for ${currentDay}. Please check the schedule settings.`,
           confirmButtonColor: "#ff9800",
+        });
+        return;
+      }
+
+      // Check for schedule conflicts before proceeding
+      const conflictCheck = checkScheduleConflict(parent.uid, relevantSchedule);
+
+      if (conflictCheck.hasConflict) {
+        await Swal.fire({
+          icon: "error",
+          title: "Schedule Conflict",
+          text: `${conflictCheck.message}. Please ensure the student is attending the correct daycare center.`,
+          confirmButtonColor: "#d33",
         });
         return;
       }
@@ -1017,10 +1150,10 @@ const AttendanceContent = () => {
 
               <Box sx={{ flex: "1 1 300px", minWidth: "200px" }}>
                 <FormControl fullWidth>
-                  <InputLabel>Section Filter</InputLabel>
+                  <InputLabel>Daycare Center Filter</InputLabel>
                   <Select
                     value={sectionFilter}
-                    label="Section Filter"
+                    label="Daycare Center Filter"
                     onChange={(e) => setSectionFilter(e.target.value)}
                     sx={{ borderRadius: "12px" }}>
                     <MenuItem value="all">All Daycare Centers</MenuItem>
@@ -1175,7 +1308,7 @@ const AttendanceContent = () => {
                         fontFamily: "Plus Jakarta Sans, sans-serif",
                         fontWeight: 600,
                       }}>
-                      Section
+                      Daycare Center
                     </TableCell>
                     <TableCell
                       sx={{
@@ -1299,7 +1432,7 @@ const AttendanceContent = () => {
                   : dateFilter}
               </Typography>
               <Typography variant="body2">
-                <strong>Section:</strong>{" "}
+                <strong>Daycare Center:</strong>{" "}
                 {sectionFilter === "all"
                   ? "All Daycare Centers"
                   : sections.find((s) => s.id === sectionFilter)?.name ||

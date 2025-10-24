@@ -317,7 +317,7 @@ const StudentProgressReport = () => {
                   fontFamily: "Plus Jakarta Sans, sans-serif",
                   fontWeight: 600,
                 }}>
-                Section
+                Daycare Center
               </TableCell>
               <TableCell
                 sx={{
@@ -397,7 +397,7 @@ const StudentProgressReport = () => {
                     </Box>
                   </TableCell>
 
-                  {/* Section Column */}
+                  {/* Daycare Center Column */}
                   <TableCell>
                     {section ? (
                       <Chip
@@ -414,7 +414,7 @@ const StudentProgressReport = () => {
                       />
                     ) : (
                       <Typography variant="body2" color="text.secondary">
-                        No Section
+                        No Daycare Center
                       </Typography>
                     )}
                   </TableCell>
@@ -586,7 +586,7 @@ const StudentProgressReport = () => {
         <DialogContent sx={{ display: "flex", flexDirection: "column", p: 4 }}>
           {selectedStudent && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
-              {/* Learning Progress Section */}
+              {/* Learning Progress Daycare Center */}
               <Box sx={{ display: "flex", flexDirection: "column" }}>
                 <Box
                   sx={{

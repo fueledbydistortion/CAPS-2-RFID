@@ -224,7 +224,7 @@ const AssignmentDetailDialog = ({
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <School sx={{ mr: 1, color: '#4caf50', fontSize: 20 }} />
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#4caf50' }}>
-                      Section
+                      Daycare Center
                     </Typography>
                   </Box>
                   <Typography variant="body2" sx={{ fontWeight: 600 }}>

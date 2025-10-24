@@ -255,7 +255,7 @@ const ClassScheduleContent = () => {
 
   const getSectionName = (sectionId) => {
     const section = sections.find((s) => s.id === sectionId);
-    return section ? section.name : "Unknown Section";
+    return section ? section.name : "Unknown Daycare Center";
   };
 
   // Get schedules for the selected day
@@ -292,7 +292,7 @@ const ClassScheduleContent = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header Section */}
+      {/* Header Daycare Center */}
       <Box
         sx={{
           display: "flex",

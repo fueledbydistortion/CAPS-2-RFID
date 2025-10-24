@@ -224,7 +224,7 @@ const StudentProgressOverview = () => {
             type: "schedule",
             title: `Class: ${subjectName}`,
             time: `${schedule.timeIn} - ${schedule.timeOut}`,
-            description: `Section: ${sectionName}`,
+            description: `Daycare Center: ${sectionName}`,
             icon: <Schedule />,
           });
         });

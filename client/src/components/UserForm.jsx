@@ -25,6 +25,7 @@ import {
 import { Field, Form, Formik } from "formik";
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { getAllSections } from "../utils/sectionService";
 import { getAllUsers } from "../utils/userService";
 import { userFormSchema } from "../validation/schema";
 
@@ -46,12 +47,14 @@ const UserForm = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
+  const [allSections, setAllSections] = useState([]);
   const [rfidError, setRfidError] = useState("");
 
   // Load all users when form opens
   useEffect(() => {
     if (open) {
       loadAllUsers();
+      loadAllSections();
     }
   }, [open]);
 
@@ -63,6 +66,17 @@ const UserForm = ({
       }
     } catch (error) {
       console.error("Error loading users:", error);
+    }
+  };
+
+  const loadAllSections = async () => {
+    try {
+      const result = await getAllSections();
+      if (result.success) {
+        setAllSections(result.data);
+      }
+    } catch (error) {
+      console.error("Error loading sections:", error);
     }
   };
 
@@ -82,8 +96,19 @@ const UserForm = ({
     );
 
     if (existingUser) {
+      // Find which daycare center the existing user is assigned to
+      const assignedSection = allSections.find(
+        (section) =>
+          section.assignedStudents &&
+          section.assignedStudents.includes(existingUser.uid)
+      );
+
+      const daycareCenter = assignedSection
+        ? assignedSection.name
+        : "Unknown Daycare Center";
+
       setRfidError(
-        `RFID "${trimmedRfid}" is already registered to ${existingUser.firstName} ${existingUser.lastName}`
+        `RFID "${trimmedRfid}" is already registered to ${existingUser.firstName} ${existingUser.lastName} in ${daycareCenter}. Each RFID can only be registered to one parent across all daycare centers.`
       );
       return false;
     } else {

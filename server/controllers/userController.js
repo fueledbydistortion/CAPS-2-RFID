@@ -4,6 +4,73 @@ const {
   setDefaultPreferencesInternal,
 } = require("./notificationPreferencesController");
 
+// Helper function to check RFID uniqueness across all daycare centers
+const checkRFIDUniqueness = async (rfid, excludeUserId = null) => {
+  if (!rfid || rfid.trim() === "") {
+    return { isUnique: true, existingUser: null };
+  }
+
+  const trimmedRFID = rfid.trim();
+
+  try {
+    // Get all users from database
+    const snapshot = await admin.database().ref("users").once("value");
+    const users = [];
+
+    if (snapshot.exists()) {
+      snapshot.forEach((childSnapshot) => {
+        const userData = childSnapshot.val();
+        users.push({
+          uid: childSnapshot.key,
+          ...userData,
+        });
+      });
+    }
+
+    // Find user with the same RFID (excluding the current user if updating)
+    const existingUser = users.find(
+      (user) =>
+        user.childRFID === trimmedRFID &&
+        user.uid !== excludeUserId &&
+        user.role === "parent"
+    );
+
+    if (existingUser) {
+      // Get section information to determine which daycare center
+      const sectionsSnapshot = await admin
+        .database()
+        .ref("sections")
+        .once("value");
+      let daycareCenter = "Unknown";
+
+      if (sectionsSnapshot.exists()) {
+        sectionsSnapshot.forEach((sectionSnapshot) => {
+          const sectionData = sectionSnapshot.val();
+          if (
+            sectionData.assignedStudents &&
+            sectionData.assignedStudents.includes(existingUser.uid)
+          ) {
+            daycareCenter = sectionData.name || "Unknown";
+          }
+        });
+      }
+
+      return {
+        isUnique: false,
+        existingUser: {
+          ...existingUser,
+          daycareCenter: daycareCenter,
+        },
+      };
+    }
+
+    return { isUnique: true, existingUser: null };
+  } catch (error) {
+    console.error("Error checking RFID uniqueness:", error);
+    throw new Error("Failed to validate RFID uniqueness");
+  }
+};
+
 // Get all users
 const getAllUsers = async (req, res) => {
   try {
@@ -117,6 +184,26 @@ const createUser = async (req, res) => {
     const userData = req.body;
     const { uid, email, password, ...profileData } = userData;
 
+    // Validate RFID uniqueness for parent users
+    if (profileData.role === "parent" && profileData.childRFID) {
+      const rfidValidation = await checkRFIDUniqueness(profileData.childRFID);
+
+      if (!rfidValidation.isUnique) {
+        const existingUser = rfidValidation.existingUser;
+        return res.status(400).json({
+          success: false,
+          error: `RFID "${profileData.childRFID}" is already registered to ${existingUser.firstName} ${existingUser.lastName} in ${existingUser.daycareCenter}. Each RFID can only be registered to one parent across all daycare centers.`,
+          details: {
+            existingUser: {
+              name: `${existingUser.firstName} ${existingUser.lastName}`,
+              daycareCenter: existingUser.daycareCenter,
+              email: existingUser.email,
+            },
+          },
+        });
+      }
+    }
+
     // Create Firebase Auth user
     const userRecord = await admin.auth().createUser({
       uid: uid,
@@ -204,6 +291,26 @@ const updateUser = async (req, res) => {
   try {
     const { uid } = req.params;
     const updates = req.body;
+
+    // Validate RFID uniqueness for parent users if RFID is being updated
+    if (updates.childRFID) {
+      const rfidValidation = await checkRFIDUniqueness(updates.childRFID, uid);
+
+      if (!rfidValidation.isUnique) {
+        const existingUser = rfidValidation.existingUser;
+        return res.status(400).json({
+          success: false,
+          error: `RFID "${updates.childRFID}" is already registered to ${existingUser.firstName} ${existingUser.lastName} in ${existingUser.daycareCenter}. Each RFID can only be registered to one parent across all daycare centers.`,
+          details: {
+            existingUser: {
+              name: `${existingUser.firstName} ${existingUser.lastName}`,
+              daycareCenter: existingUser.daycareCenter,
+              email: existingUser.email,
+            },
+          },
+        });
+      }
+    }
 
     // Clean up updates - remove empty password field
     const cleanUpdates = { ...updates };
@@ -449,6 +556,20 @@ const bulkImportParents = async (req, res) => {
           );
           return found !== undefined && found !== null ? `${found}`.trim() : "";
         })();
+
+        // Validate RFID uniqueness for parent users
+        if (normalizedRFID) {
+          const rfidValidation = await checkRFIDUniqueness(normalizedRFID);
+
+          if (!rfidValidation.isUnique) {
+            const existingUser = rfidValidation.existingUser;
+            results.failed.push({
+              data: parentData,
+              error: `RFID "${normalizedRFID}" is already registered to ${existingUser.firstName} ${existingUser.lastName} in ${existingUser.daycareCenter}. Each RFID can only be registered to one parent across all daycare centers.`,
+            });
+            continue;
+          }
+        }
 
         // ⚠️ SECURITY WARNING: Storing plain text password - NOT RECOMMENDED for production
         // Prepare user profile data

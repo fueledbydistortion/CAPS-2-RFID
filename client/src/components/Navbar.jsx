@@ -280,7 +280,7 @@ function Navbar() {
                 </Button>
               ))}
 
-              <Button
+              {/* <Button
                 component={Link}
                 to="/login"
                 variant="outlined"
@@ -300,7 +300,7 @@ function Navbar() {
                   transition: "all 0.3s ease",
                 }}>
                 Login
-              </Button>
+              </Button> */}
 
               {/* <Button
                 component={Link}

@@ -73,7 +73,6 @@ Successfully implemented comprehensive server-side RFID validation to ensure RFI
 ```
 RFID "RFID123" is already registered to John Doe in Daycare Center K1. Each RFID can only be registered to one parent across all daycare centers.
 ```
-
 ## Technical Implementation Details
 
 ### Database Structure

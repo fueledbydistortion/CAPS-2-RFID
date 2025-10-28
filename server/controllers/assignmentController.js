@@ -542,7 +542,7 @@ const gradeAssignmentSubmission = async (req, res) => {
     const { submissionId } = req.params;
     const { grade, feedback, status } = req.body;
 
-    if (!grade && grade !== 0) {
+    if (grade === undefined || grade === null || grade === '') {
       return res.status(400).json({
         success: false,
         error: 'Grade is required'
@@ -561,9 +561,18 @@ const gradeAssignmentSubmission = async (req, res) => {
 
     const submission = submissionSnapshot.val();
 
+    // Validate that grade is a valid letter grade
+    const validGrades = ['A', 'B', 'C', 'D', 'F'];
+    if (!validGrades.includes(grade)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Grade must be A, B, C, D, or F'
+      });
+    }
+
     // Update submission with grade
     const updateData = {
-      grade: parseFloat(grade),
+      grade: grade,
       feedback: feedback || '',
       status: 'graded', // Always set to graded when grading
       gradedAt: new Date().toISOString(),
@@ -582,7 +591,7 @@ const gradeAssignmentSubmission = async (req, res) => {
       const assignmentSnapshot = await db.ref(`assignments/${submission.assignmentId}`).once('value');
       if (assignmentSnapshot.exists()) {
         const assignment = assignmentSnapshot.val();
-        const gradeEmoji = parseFloat(grade) >= 80 ? '🌟' : parseFloat(grade) >= 70 ? '👍' : '📝';
+        const gradeEmoji = grade === 'A' ? '🌟' : grade === 'B' ? '👍' : '📝';
         
         await createNotificationInternal({
           recipientId: submission.studentId,
@@ -595,7 +604,7 @@ const gradeAssignmentSubmission = async (req, res) => {
           metadata: {
             assignmentId: submission.assignmentId,
             submissionId,
-            grade: parseFloat(grade)
+            grade: grade
           },
           createdBy: req.user?.uid || 'system'
         });
@@ -702,8 +711,17 @@ const updateProgressForAssignmentGrade = async (studentId, assignmentId, grade) 
     
     if (!progressSnapshot.exists()) return;
 
-    // Calculate percentage based on grade (assuming grade is out of 100)
-    const percentage = Math.min(100, Math.max(0, grade));
+    // Convert letter grade to percentage for progress tracking
+    let percentage;
+    switch (grade) {
+      case 'A': percentage = 100; break;
+      case 'B': percentage = 85; break;
+      case 'C': percentage = 75; break;
+      case 'D': percentage = 65; break;
+      case 'F': percentage = 50; break;
+      default: percentage = 0;
+    }
+    
     const status = percentage >= 100 ? 'completed' : 
                   percentage >= 70 ? 'in_progress' : 'in_progress';
 

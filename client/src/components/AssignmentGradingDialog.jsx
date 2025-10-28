@@ -72,6 +72,7 @@ const AssignmentGradingDialog = ({
   });
   const [errors, setErrors] = useState({});
 
+
   useEffect(() => {
     if (open && assignment) {
       loadSubmissions();
@@ -124,7 +125,7 @@ const AssignmentGradingDialog = ({
   };
 
   const handleGradeSubmission = async (submissionId) => {
-    if (!gradeForm.grade) {
+    if (gradeForm.grade === undefined || gradeForm.grade === null || gradeForm.grade === '') {
       setErrors({ grade: 'Please select a grade' });
       return;
     }

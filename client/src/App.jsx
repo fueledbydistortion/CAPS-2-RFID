@@ -9,6 +9,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 // import Download from './pages/Download'
 import ChatWidget from "./components/ChatWidget";
 import Footer from "./components/Footer";
@@ -35,6 +36,7 @@ function AppContent() {
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
           {/* <Route path="/download" element={<Download />} /> */}
           <Route
             path="/dashboard/*"

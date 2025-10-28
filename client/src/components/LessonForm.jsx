@@ -43,9 +43,7 @@ import {
   validateFile,
   formatFileSize,
   getFileUrlFromAttachment,
-  deleteLessonFile,
-  MAX_FILE_SIZE_MB,
-  ALLOWED_FILE_EXTENSIONS
+  deleteLessonFile
 } from '../utils/fileService';
 import { lessonSchema } from '../validation/schema';
 
@@ -605,16 +603,14 @@ const LessonForm = ({
               <label htmlFor="file-upload" style={{ cursor: 'pointer' }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                   <CloudUpload sx={{ fontSize: 48, color: 'hsl(152, 65%, 28%)', opacity: 0.7 }} />
-                  <Typography variant="h6" sx={{ color: 'hsl(152, 65%, 28%)', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
+                  <Typography variant="h6" sx={{ color: 'hsl(152, 65%, 28%)', fontWeight: 600, fontFamily: 'Plus Jakarta Sans, sans-serif' , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
                     {isDragOver ? 'Drop files here' : 'Drag & drop files here'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     or click to browse files
                   </Typography>
-                  <Typography variant="caption" sx={{ color: '#666', textAlign: 'center', maxWidth: '400px', mt: 1 }}>
-                    <strong>Allowed:</strong> Images (JPG, PNG, GIF), Documents (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT), Archives (ZIP)
-                    <br />
-                    <strong>Max size:</strong> {MAX_FILE_SIZE_MB}MB per file
+                  <Typography variant="caption" color="primary" sx={{ fontWeight: 600 }}>
+                    Files will be uploaded to the server for better performance
                   </Typography>
                   <Button
                     variant="outlined"

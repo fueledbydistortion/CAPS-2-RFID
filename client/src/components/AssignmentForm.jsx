@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import { Field, Form, Formik } from "formik";
 import React, { useEffect, useState } from "react";
-import { uploadFile, MAX_FILE_SIZE_MB, ALLOWED_FILE_EXTENSIONS } from "../utils/fileService";
+import { uploadFile } from "../utils/fileService";
 import { assignmentSchema } from "../validation/schema";
 
 const AssignmentForm = ({
@@ -292,17 +292,12 @@ const AssignmentForm = ({
                     sx={{
                       mb: 2,
                       color: "hsl(152, 65%, 28%)",
+                      fontWeight: 600,
+                      fontFamily: "Plus Jakarta Sans, sans-serif",
                       fontFamily: "Plus Jakarta Sans, sans-serif",
                       fontWeight: 700,
                     }}>
                     Assignment Materials
-                  </Typography>
-
-                  {/* File restrictions info */}
-                  <Typography variant="caption" sx={{ color: '#666', display: 'block', mb: 1 }}>
-                    <strong>Allowed:</strong> Images (JPG, PNG, GIF), Documents (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT), Archives (ZIP)
-                    {' • '}
-                    <strong>Max size:</strong> {MAX_FILE_SIZE_MB}MB per file
                   </Typography>
 
                   {/* Upload Button */}

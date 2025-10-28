@@ -197,7 +197,7 @@ const AttendanceDialog = ({
           <Box>
             {/* Schedule Information */}
             <Box sx={{ mb: 3, p: 2, backgroundColor: 'rgba(31, 120, 80, 0.05)', borderRadius: 2 }}>
-              <Typography variant="h6" sx={{ color: 'hsl(152, 65%, 28%)', mb: 1 , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
+              <Typography variant="h6" sx={{ color: 'hsl(152, 65%, 28%)', fontWeight: 600, fontFamily: 'Plus Jakarta Sans, sans-serif', mb: 1 , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
                 Schedule Details
               </Typography>
               <Typography variant="body1">

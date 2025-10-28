@@ -131,11 +131,7 @@ const AssignmentCard = ({
                 color={isOverdue(assignment.dueDate) ? 'error' : 'default'}
                 size="small" 
               />
-              <Chip 
-                label={`${assignment.points} points`} 
-                color="primary" 
-                size="small" 
-              />
+              {/* Points chip removed per letter-only grading */}
             </Box>
 
             {/* Instructions */}
@@ -212,12 +208,12 @@ const AssignmentCard = ({
               )}
 
               {/* Grade Display */}
-              {submission.grade !== undefined && (
+              {submission.grade !== undefined && submission.grade !== null && submission.grade !== '' && (
                 <Box sx={{ mt: 2, p: 2, background: 'rgba(31, 120, 80, 0.05)', borderRadius: '8px' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Grade sx={{ color: 'hsl(152, 65%, 28%)' }} />
-                    <Typography variant="h6" sx={{ fontWeight: 600, fontFamily: 'Plus Jakarta Sans, sans-serif', color: 'hsl(152, 65%, 28%)' , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
-                      Grade: {submission.grade}/100
+                    <Typography variant="h6" sx={{ fontWeight: 600, fontFamily: 'Plus Jakarta Sans, sans-serif', color: 'hsl(152, 65%, 28%)' }}>
+                      Grade: {submission.grade?.toUpperCase()}
                     </Typography>
                   </Box>
                   {submission.feedback && (

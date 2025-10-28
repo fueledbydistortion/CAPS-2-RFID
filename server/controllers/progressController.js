@@ -1009,7 +1009,7 @@ const getProgressWithAssignments = async (req, res) => {
           completedAssignments: submissions.filter(s => s.status === 'graded').length,
           pendingAssignments: submissions.filter(s => s.status === 'submitted').length,
           averageGrade: submissions.length > 0 
-            ? Math.round(submissions.filter(s => s.grade !== undefined).reduce((sum, s) => sum + s.grade, 0) / submissions.filter(s => s.grade !== undefined).length)
+            ? submissions.filter(s => s.grade !== undefined && s.grade !== null && s.grade !== '').length
             : 0
         }
       }

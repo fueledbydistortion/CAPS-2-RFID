@@ -294,7 +294,18 @@ const ParentSectionContent = () => {
     setActiveTab(newValue);
   };
 
-  const getAssignmentStatus = (dueDate) => {
+  const getAssignmentStatus = (dueDate, assignment) => {
+    // If assignment has submissions and is graded, show completed status
+    if (assignment?.latestSubmission?.status === 'graded') {
+      return { status: "completed", color: "success", text: "Completed" };
+    }
+    
+    // If assignment has submissions but not graded yet
+    if (assignment?.latestSubmission?.status === 'submitted') {
+      return { status: "submitted", color: "info", text: "Submitted" };
+    }
+
+    // If no submission, check due date
     const now = new Date();
     const due = new Date(dueDate);
     const diffTime = due - now;
@@ -832,18 +843,12 @@ const ParentSectionContent = () => {
                       }}>
                       Status
                     </TableCell>
-                    <TableCell
-                      sx={{
-                        fontFamily: "Plus Jakarta Sans, sans-serif",
-                        fontWeight: 600,
-                      }}>
-                      Points
-                    </TableCell>
+                    {/* Points column removed per letter-only grading */}
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {filteredContent.assignments.map((assignment) => {
-                    const status = getAssignmentStatus(assignment.dueDate);
+                    const status = getAssignmentStatus(assignment.dueDate, assignment);
                     return (
                       <TableRow
                         key={assignment.id}
@@ -899,11 +904,7 @@ const ParentSectionContent = () => {
                             }
                           />
                         </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                            {assignment.points} pts
-                          </Typography>
-                        </TableCell>
+                        {/* Points cell removed per letter-only grading */}
                       </TableRow>
                     );
                   })}

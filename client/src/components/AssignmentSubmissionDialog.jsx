@@ -215,11 +215,7 @@ const AssignmentSubmissionDialog = ({
               )}
               
               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-                <Chip 
-                  label={`${assignment.points} points`} 
-                  color="primary" 
-                  size="small" 
-                />
+              {/* Points chip removed per letter-only grading */}
                 <Chip 
                   label={`Due: ${formatDate(assignment.dueDate)}`} 
                   color={new Date(assignment.dueDate) < new Date() ? 'error' : 'default'}

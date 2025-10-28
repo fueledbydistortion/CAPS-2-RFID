@@ -1247,14 +1247,7 @@ const SkillsContent = () => {
                                                 }}>
                                                 Description
                                               </TableCell>
-                                              <TableCell
-                                                sx={{
-                                                  fontFamily:
-                                                    "Plus Jakarta Sans, sans-serif",
-                                                  fontWeight: 600,
-                                                }}>
-                                                Points
-                                              </TableCell>
+                                              {/* Points column removed per letter-only grading */}
                                               <TableCell
                                                 sx={{
                                                   fontFamily:
@@ -1305,22 +1298,7 @@ const SkillsContent = () => {
                                                         "-"}
                                                     </Typography>
                                                   </TableCell>
-                                                  <TableCell>
-                                                    <Typography
-                                                      variant="caption"
-                                                      sx={{
-                                                        px: 1,
-                                                        py: 0.5,
-                                                        backgroundColor:
-                                                          "rgba(31, 120, 80, 0.1)",
-                                                        borderRadius: "4px",
-                                                        color:
-                                                          "hsl(152, 65%, 28%)",
-                                                        fontWeight: 500,
-                                                      }}>
-                                                      {assignment.points} pts
-                                                    </Typography>
-                                                  </TableCell>
+                                                  {/* Points cell removed per letter-only grading */}
                                                   <TableCell
                                                     sx={{
                                                       fontFamily:

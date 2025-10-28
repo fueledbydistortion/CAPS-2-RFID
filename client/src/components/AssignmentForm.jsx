@@ -40,7 +40,6 @@ const AssignmentForm = ({
   const initialValues = {
     title: assignmentData?.title || "",
     description: assignmentData?.description || "",
-    points: assignmentData?.points || 100,
     dueDate: assignmentData?.dueDate
       ? new Date(assignmentData.dueDate).toISOString().split("T")[0]
       : getMinDate(),
@@ -199,32 +198,7 @@ const AssignmentForm = ({
                   )}
                 </Field>
 
-                {/* Points */}
-                <Field name="points">
-                  {({ field, meta }) => (
-                    <TextField
-                      {...field}
-                      fullWidth
-                      label="Points"
-                      type="number"
-                      error={meta.touched && Boolean(meta.error)}
-                      helperText={meta.touched && meta.error}
-                      required
-                      inputProps={{ min: 1 }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "12px",
-                          "&:hover fieldset": {
-                            borderColor: "hsl(152, 65%, 28%)",
-                          },
-                          "&.Mui-focused fieldset": {
-                            borderColor: "hsl(152, 65%, 28%)",
-                          },
-                        },
-                      }}
-                    />
-                  )}
-                </Field>
+                {/* Points removed for letter-only grading */}
 
                 {/* Due Date */}
                 <Field name="dueDate">

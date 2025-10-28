@@ -1,6 +1,40 @@
 const { db } = require('../config/firebase-admin-config');
 const { createNotificationInternal } = require('./notificationController');
 
+// Simplified letter grade conversion system
+const LETTER_GRADES = {
+  'A': { min: 90, max: 100, gpa: 4.0 },
+  'B': { min: 80, max: 89, gpa: 3.0 },
+  'C': { min: 70, max: 79, gpa: 2.0 },
+  'D': { min: 60, max: 69, gpa: 1.0 },
+  'F': { min: 0, max: 59, gpa: 0.0 }
+};
+
+// Convert numeric grade to letter grade
+const convertToLetterGrade = (numericGrade) => {
+  const grade = Math.round(numericGrade);
+  for (const [letter, range] of Object.entries(LETTER_GRADES)) {
+    if (grade >= range.min && grade <= range.max) {
+      return letter;
+    }
+  }
+  return 'F'; // Default to F if no match
+};
+
+// Convert letter grade to numeric grade (for calculations)
+const convertToNumericGrade = (letterGrade) => {
+  const grade = LETTER_GRADES[letterGrade];
+  if (grade) {
+    return Math.round((grade.min + grade.max) / 2); // Return midpoint
+  }
+  return 0; // Default to 0 for invalid grades
+};
+
+// Validate letter grade
+const isValidLetterGrade = (grade) => {
+  return LETTER_GRADES.hasOwnProperty(grade);
+};
+
 // Get all assignments for a specific skill
 const getAssignmentsBySkill = async (req, res) => {
   try {
@@ -561,20 +595,21 @@ const gradeAssignmentSubmission = async (req, res) => {
 
     const submission = submissionSnapshot.val();
 
-    // Validate, coerce, and clamp grade
-    let numericGrade = Number(grade);
-    if (!Number.isFinite(numericGrade)) {
+    // Validate letter grade
+    if (!isValidLetterGrade(grade)) {
       return res.status(400).json({
         success: false,
-        error: 'Grade must be a finite number'
+        error: 'Invalid letter grade. Valid grades: A, B, C, D, F'
       });
     }
-    // Clamp to 0-100 range
-    numericGrade = Math.min(100, Math.max(0, numericGrade));
+
+    const letterGrade = grade;
+    const numericGrade = convertToNumericGrade(letterGrade);
 
     // Update submission with grade
     const updateData = {
-      grade: numericGrade,
+      grade: letterGrade,
+      numericGrade: numericGrade, // Keep numeric for calculations
       feedback: feedback || '',
       status: 'graded', // Always set to graded when grading
       gradedAt: new Date().toISOString(),
@@ -583,30 +618,33 @@ const gradeAssignmentSubmission = async (req, res) => {
 
     await submissionRef.update(updateData);
 
-    console.log(`Updated submission ${submissionId} with status: graded, grade: ${numericGrade}`);
+    console.log(`Updated submission ${submissionId} with status: graded, grade: ${letterGrade} (${numericGrade})`);
 
     // Update progress tracking
-    await updateProgressForAssignmentGrade(submission.studentId, submission.assignmentId, numericGrade);
+    await updateProgressForAssignmentGrade(submission.studentId, submission.assignmentId, letterGrade, numericGrade);
 
     // Notify student about the grade
     try {
       const assignmentSnapshot = await db.ref(`assignments/${submission.assignmentId}`).once('value');
       if (assignmentSnapshot.exists()) {
         const assignment = assignmentSnapshot.val();
-        const gradeEmoji = numericGrade >= 80 ? '🌟' : numericGrade >= 70 ? '👍' : '📝';
+        const gradeEmoji = letterGrade.startsWith('A') ? '🌟' : 
+                          letterGrade.startsWith('B') ? '👍' : 
+                          letterGrade.startsWith('C') ? '📝' : '📚';
         
         await createNotificationInternal({
           recipientId: submission.studentId,
           recipientRole: 'parent',
           type: 'assignment',
           title: `${gradeEmoji} Assignment Graded`,
-          message: `${assignment.title} - Grade: ${numericGrade}${feedback ? ` - ${feedback.substring(0, 50)}...` : ''}`,
+          message: `${assignment.title} - Grade: ${letterGrade}${feedback ? ` - ${feedback.substring(0, 50)}...` : ''}`,
           priority: 'normal',
           actionUrl: '/dashboard/parent-content',
           metadata: {
             assignmentId: submission.assignmentId,
             submissionId,
-            grade: numericGrade
+            grade: letterGrade,
+            numericGrade: numericGrade
           },
           createdBy: req.user?.uid || 'system'
         });
@@ -742,17 +780,27 @@ const updateProgressForAssignmentSubmission = async (studentId, assignmentId, as
 };
 
 // Helper function to update progress when assignment is graded
-const updateProgressForAssignmentGrade = async (studentId, assignmentId, grade) => {
+const updateProgressForAssignmentGrade = async (studentId, assignmentId, letterGrade, numericGrade) => {
   try {
     const progressRef = db.ref(`progress/${studentId}/${assignmentId}`);
     const progressSnapshot = await progressRef.once('value');
     
     if (!progressSnapshot.exists()) return;
 
-    // Calculate percentage based on grade (assuming grade is out of 100)
-    const percentage = Math.min(100, Math.max(0, grade));
-    const status = percentage >= 100 ? 'completed' : 
-                  percentage >= 70 ? 'in_progress' : 'in_progress';
+    // Calculate percentage based on numeric grade
+    const percentage = Math.min(100, Math.max(0, numericGrade));
+    
+    // Determine status based on letter grade
+    let status = 'in_progress';
+    if (letterGrade.startsWith('A') || letterGrade.startsWith('B')) {
+      status = 'completed';
+    } else if (letterGrade.startsWith('C')) {
+      status = 'completed'; // C is still passing
+    } else if (letterGrade.startsWith('D')) {
+      status = 'needs_improvement';
+    } else if (letterGrade === 'F') {
+      status = 'failed';
+    }
 
     await progressRef.update({
       percentage,
@@ -760,11 +808,12 @@ const updateProgressForAssignmentGrade = async (studentId, assignmentId, grade) 
       lastAccessed: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       assignmentGraded: true,
-      grade,
+      grade: letterGrade,
+      numericGrade: numericGrade,
       gradedAt: new Date().toISOString()
     });
 
-    console.log(`Updated progress for student ${studentId}, assignment ${assignmentId}: graded with ${grade}`);
+    console.log(`Updated progress for student ${studentId}, assignment ${assignmentId}: graded with ${letterGrade} (${numericGrade}) - status: ${status}`);
 
   } catch (error) {
     console.error('Error updating progress for assignment grade:', error);

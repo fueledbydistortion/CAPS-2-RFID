@@ -468,7 +468,7 @@ const SkillDetailContent = () => {
                       {assignment.description || 'No description'}
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      <Chip label={`Points: ${assignment.points}`} size="small" color="primary" variant="outlined" />
+                      {/* Points chip removed per letter-only grading */}
                       <Chip label={`Type: ${assignment.type}`} size="small" color="secondary" variant="outlined" />
                     </Box>
                   </CardContent>

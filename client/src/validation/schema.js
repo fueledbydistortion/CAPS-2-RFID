@@ -187,12 +187,7 @@ export const assignmentSchema = yup.object({
     .max(500, "Description must be less than 500 characters")
     .trim(),
 
-  points: yup
-    .number()
-    .required("Points are required")
-    .min(1, "Points must be at least 1")
-    .max(1000, "Points must be no more than 1000")
-    .integer("Points must be a whole number"),
+  // points removed for letter-only grading
 
   dueDate: yup.date().required("Due date is required"),
 

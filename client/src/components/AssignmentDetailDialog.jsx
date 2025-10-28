@@ -21,7 +21,8 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  ListItemSecondaryAction
+  ListItemSecondaryAction,
+  Paper
 } from '@mui/material';
 import { 
   Assignment,
@@ -103,7 +104,28 @@ const AssignmentDetailDialog = ({
     });
   };
 
-  const getAssignmentStatus = (dueDate) => {
+  const getAssignmentStatus = (dueDate, submission) => {
+    // If assignment is submitted and graded, show completed status
+    if (submission && submission.status === 'graded') {
+      return { 
+        status: 'completed', 
+        color: 'success', 
+        text: 'Completed',
+        icon: <CheckCircle />
+      };
+    }
+    
+    // If assignment is submitted but not graded yet
+    if (submission && submission.status === 'submitted') {
+      return { 
+        status: 'submitted', 
+        color: 'info', 
+        text: 'Submitted',
+        icon: <CheckCircle />
+      };
+    }
+
+    // If no submission, check due date
     const now = new Date();
     const due = new Date(dueDate);
     const diffTime = due - now;
@@ -142,7 +164,7 @@ const AssignmentDetailDialog = ({
 
   if (!assignment) return null;
 
-  const status = getAssignmentStatus(assignment.dueDate);
+  const status = getAssignmentStatus(assignment.dueDate, mySubmission);
 
   return (
     <>
@@ -196,25 +218,7 @@ const AssignmentDetailDialog = ({
 
             {/* Assignment Info Cards */}
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-              <Card sx={{ 
-                flex: '1 1 200px', 
-                minWidth: '200px',
-                background: 'rgba(31, 120, 80, 0.05)',
-                border: '1px solid rgba(31, 120, 80, 0.2)',
-                borderRadius: '12px'
-              }}>
-                <CardContent sx={{ p: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Grade sx={{ mr: 1, color: 'hsl(152, 65%, 28%)', fontSize: 20 }} />
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, color: 'hsl(152, 65%, 28%)' }}>
-                      Points
-                    </Typography>
-                  </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Plus Jakarta Sans, sans-serif', color: 'hsl(152, 65%, 28%)' , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
-                    {assignment.points}
-                  </Typography>
-                </CardContent>
-              </Card>
+              {/* Points card removed per letter-only grading */}
 
               <Card sx={{ 
                 flex: '1 1 200px', 
@@ -496,11 +500,17 @@ const AssignmentDetailDialog = ({
                             Grade:
                           </Typography>
                           <Chip 
-                            label={`${mySubmission.grade}%`} 
+                            label={mySubmission.grade?.toUpperCase()} 
                             size="medium" 
-                            color={mySubmission.grade >= 80 ? 'success' : mySubmission.grade >= 70 ? 'info' : 'warning'} 
+                            color={mySubmission.grade === 'A' ? 'success' : 
+                                   mySubmission.grade === 'B' ? 'primary' : 
+                                   mySubmission.grade === 'C' ? 'warning' : 'error'} 
                             variant="filled"
-                            sx={{ fontWeight: 600 }}
+                            sx={{ 
+                              fontWeight: 600, 
+                              fontSize: '1rem',
+                              color: (mySubmission.grade === 'A' || mySubmission.grade === 'B') ? 'white' : 'white'
+                            }}
                           />
                         </Box>
                       )}

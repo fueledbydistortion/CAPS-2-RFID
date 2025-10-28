@@ -72,29 +72,53 @@ const AssignmentGradingDialog = ({
   });
   const [errors, setErrors] = useState({});
 
-  // Helpers to map between letter and numeric grades
-  const letterToNumeric = (letter) => {
-    switch (letter) {
-      case 'A': return 95;
-      case 'B': return 85;
-      case 'C': return 75;
-      case 'D': return 65;
-      case 'F': return 50;
-      default: {
-        const n = Number(letter);
-        return Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0;
+  // Simplified letter grade system matching backend
+  const LETTER_GRADES = ['A', 'B', 'C', 'D', 'F'];
+
+  // Normalize any incoming grade (letter or numeric) to a letter grade
+  const toLetter = (raw) => {
+    if (raw === undefined || raw === null) return '';
+    if (typeof raw === 'string') {
+      const s = raw.trim().toUpperCase();
+      // If string is numeric, fall through to numeric mapping
+      if (LETTER_GRADES.includes(s)) return s;
+      const n = Number(s);
+      if (Number.isFinite(n)) {
+        if (n >= 90) return 'A';
+        if (n >= 80) return 'B';
+        if (n >= 70) return 'C';
+        if (n >= 60) return 'D';
+        return 'F';
       }
+      return '';
     }
+    const n = Number(raw);
+    if (Number.isFinite(n)) {
+      if (n >= 90) return 'A';
+      if (n >= 80) return 'B';
+      if (n >= 70) return 'C';
+      if (n >= 60) return 'D';
+      return 'F';
+    }
+    return '';
   };
 
-  const numericToLetter = (num) => {
-    const n = Number(num);
-    if (!Number.isFinite(n)) return '';
-    if (n >= 90) return 'A';
-    if (n >= 80) return 'B';
-    if (n >= 70) return 'C';
-    if (n >= 60) return 'D';
-    return 'F';
+  const getGradeColor = (grade) => {
+    const letter = toLetter(grade);
+    if (letter === 'A') return 'success';
+    if (letter === 'B') return 'primary';
+    if (letter === 'C') return 'warning';
+    if (letter === 'D') return 'error';
+    return 'error'; // F or invalid
+  };
+
+  const getGradeEmoji = (grade) => {
+    const letter = toLetter(grade);
+    if (letter === 'A') return '🌟';
+    if (letter === 'B') return '👍';
+    if (letter === 'C') return '📝';
+    if (letter === 'D') return '📚';
+    return '❌'; // F or invalid
   };
 
   useEffect(() => {
@@ -142,9 +166,7 @@ const AssignmentGradingDialog = ({
   const handleViewSubmission = (submission) => {
     setSelectedSubmission(submission);
     setGradeForm({
-      grade: submission.grade !== undefined && submission.grade !== null && submission.grade !== ''
-        ? numericToLetter(submission.grade)
-        : '',
+      grade: submission.grade || '',
       feedback: submission.feedback || '',
       status: 'graded' // Always set to graded when grading
     });
@@ -158,11 +180,8 @@ const AssignmentGradingDialog = ({
 
     setGrading(prev => ({ ...prev, [submissionId]: true }));
     try {
-      const numericGrade = letterToNumeric(gradeForm.grade);
-      console.log('Converting grade:', { original: gradeForm.grade, numeric: numericGrade, type: typeof numericGrade });
-      const payload = { ...gradeForm, grade: numericGrade };
-      console.log('Grading submission with data:', { submissionId, payload });
-      const result = await gradeAssignmentSubmission(submissionId, payload);
+      console.log('Grading submission with data:', { submissionId, payload: gradeForm });
+      const result = await gradeAssignmentSubmission(submissionId, gradeForm);
       if (result.success) {
         // Update local submissions
         setSubmissions(prev => prev.map(sub => 
@@ -207,19 +226,10 @@ const AssignmentGradingDialog = ({
     }
   };
 
-  const getGradeColor = (grade) => {
-    if (grade === 'A') return 'success';
-    if (grade === 'B') return 'info';
-    if (grade === 'C') return 'warning';
-    if (grade === 'D') return 'error';
-    if (grade === 'F') return 'error';
-    return 'default';
-  };
 
   const renderGradeChip = (grade) => {
-    const isNumeric = typeof grade === 'number' || (typeof grade === 'string' && grade !== '' && !isNaN(Number(grade)));
-    const numeric = isNumeric ? Number(grade) : letterToNumeric(grade);
-    const letter = isNumeric ? numericToLetter(numeric) : grade;
+    const letter = toLetter(grade);
+    if (!letter) return null;
 
     const colorMap = {
       'A': '#4caf50',
@@ -229,18 +239,23 @@ const AssignmentGradingDialog = ({
       'F': '#f44336'
     };
 
-    const label = Number.isFinite(numeric) ? `${letter} (${numeric}%)` : String(grade);
+    const emoji = getGradeEmoji(letter);
+    const label = `${emoji} ${letter.toUpperCase()}`;
+
+    // Determine text color based on background color
+    const isGreenBackground = letter === 'A' || letter === 'B';
+    const textColor = isGreenBackground ? 'white' : 'white';
 
     return (
       <Chip
         label={label}
         sx={{
           bgcolor: colorMap[letter] || '#9e9e9e',
-          color: 'white',
+          color: textColor,
           fontWeight: 'bold',
-          fontSize: '1rem',
+          fontSize: '0.9rem',
           height: 32,
-          minWidth: 50
+          minWidth: 60
         }}
       />
     );
@@ -292,11 +307,6 @@ const AssignmentGradingDialog = ({
           </Typography>
           
           <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 3 }}>
-            <Chip 
-              label={`${assignment.points} points`} 
-              color="primary" 
-              size="small" 
-            />
             <Chip 
               label={`Due: ${formatDate(assignment.dueDate)}`} 
               color="default" 
@@ -389,10 +399,11 @@ const AssignmentGradingDialog = ({
                       </TableCell>
                       <TableCell>
                         <Chip 
-                          label={submission.status} 
+                          label={submission.status?.charAt(0).toUpperCase() + submission.status?.slice(1).toLowerCase()} 
                           size="small" 
                           color={getStatusColor(submission.status)} 
                           variant="filled"
+                          sx={{ color: 'white' }}
                         />
                       </TableCell>
                       <TableCell>

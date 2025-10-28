@@ -6,8 +6,7 @@ const LETTER_GRADES = {
   'A': { min: 90, max: 100, gpa: 4.0 },
   'B': { min: 80, max: 89, gpa: 3.0 },
   'C': { min: 70, max: 79, gpa: 2.0 },
-  'D': { min: 60, max: 69, gpa: 1.0 },
-  'F': { min: 0, max: 59, gpa: 0.0 }
+  'D': { min: 60, max: 69, gpa: 1.0 }
 };
 
 // Convert numeric grade to letter grade
@@ -599,7 +598,7 @@ const gradeAssignmentSubmission = async (req, res) => {
     if (!isValidLetterGrade(grade)) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid letter grade. Valid grades: A, B, C, D, F'
+        error: 'Invalid letter grade. Valid grades: A, B, C, D'
       });
     }
 
@@ -798,8 +797,6 @@ const updateProgressForAssignmentGrade = async (studentId, assignmentId, letterG
       status = 'completed'; // C is still passing
     } else if (letterGrade.startsWith('D')) {
       status = 'needs_improvement';
-    } else if (letterGrade === 'F') {
-      status = 'failed';
     }
 
     await progressRef.update({

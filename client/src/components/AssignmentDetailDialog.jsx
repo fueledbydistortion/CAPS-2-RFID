@@ -504,12 +504,13 @@ const AssignmentDetailDialog = ({
                             size="medium" 
                             color={mySubmission.grade === 'A' ? 'success' : 
                                    mySubmission.grade === 'B' ? 'primary' : 
-                                   mySubmission.grade === 'C' ? 'warning' : 'error'} 
+                                   mySubmission.grade === 'C' ? 'warning' : 
+                                   mySubmission.grade === 'D' ? 'error' : 'default'} 
                             variant="filled"
                             sx={{ 
                               fontWeight: 600, 
                               fontSize: '1rem',
-                              color: (mySubmission.grade === 'A' || mySubmission.grade === 'B') ? 'white' : 'white'
+                              color: 'white'
                             }}
                           />
                         </Box>

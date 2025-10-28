@@ -73,7 +73,7 @@ const AssignmentGradingDialog = ({
   const [errors, setErrors] = useState({});
 
   // Simplified letter grade system matching backend
-  const LETTER_GRADES = ['A', 'B', 'C', 'D', 'F'];
+  const LETTER_GRADES = ['A', 'B', 'C', 'D'];
 
   // Normalize any incoming grade (letter or numeric) to a letter grade
   const toLetter = (raw) => {
@@ -88,7 +88,7 @@ const AssignmentGradingDialog = ({
         if (n >= 80) return 'B';
         if (n >= 70) return 'C';
         if (n >= 60) return 'D';
-        return 'F';
+        return 'D'; // Default to D for any grade below 60
       }
       return '';
     }
@@ -118,7 +118,7 @@ const AssignmentGradingDialog = ({
     if (letter === 'B') return '👍';
     if (letter === 'C') return '📝';
     if (letter === 'D') return '📚';
-    return '❌'; // F or invalid
+    return '📚'; // Default to D emoji for any invalid grade
   };
 
   useEffect(() => {
@@ -235,8 +235,7 @@ const AssignmentGradingDialog = ({
       'A': '#4caf50',
       'B': 'hsl(145, 60%, 40%)',
       'C': '#ff9800',
-      'D': '#ff5722',
-      'F': '#f44336'
+      'D': '#ff5722'
     };
 
     const emoji = getGradeEmoji(letter);
@@ -538,7 +537,6 @@ const AssignmentGradingDialog = ({
                   <MenuItem value="B">B - Good</MenuItem>
                   <MenuItem value="C">C - Satisfactory</MenuItem>
                   <MenuItem value="D">D - Needs Improvement</MenuItem>
-                  <MenuItem value="F">F - Fail</MenuItem>
                 </Select>
                 {errors.grade && (
                   <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>

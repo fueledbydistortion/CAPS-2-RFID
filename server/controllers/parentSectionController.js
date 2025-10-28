@@ -233,6 +233,8 @@ const getParentSectionContent = async (req, res) => {
 			uniqueAssignments.map((assignment) => assignment.id).filter(Boolean)
 		);
 
+		console.log(`Target assignment IDs: ${Array.from(targetAssignmentIds).join(', ')}`);
+
 		if (uniqueAssignments.length > 0) {
 			try {
 				const submissionsByAssignment = new Map();
@@ -240,7 +242,7 @@ const getParentSectionContent = async (req, res) => {
 					.ref("assignmentSubmissions")
 					.once("value");
 
-				const registerSubmission = (
+				registerSubmission = (
 					rawSubmission,
 					fallbackAssignmentId,
 					fallbackId
@@ -249,7 +251,10 @@ const getParentSectionContent = async (req, res) => {
 					const assignmentId =
 						rawSubmission.assignmentId || fallbackAssignmentId || null;
 
+					console.log(`Processing submission ${fallbackId} with assignmentId ${assignmentId}`);
+
 					if (!assignmentId || !targetAssignmentIds.has(assignmentId)) {
+						console.log(`AssignmentId ${assignmentId} not in target`);
 						return;
 					}
 
@@ -267,15 +272,22 @@ const getParentSectionContent = async (req, res) => {
 						rawSubmission.parentUID,
 					];
 
+					console.log(`Owner candidates: ${ownerCandidates.filter(Boolean).join(', ')}`);
+					console.log(`Associated student IDs: ${Array.from(associatedStudentIds).join(', ')}`);
+
 					const matchedOwner = ownerCandidates.some((candidate) => {
 						if (!candidate) return false;
 						const normalized = String(candidate).trim();
 						return normalized && associatedStudentIds.has(normalized);
 					});
 
+					console.log(`Matched owner for submission ${submissionId}: ${matchedOwner}`);
+
 					if (!matchedOwner) {
 						return;
 					}
+
+					console.log(`Registering submission ${submissionId} for ${assignmentId}`);
 
 					const submissionId = rawSubmission.id || fallbackId;
 					const normalizedSubmission = {

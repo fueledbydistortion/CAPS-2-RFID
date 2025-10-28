@@ -561,18 +561,20 @@ const gradeAssignmentSubmission = async (req, res) => {
 
     const submission = submissionSnapshot.val();
 
-    // Validate that grade is a valid letter grade
-    const validGrades = ['A', 'B', 'C', 'D', 'F'];
-    if (!validGrades.includes(grade)) {
+    // Validate, coerce, and clamp grade
+    let numericGrade = Number(grade);
+    if (!Number.isFinite(numericGrade)) {
       return res.status(400).json({
         success: false,
-        error: 'Grade must be A, B, C, D, or F'
+        error: 'Grade must be a finite number'
       });
     }
+    // Clamp to 0-100 range
+    numericGrade = Math.min(100, Math.max(0, numericGrade));
 
     // Update submission with grade
     const updateData = {
-      grade: grade,
+      grade: numericGrade,
       feedback: feedback || '',
       status: 'graded', // Always set to graded when grading
       gradedAt: new Date().toISOString(),
@@ -581,30 +583,30 @@ const gradeAssignmentSubmission = async (req, res) => {
 
     await submissionRef.update(updateData);
 
-    console.log(`Updated submission ${submissionId} with status: graded, grade: ${grade}`);
+    console.log(`Updated submission ${submissionId} with status: graded, grade: ${numericGrade}`);
 
     // Update progress tracking
-    await updateProgressForAssignmentGrade(submission.studentId, submission.assignmentId, grade);
+    await updateProgressForAssignmentGrade(submission.studentId, submission.assignmentId, numericGrade);
 
     // Notify student about the grade
     try {
       const assignmentSnapshot = await db.ref(`assignments/${submission.assignmentId}`).once('value');
       if (assignmentSnapshot.exists()) {
         const assignment = assignmentSnapshot.val();
-        const gradeEmoji = grade === 'A' ? '🌟' : grade === 'B' ? '👍' : '📝';
+        const gradeEmoji = numericGrade >= 80 ? '🌟' : numericGrade >= 70 ? '👍' : '📝';
         
         await createNotificationInternal({
           recipientId: submission.studentId,
           recipientRole: 'parent',
           type: 'assignment',
           title: `${gradeEmoji} Assignment Graded`,
-          message: `${assignment.title} - Grade: ${grade}${feedback ? ` - ${feedback.substring(0, 50)}...` : ''}`,
+          message: `${assignment.title} - Grade: ${numericGrade}${feedback ? ` - ${feedback.substring(0, 50)}...` : ''}`,
           priority: 'normal',
           actionUrl: '/dashboard/parent-content',
           metadata: {
             assignmentId: submission.assignmentId,
             submissionId,
-            grade: grade
+            grade: numericGrade
           },
           createdBy: req.user?.uid || 'system'
         });
@@ -711,17 +713,8 @@ const updateProgressForAssignmentGrade = async (studentId, assignmentId, grade) 
     
     if (!progressSnapshot.exists()) return;
 
-    // Convert letter grade to percentage for progress tracking
-    let percentage;
-    switch (grade) {
-      case 'A': percentage = 100; break;
-      case 'B': percentage = 85; break;
-      case 'C': percentage = 75; break;
-      case 'D': percentage = 65; break;
-      case 'F': percentage = 50; break;
-      default: percentage = 0;
-    }
-    
+    // Calculate percentage based on grade (assuming grade is out of 100)
+    const percentage = Math.min(100, Math.max(0, grade));
     const status = percentage >= 100 ? 'completed' : 
                   percentage >= 70 ? 'in_progress' : 'in_progress';
 

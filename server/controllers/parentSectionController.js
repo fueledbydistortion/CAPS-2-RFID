@@ -268,8 +268,7 @@ const getParentSectionContent = async (req, res) => {
 								if (filteredSubmissions.length > 0) {
 									filteredSubmissions.sort(
 										(a, b) =>
-											getSubmissionTimestamp(b) -
-											getSubmissionTimestamp(a)
+											getSubmissionTimestamp(b) - getSubmissionTimestamp(a)
 									);
 									submissionsByAssignment.set(
 										assignment.id,

@@ -259,6 +259,22 @@ export const getStudentSubmissions = async (studentId) => {
   }
 };
 
+// Get authenticated parent's submission for a specific assignment
+export const getMySubmissionForAssignment = async (assignmentId) => {
+  try {
+    const response = await apiRequest(`/assignments/${assignmentId}/my-submission`);
+    return {
+      success: true,
+      data: response.data
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
 // Real-time subscription simulation (polling-based)
 let pollingInterval = null;
 let subscribers = [];

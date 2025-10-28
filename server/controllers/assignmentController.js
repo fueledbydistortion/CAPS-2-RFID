@@ -669,6 +669,42 @@ const getStudentSubmissions = async (req, res) => {
   }
 };
 
+// Get the authenticated parent's submission for a specific assignment
+const getMySubmissionForAssignment = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+    const studentId = req.user?.uid;
+
+    if (!studentId) {
+      return res.status(401).json({ success: false, error: 'User authentication required' });
+    }
+
+    // Query submissions by assignmentId, then filter by studentId
+    const submissionsSnapshot = await db
+      .ref('assignmentSubmissions')
+      .orderByChild('assignmentId')
+      .equalTo(assignmentId)
+      .once('value');
+
+    if (!submissionsSnapshot.exists()) {
+      return res.json({ success: true, data: null });
+    }
+
+    let mySubmission = null;
+    submissionsSnapshot.forEach((childSnapshot) => {
+      const submission = childSnapshot.val();
+      if (submission.studentId === studentId && !mySubmission) {
+        mySubmission = { id: childSnapshot.key, ...submission };
+      }
+    });
+
+    return res.json({ success: true, data: mySubmission });
+  } catch (error) {
+    console.error('Error getting my submission for assignment:', error);
+    return res.status(500).json({ success: false, error: 'Failed to get submission' });
+  }
+};
+
 // Helper function to update progress when assignment is submitted
 const updateProgressForAssignmentSubmission = async (studentId, assignmentId, assignment) => {
   try {
@@ -747,5 +783,6 @@ module.exports = {
   submitAssignment,
   getAssignmentSubmissions,
   gradeAssignmentSubmission,
-  getStudentSubmissions
+  getStudentSubmissions,
+  getMySubmissionForAssignment
 };

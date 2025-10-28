@@ -12,7 +12,8 @@ const {
   submitAssignment,
   getAssignmentSubmissions,
   gradeAssignmentSubmission,
-  getStudentSubmissions
+  getStudentSubmissions,
+  getMySubmissionForAssignment
 } = require('../controllers/assignmentController');
 const { authenticateToken, authorizeParent, authorizeTeacher } = require('../middleware/auth');
 
@@ -52,5 +53,8 @@ router.put('/submissions/:submissionId/grade', authenticateToken, authorizeTeach
 
 // GET /api/assignments/student/:studentId/submissions - Get student's submissions
 router.get('/student/:studentId/submissions', authenticateToken, authorizeTeacher, getStudentSubmissions);
+
+// GET /api/assignments/:assignmentId/my-submission - Get authenticated parent's submission for this assignment
+router.get('/:assignmentId/my-submission', authenticateToken, authorizeParent, getMySubmissionForAssignment);
 
 module.exports = router;

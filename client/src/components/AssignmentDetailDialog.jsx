@@ -39,7 +39,7 @@ import {
   Delete
 } from '@mui/icons-material';
 import AssignmentSubmissionDialog from './AssignmentSubmissionDialog';
-import { getStudentSubmissions } from '../utils/assignmentService';
+import { getMySubmissionForAssignment } from '../utils/assignmentService';
 import { useAuth } from '../contexts/AuthContext';
 
 const AssignmentDetailDialog = ({ 
@@ -63,14 +63,11 @@ const AssignmentDetailDialog = ({
 
   const loadMySubmission = async () => {
     if (!assignment || !userProfile) return;
-    
     setLoadingSubmission(true);
     try {
-      const result = await getStudentSubmissions(userProfile.uid);
+      const result = await getMySubmissionForAssignment(assignment.id);
       if (result.success) {
-        // Find submission for this specific assignment
-        const submission = result.data.find(sub => sub.assignmentId === assignment.id);
-        setMySubmission(submission || null);
+        setMySubmission(result.data || null);
       }
     } catch (error) {
       console.error('Error loading submission:', error);

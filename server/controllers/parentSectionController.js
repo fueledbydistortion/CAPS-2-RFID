@@ -71,7 +71,6 @@ const getParentSectionContent = async (req, res) => {
 		}
 
 		// Find sections where this parent's child is assigned
-		// In this system, the parent's child is represented by the parent's uid in assignedStudents
 		const sectionsSnapshot = await db.ref("sections").once("value");
 		const sections = [];
 
@@ -190,8 +189,6 @@ const getParentSectionContent = async (req, res) => {
 				const submissionsByAssignment = new Map();
 				const submissionsSnapshot = await db
 					.ref("assignmentSubmissions")
-					.orderByChild("studentId")
-					.equalTo(parentId)
 					.once("value");
 
 				if (submissionsSnapshot.exists()) {
@@ -201,7 +198,10 @@ const getParentSectionContent = async (req, res) => {
 							...childSnapshot.val(),
 						};
 
-						if (!submission.assignmentId) {
+						if (
+							!submission.assignmentId ||
+							submission.studentId !== parentId
+						) {
 							return;
 						}
 
@@ -229,62 +229,6 @@ const getParentSectionContent = async (req, res) => {
 					});
 				}
 
-				// Fallback: ensure each assignment has the parent's submissions even if the global query missed them
-				const assignmentsNeedingFallback = uniqueAssignments.filter(
-					(assignment) => !submissionsByAssignment.has(assignment.id)
-				);
-
-				if (assignmentsNeedingFallback.length > 0) {
-					await Promise.all(
-						assignmentsNeedingFallback.map(async (assignment) => {
-							try {
-								const fallbackSnapshot = await db
-									.ref("assignmentSubmissions")
-									.orderByChild("assignmentId")
-									.equalTo(assignment.id)
-									.once("value");
-
-								if (!fallbackSnapshot.exists()) {
-									return;
-								}
-
-								const filteredSubmissions = [];
-								fallbackSnapshot.forEach((childSnapshot) => {
-									const submission = childSnapshot.val();
-									if (submission?.studentId !== parentId) {
-										return;
-									}
-
-									filteredSubmissions.push({
-										id: childSnapshot.key,
-										...submission,
-										attachments: normalizeAttachments(
-											submission.attachments,
-											`${assignment.id}_${childSnapshot.key}`
-										),
-									});
-								});
-
-								if (filteredSubmissions.length > 0) {
-									filteredSubmissions.sort(
-										(a, b) =>
-											getSubmissionTimestamp(b) - getSubmissionTimestamp(a)
-									);
-									submissionsByAssignment.set(
-										assignment.id,
-										filteredSubmissions
-									);
-								}
-							} catch (assignmentError) {
-								console.error(
-									`Fallback submission lookup failed for assignment ${assignment.id}:`,
-									assignmentError
-								);
-							}
-						})
-					);
-				}
-
 				uniqueAssignments = uniqueAssignments.map((assignment) => {
 					const submissions = submissionsByAssignment.get(assignment.id) || [];
 					return {
@@ -302,6 +246,15 @@ const getParentSectionContent = async (req, res) => {
 					"Error attaching assignment submissions:",
 					submissionError
 				);
+				uniqueAssignments = uniqueAssignments.map((assignment) => ({
+					...assignment,
+					attachments: normalizeAttachments(
+						assignment.attachments,
+						assignment.id
+					),
+					submissions: [],
+					latestSubmission: null,
+				}));
 			}
 		}
 

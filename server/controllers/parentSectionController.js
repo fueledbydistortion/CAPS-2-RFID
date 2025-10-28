@@ -70,6 +70,50 @@ const getParentSectionContent = async (req, res) => {
 			});
 		}
 
+		// Parents may have one or more child identifiers stored in different shapes.
+		// Collect every ID we should treat as belonging to this parent when
+		// looking up submissions.
+		const associatedStudentIds = new Set([String(parentId)]);
+		const addAssociatedId = (value) => {
+			if (!value) return;
+			const id = String(value).trim();
+			if (id) {
+				associatedStudentIds.add(id);
+			}
+		};
+
+		if (Array.isArray(parent.children)) {
+			parent.children.forEach((child) => {
+				if (!child) return;
+				if (typeof child === "string") {
+					addAssociatedId(child);
+				} else if (typeof child === "object") {
+					addAssociatedId(child.uid);
+					addAssociatedId(child.id);
+					addAssociatedId(child.childId);
+				}
+			});
+		} else if (parent.children && typeof parent.children === "object") {
+			Object.values(parent.children).forEach((child) => {
+				if (!child) return;
+				if (typeof child === "string") {
+					addAssociatedId(child);
+				} else if (typeof child === "object") {
+					addAssociatedId(child.uid);
+					addAssociatedId(child.id);
+					addAssociatedId(child.childId);
+				}
+			});
+		}
+
+		addAssociatedId(parent.childUid);
+		addAssociatedId(parent.childUID);
+		addAssociatedId(parent.childId);
+		addAssociatedId(parent.childID);
+		if (Array.isArray(parent.childIds)) {
+			parent.childIds.forEach(addAssociatedId);
+		}
+
 		// Find sections where this parent's child is assigned
 		const sectionsSnapshot = await db.ref("sections").once("value");
 		const sections = [];
@@ -183,6 +227,9 @@ const getParentSectionContent = async (req, res) => {
 		const uniqueSkills = Array.from(aggregatedSkills.values());
 		const uniqueModules = Array.from(moduleMap.values());
 		let uniqueAssignments = Array.from(assignmentMap.values());
+		const targetAssignmentIds = new Set(
+			uniqueAssignments.map((assignment) => assignment.id).filter(Boolean)
+		);
 
 		if (uniqueAssignments.length > 0) {
 			try {
@@ -198,7 +245,29 @@ const getParentSectionContent = async (req, res) => {
 							...childSnapshot.val(),
 						};
 
-						if (!submission.assignmentId || submission.studentId !== parentId) {
+						const submissionAssignmentId = submission.assignmentId;
+
+						if (
+							!submissionAssignmentId ||
+							!targetAssignmentIds.has(submissionAssignmentId)
+						) {
+							return;
+						}
+
+						const ownerCandidates = [
+							submission.studentId,
+							submission.parentId,
+							submission.childId,
+							submission.childUID,
+							submission.childUid,
+						];
+						const matchedOwner = ownerCandidates.some((candidate) => {
+							if (!candidate) return false;
+							const normalized = String(candidate).trim();
+							return normalized && associatedStudentIds.has(normalized);
+						});
+
+						if (!matchedOwner) {
 							return;
 						}
 
@@ -218,6 +287,14 @@ const getParentSectionContent = async (req, res) => {
 							.get(submission.assignmentId)
 							.push(normalizedSubmission);
 					});
+
+					const matchedCount = Array.from(submissionsByAssignment.values()).reduce(
+						(count, list) => count + list.length,
+						0
+					);
+					console.log(
+						`[ParentSection] Matched ${matchedCount} submissions for parent ${parentId}`
+					);
 
 					submissionsByAssignment.forEach((submissions) => {
 						submissions.sort(

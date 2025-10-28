@@ -374,11 +374,22 @@ const getAssignmentsDueSoon = async (req, res) => {
 	}
 };
 
-// Submit assignment (for parents/students)
+	// Submit assignment (for parents/students)
 const submitAssignment = async (req, res) => {
 	try {
 		const { assignmentId, submissionText, attachments, submittedAt } = req.body;
 		const studentId = req.user?.uid; // Assuming user ID is available from auth middleware
+
+		console.log("🔍 submitAssignment called with:", {
+			assignmentId,
+			studentId,
+			hasSubmissionText: !!submissionText,
+			submissionTextLength: submissionText?.length || 0,
+			attachmentsReceived: attachments,
+			attachmentsType: typeof attachments,
+			attachmentsIsArray: Array.isArray(attachments),
+			attachmentsCount: Array.isArray(attachments) ? attachments.length : 0,
+		});
 
 		if (!assignmentId) {
 			return res.status(400).json({
@@ -407,12 +418,15 @@ const submitAssignment = async (req, res) => {
 
 		const assignment = assignmentSnapshot.val();
 
+		// Ensure attachments is an array
+		const cleanAttachments = Array.isArray(attachments) ? attachments : [];
+
 		// Create submission data
 		const submissionData = {
 			assignmentId,
 			studentId,
 			submissionText: submissionText || "",
-			attachments: attachments || [],
+			attachments: cleanAttachments,
 			submittedAt: submittedAt || new Date().toISOString(),
 			status: "submitted",
 			createdAt: new Date().toISOString(),
@@ -422,9 +436,9 @@ const submitAssignment = async (req, res) => {
 		console.log("🔍 Creating submission with data:", {
 			assignmentId,
 			studentId,
-			attachmentCount: (attachments || []).length,
+			attachmentCount: cleanAttachments.length,
 			hasText: !!(submissionText || "").trim(),
-			attachments: attachments,
+			submissionData: submissionData,
 		});
 
 		// Save submission
@@ -432,14 +446,14 @@ const submitAssignment = async (req, res) => {
 		await submissionRef.set(submissionData);
 
 		console.log("✅ Submission saved with ID:", submissionRef.key);
-		console.log("✅ Full submission data saved:", submissionData);
+		console.log("✅ Full submission data saved:", JSON.stringify(submissionData, null, 2));
 
 		// Verify the submission was saved by reading it back
 		const verifySnapshot = await submissionRef.once("value");
 		console.log("✅ Verified submission exists:", verifySnapshot.exists());
-		console.log("✅ Verified submission data:", verifySnapshot.val());
-
-		// Update progress tracking
+		const verifiedData = verifySnapshot.val();
+		console.log("✅ Verified submission data:", JSON.stringify(verifiedData, null, 2));
+		console.log("✅ Verified attachments:", verifiedData?.attachments);		// Update progress tracking
 		await updateProgressForAssignmentSubmission(
 			studentId,
 			assignmentId,

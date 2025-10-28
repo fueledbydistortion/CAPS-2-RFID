@@ -186,129 +186,68 @@ const getParentSectionContent = async (req, res) => {
 		let uniqueAssignments = Array.from(assignmentMap.values());
 
 		if (uniqueAssignments.length > 0) {
-			// Fetch all submissions for this parent once and attach them to matching assignments
-			console.log("🔍 Fetching submissions for parent:", parentId);
-
 			try {
-				// Fetch ALL submissions and filter manually to avoid Firebase indexing issues
-				const allSubmissionsSnapshot = await db
-					.ref("assignmentSubmissions")
-					.once("value");
+				const assignmentWithSubmissions = await Promise.all(
+					uniqueAssignments.map(async (assignment) => {
+						try {
+							const submissionsSnapshot = await db
+								.ref("assignmentSubmissions")
+								.orderByChild("assignmentId")
+								.equalTo(assignment.id)
+								.once("value");
 
-				console.log(
-					"🔍 Total submissions in database:",
-					allSubmissionsSnapshot.numChildren()
-				);
+							const submissions = [];
+							if (submissionsSnapshot.exists()) {
+								submissionsSnapshot.forEach((childSnapshot) => {
+									const submission = {
+										id: childSnapshot.key,
+										...childSnapshot.val(),
+									};
 
-				const submissionsByAssignment = new Map();
+									if (submission.studentId !== parentId) {
+										return;
+									}
 
-				if (allSubmissionsSnapshot.exists()) {
-					console.log("🔍 Processing all submissions...");
-					allSubmissionsSnapshot.forEach((submissionChildSnapshot) => {
-						const submissionPayload = {
-							id: submissionChildSnapshot.key,
-							...submissionChildSnapshot.val(),
-						};
+									submissions.push({
+										...submission,
+										attachments: normalizeAttachments(
+											submission.attachments,
+											`${assignment.id}_${submission.id || "submission"}`
+										),
+									});
+								});
+							}
 
-						// Filter for this parent's submissions
-						if (submissionPayload.studentId !== parentId) {
-							return;
-						}
-
-						console.log(
-							"✅ Found submission for parent:",
-							submissionPayload.id,
-							"for assignment:",
-							submissionPayload.assignmentId
-						);
-						console.log("   - Status:", submissionPayload.status);
-						console.log("   - Attachments:", submissionPayload.attachments);
-						console.log(
-							"   - Text:",
-							submissionPayload.submissionText?.substring(0, 50)
-						);
-
-						const assignmentId = submissionPayload.assignmentId;
-						if (!assignmentId) {
-							console.warn(
-								"⚠️ Submission without assignmentId:",
-								submissionPayload.id
+							submissions.sort(
+								(a, b) => getSubmissionTimestamp(b) - getSubmissionTimestamp(a)
 							);
-							return;
+
+							const latestSubmission = submissions[0] || null;
+
+							return {
+								...assignment,
+								attachments: normalizeAttachments(assignment.attachments, assignment.id),
+								submissions,
+								latestSubmission,
+							};
+						} catch (assignmentError) {
+							console.error(
+								`Error fetching submissions for assignment ${assignment.id}:`,
+								assignmentError
+							);
+							return {
+								...assignment,
+								attachments: normalizeAttachments(assignment.attachments, assignment.id),
+								submissions: [],
+								latestSubmission: null,
+							};
 						}
-
-						submissionPayload.attachments = normalizeAttachments(
-							submissionPayload.attachments,
-							`${assignmentId}_${submissionPayload.id || "submission"}`
-						);
-
-						if (!submissionsByAssignment.has(assignmentId)) {
-							submissionsByAssignment.set(assignmentId, []);
-						}
-
-						submissionsByAssignment.get(assignmentId).push(submissionPayload);
-					});
-				}
-
-				console.log("🔍 Total unique assignments:", uniqueAssignments.length);
-				console.log(
-					"🔍 Assignments with submissions:",
-					submissionsByAssignment.size
-				);
-				console.log(
-					"🔍 Submission mapping:",
-					Array.from(submissionsByAssignment.entries()).map(([id, subs]) => ({
-						assignmentId: id,
-						submissionCount: subs.length,
-					}))
+					})
 				);
 
-				uniqueAssignments = uniqueAssignments.map((assignment) => {
-					const submissionsForAssignment =
-						submissionsByAssignment.get(assignment.id) || [];
-
-					const normalizedSubmissions = submissionsForAssignment
-						.map((submission) => ({
-							...submission,
-							attachments: normalizeAttachments(
-								submission.attachments,
-								`${assignment.id}_${submission.id || "submission"}`
-							),
-						}))
-						.sort(
-							(a, b) => getSubmissionTimestamp(b) - getSubmissionTimestamp(a)
-						);
-
-					const fallbackLatest = assignment.latestSubmission
-						? {
-								...assignment.latestSubmission,
-								attachments: normalizeAttachments(
-									assignment.latestSubmission.attachments,
-									`${assignment.id}_${
-										assignment.latestSubmission.id || "latest"
-									}`
-								),
-						  }
-						: null;
-
-					const latestSubmission =
-						normalizedSubmissions.length > 0
-							? normalizedSubmissions[0]
-							: fallbackLatest;
-
-					return {
-						...assignment,
-						attachments: normalizeAttachments(
-							assignment.attachments,
-							assignment.id
-						),
-						submissions: normalizedSubmissions,
-						latestSubmission,
-					};
-				});
+				uniqueAssignments = assignmentWithSubmissions;
 			} catch (submissionError) {
-				console.error("🔍 Error fetching submissions:", submissionError);
-				// Continue without submissions if there's an error
+				console.error("Error attaching assignment submissions:", submissionError);
 			}
 		}
 

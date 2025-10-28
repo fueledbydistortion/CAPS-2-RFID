@@ -123,7 +123,9 @@ const getParentSectionContent = async (req, res) => {
 				const section = childSnapshot.val();
 				if (
 					section.assignedStudents &&
-					section.assignedStudents.some(studentId => associatedStudentIds.has(studentId))
+					section.assignedStudents.some((studentId) =>
+						associatedStudentIds.has(studentId)
+					)
 				) {
 					sections.push({ id: childSnapshot.key, ...section });
 				}
@@ -324,10 +326,9 @@ const getParentSectionContent = async (req, res) => {
 						}
 					});
 
-					const matchedCount = Array.from(submissionsByAssignment.values()).reduce(
-						(count, list) => count + list.length,
-						0
-					);
+					const matchedCount = Array.from(
+						submissionsByAssignment.values()
+					).reduce((count, list) => count + list.length, 0);
 					console.log(
 						`[ParentSection] Matched ${matchedCount} submissions for parent ${parentId}`
 					);

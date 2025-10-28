@@ -123,7 +123,7 @@ const getParentSectionContent = async (req, res) => {
 				const section = childSnapshot.val();
 				if (
 					section.assignedStudents &&
-					section.assignedStudents.includes(parentId)
+					section.assignedStudents.some(studentId => associatedStudentIds.has(studentId))
 				) {
 					sections.push({ id: childSnapshot.key, ...section });
 				}

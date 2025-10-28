@@ -238,54 +238,90 @@ const getParentSectionContent = async (req, res) => {
 					.ref("assignmentSubmissions")
 					.once("value");
 
+				const registerSubmission = (
+					rawSubmission,
+					fallbackAssignmentId,
+					fallbackId
+				) => {
+					if (!rawSubmission || typeof rawSubmission !== "object") return;
+					const assignmentId =
+						rawSubmission.assignmentId || fallbackAssignmentId || null;
+
+					if (!assignmentId || !targetAssignmentIds.has(assignmentId)) {
+						return;
+					}
+
+					const ownerCandidates = [
+						rawSubmission.studentId,
+						rawSubmission.parentId,
+						rawSubmission.childId,
+						rawSubmission.childUID,
+						rawSubmission.childUid,
+						rawSubmission.userId,
+						rawSubmission.userID,
+						rawSubmission.studentUID,
+						rawSubmission.studentUid,
+						rawSubmission.parentUid,
+						rawSubmission.parentUID,
+					];
+
+					const matchedOwner = ownerCandidates.some((candidate) => {
+						if (!candidate) return false;
+						const normalized = String(candidate).trim();
+						return normalized && associatedStudentIds.has(normalized);
+					});
+
+					if (!matchedOwner) {
+						return;
+					}
+
+					const submissionId = rawSubmission.id || fallbackId;
+					const normalizedSubmission = {
+						...rawSubmission,
+						id: submissionId,
+						assignmentId,
+						attachments: normalizeAttachments(
+							rawSubmission.attachments,
+							`${assignmentId}_${submissionId || "submission"}`
+						),
+					};
+
+					if (!submissionsByAssignment.has(assignmentId)) {
+						submissionsByAssignment.set(assignmentId, []);
+					}
+
+					submissionsByAssignment.get(assignmentId).push(normalizedSubmission);
+				};
+
 				if (submissionsSnapshot.exists()) {
 					submissionsSnapshot.forEach((childSnapshot) => {
-						const submission = {
-							id: childSnapshot.key,
-							...childSnapshot.val(),
-						};
+						const raw = childSnapshot.val();
 
-						const submissionAssignmentId = submission.assignmentId;
+						// Detect nested structure: assignmentId -> submissions -> data
+						const isLikelyNested =
+							raw &&
+							typeof raw === "object" &&
+							!Array.isArray(raw) &&
+							!raw.assignmentId &&
+							Object.values(raw).some(
+								(value) => value && typeof value === "object"
+							);
 
-						if (
-							!submissionAssignmentId ||
-							!targetAssignmentIds.has(submissionAssignmentId)
-						) {
-							return;
+						if (isLikelyNested) {
+							Object.entries(raw).forEach(([nestedKey, nestedValue]) => {
+								registerSubmission(
+									{ id: nestedKey, ...nestedValue },
+									childSnapshot.key,
+									nestedKey
+								);
+							});
+						} else {
+							registerSubmission(
+								{ id: childSnapshot.key, ...raw },
+								raw?.assignmentId || childSnapshot.key,
+								childSnapshot.key
+							);
 						}
-
-						const ownerCandidates = [
-							submission.studentId,
-							submission.parentId,
-							submission.childId,
-							submission.childUID,
-							submission.childUid,
-						];
-						const matchedOwner = ownerCandidates.some((candidate) => {
-							if (!candidate) return false;
-							const normalized = String(candidate).trim();
-							return normalized && associatedStudentIds.has(normalized);
-						});
-
-						if (!matchedOwner) {
-							return;
-						}
-
-						const normalizedSubmission = {
-							...submission,
-							attachments: normalizeAttachments(
-								submission.attachments,
-								`${submission.assignmentId}_${submission.id || "submission"}`
-							),
-						};
-
-						if (!submissionsByAssignment.has(submission.assignmentId)) {
-							submissionsByAssignment.set(submission.assignmentId, []);
-						}
-
-						submissionsByAssignment
-							.get(submission.assignmentId)
-							.push(normalizedSubmission);
 					});
 
 					const matchedCount = Array.from(submissionsByAssignment.values()).reduce(

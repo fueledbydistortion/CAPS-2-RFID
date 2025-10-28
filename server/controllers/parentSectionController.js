@@ -226,7 +226,10 @@ const getParentSectionContent = async (req, res) => {
 
 							return {
 								...assignment,
-								attachments: normalizeAttachments(assignment.attachments, assignment.id),
+								attachments: normalizeAttachments(
+									assignment.attachments,
+									assignment.id
+								),
 								submissions,
 								latestSubmission,
 							};
@@ -237,7 +240,10 @@ const getParentSectionContent = async (req, res) => {
 							);
 							return {
 								...assignment,
-								attachments: normalizeAttachments(assignment.attachments, assignment.id),
+								attachments: normalizeAttachments(
+									assignment.attachments,
+									assignment.id
+								),
 								submissions: [],
 								latestSubmission: null,
 							};
@@ -247,7 +253,10 @@ const getParentSectionContent = async (req, res) => {
 
 				uniqueAssignments = assignmentWithSubmissions;
 			} catch (submissionError) {
-				console.error("Error attaching assignment submissions:", submissionError);
+				console.error(
+					"Error attaching assignment submissions:",
+					submissionError
+				);
 			}
 		}
 

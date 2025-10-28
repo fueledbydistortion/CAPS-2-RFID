@@ -374,7 +374,7 @@ const getAssignmentsDueSoon = async (req, res) => {
 	}
 };
 
-	// Submit assignment (for parents/students)
+// Submit assignment (for parents/students)
 const submitAssignment = async (req, res) => {
 	try {
 		const { assignmentId, submissionText, attachments, submittedAt } = req.body;
@@ -446,14 +446,20 @@ const submitAssignment = async (req, res) => {
 		await submissionRef.set(submissionData);
 
 		console.log("✅ Submission saved with ID:", submissionRef.key);
-		console.log("✅ Full submission data saved:", JSON.stringify(submissionData, null, 2));
+		console.log(
+			"✅ Full submission data saved:",
+			JSON.stringify(submissionData, null, 2)
+		);
 
 		// Verify the submission was saved by reading it back
 		const verifySnapshot = await submissionRef.once("value");
 		console.log("✅ Verified submission exists:", verifySnapshot.exists());
 		const verifiedData = verifySnapshot.val();
-		console.log("✅ Verified submission data:", JSON.stringify(verifiedData, null, 2));
-		console.log("✅ Verified attachments:", verifiedData?.attachments);		// Update progress tracking
+		console.log(
+			"✅ Verified submission data:",
+			JSON.stringify(verifiedData, null, 2)
+		);
+		console.log("✅ Verified attachments:", verifiedData?.attachments); // Update progress tracking
 		await updateProgressForAssignmentSubmission(
 			studentId,
 			assignmentId,

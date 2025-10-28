@@ -115,9 +115,10 @@ const AssignmentCard = ({
             
             {/* Status Chip */}
             <Chip 
-              label={getStatusText(submission?.status)}
+              label={getStatusText(submission?.status)?.charAt(0).toUpperCase() + getStatusText(submission?.status)?.slice(1)}
               color={getStatusColor(submission?.status)}
               size="small"
+              sx={{ color: 'white' }}
               icon={submission?.status === 'graded' ? <CheckCircle /> : undefined}
             />
           </Box>

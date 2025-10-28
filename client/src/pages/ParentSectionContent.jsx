@@ -889,10 +889,11 @@ const ParentSectionContent = () => {
                         </TableCell>
                         <TableCell>
                           <Chip
-                            label={status.text}
+                            label={status.text?.charAt(0).toUpperCase() + status.text?.slice(1)}
                             size="small"
                             color={status.color}
                             variant="filled"
+                            sx={{ color: 'white' }}
                             icon={
                               status.status === "overdue" ? (
                                 <Warning />

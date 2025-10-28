@@ -217,9 +217,9 @@ const getParentSectionContent = async (req, res) => {
 							submissionsByAssignment.set(submission.assignmentId, []);
 						}
 
-						submissionsByAssignment.get(submission.assignmentId).push(
-							normalizedSubmission
-						);
+						submissionsByAssignment
+							.get(submission.assignmentId)
+							.push(normalizedSubmission);
 					});
 
 					submissionsByAssignment.forEach((submissions) => {

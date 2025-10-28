@@ -266,3 +266,241 @@ export const handleExportReport = (reportData, period, insights, recommendations
   return { success: true, message: 'Report exported successfully!' };
 };
 
+/**
+ * Export schedule data to PDF format
+ */
+export const exportScheduleToPDF = (schedules, day, users, sections, skills) => {
+  try {
+    const doc = new jsPDF();
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    
+    // Debug logging
+    console.log('Export PDF - Data check:', {
+      schedulesCount: schedules?.length || 0,
+      usersCount: users?.length || 0,
+      sectionsCount: sections?.length || 0,
+      skillsCount: skills?.length || 0,
+      selectedDay: daysOfWeek[day]
+    });
+    
+    // Title
+    doc.setFontSize(20);
+    doc.setTextColor(21, 101, 192);
+    doc.text(`${daysOfWeek[day]} Schedule`, 20, 20);
+    
+    // Date Generated
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 30);
+
+    // Filter schedules for selected day
+    const daySchedules = schedules.filter(s => s.day === daysOfWeek[day]);
+    
+    console.log('Filtered schedules for day:', daySchedules.length);
+    if (daySchedules.length > 0) {
+      console.log('Sample schedule:', daySchedules[0]);
+    }
+    
+    if (daySchedules.length === 0) {
+      doc.setFontSize(12);
+      doc.setTextColor(0);
+      doc.text('No schedules available for this day.', 20, 45);
+    } else {
+      // Sort schedules by time
+      const sortedSchedules = [...daySchedules].sort((a, b) => {
+        const timeA = (a.timeInStart || a.timeIn || '00:00').split(':').map(Number);
+        const timeB = (b.timeInStart || b.timeIn || '00:00').split(':').map(Number);
+        return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+      });
+
+      // Prepare table data
+      const tableData = sortedSchedules.map(schedule => {
+        // Find teacher name
+        const teacher = users.find(u => u.uid === schedule.teacherId);
+        const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : 'N/A';
+        
+        // Find section name
+        const section = sections.find(s => s.id === schedule.sectionId);
+        const sectionName = section ? section.name : 'N/A';
+        
+        // Find skill name (using subjectId, not skillId)
+        const skill = skills.find(s => s.id === schedule.subjectId);
+        const skillName = skill ? skill.name : 'N/A';
+        
+        // Debug first schedule
+        if (sortedSchedules.indexOf(schedule) === 0) {
+          console.log('First schedule mapping:', {
+            scheduleTeacherId: schedule.teacherId,
+            foundTeacher: teacher,
+            scheduleSectionId: schedule.sectionId,
+            foundSection: section,
+            scheduleSubjectId: schedule.subjectId,
+            foundSkill: skill,
+            timeInStart: schedule.timeInStart,
+            timeIn: schedule.timeIn,
+            timeOutEnd: schedule.timeOutEnd,
+            timeOut: schedule.timeOut
+          });
+        }
+        
+        // Format time
+        const formatTime = (time24) => {
+          if (!time24) {
+            console.log('formatTime received empty/null value:', time24);
+            return 'N/A';
+          }
+          const [hours, minutes] = time24.split(':');
+          const hour = parseInt(hours);
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          const hour12 = hour % 12 || 12;
+          return `${hour12}:${minutes} ${ampm}`;
+        };
+        
+        const timeRange = `${formatTime(schedule.timeInStart || schedule.timeIn)} - ${formatTime(schedule.timeOutEnd || schedule.timeOut)}`;
+        
+        console.log('Time range created:', timeRange, 'from', schedule.timeInStart || schedule.timeIn, schedule.timeOutEnd || schedule.timeOut);
+        
+        return [
+          timeRange,
+          skillName,
+          sectionName,
+          teacherName
+        ];
+      });
+
+      // Add table
+      autoTable(doc, {
+        startY: 40,
+        head: [['Time', 'Activity', 'Daycare Center', 'Teacher']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { 
+          fillColor: [21, 101, 192],
+          fontSize: 11,
+          fontStyle: 'bold'
+        },
+        bodyStyles: {
+          fontSize: 10
+        },
+        columnStyles: {
+          0: { cellWidth: 45 },
+          1: { cellWidth: 50 },
+          2: { cellWidth: 45 },
+          3: { cellWidth: 45 }
+        },
+        margin: { left: 20, right: 20 },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245]
+        }
+      });
+
+      // Add footer with schedule count
+      const finalY = doc.lastAutoTable.finalY + 15;
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Total Activities: ${daySchedules.length}`, 20, finalY);
+    }
+
+    // Save the PDF
+    const fileName = `Schedule_${daysOfWeek[day]}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+
+    return { success: true, message: 'Schedule exported to PDF successfully!' };
+  } catch (error) {
+    console.error('Error exporting schedule to PDF:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Export schedules for Monday-Friday into a single PDF
+ */
+export const exportScheduleWeekToPDF = (schedules, users, sections, skills) => {
+  try {
+    const doc = new jsPDF();
+
+    const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+    // Title page
+    doc.setFontSize(20);
+    doc.setTextColor(21, 101, 192);
+    doc.text('Weekly Schedule (Monday - Friday)', 20, 20);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 30);
+
+    // Ensure title is on its own page, start weekdays on the next page
+    doc.addPage();
+
+    for (let i = 0; i < daysOfWeek.length; i++) {
+      const day = daysOfWeek[i];
+      const daySchedules = (schedules || []).filter((s) => s.day === day);
+
+      if (i !== 0) doc.addPage();
+
+      doc.setFontSize(16);
+      doc.setTextColor(21, 101, 192);
+      doc.text(`${day} Schedule`, 20, 20);
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, 20, 28);
+
+      if (!daySchedules || daySchedules.length === 0) {
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text('No schedules available for this day.', 20, 45);
+        continue;
+      }
+
+      // Sort schedules by time
+      const sortedSchedules = [...daySchedules].sort((a, b) => {
+        const timeA = (a.timeInStart || a.timeIn || '00:00').split(':').map(Number);
+        const timeB = (b.timeInStart || b.timeIn || '00:00').split(':').map(Number);
+        return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+      });
+
+      const tableData = sortedSchedules.map((schedule) => {
+        const teacher = users.find((u) => u.uid === schedule.teacherId);
+        const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : 'N/A';
+
+        const section = sections.find((s) => s.id === schedule.sectionId);
+        const sectionName = section ? section.name : 'N/A';
+
+        const skill = skills.find((s) => s.id === schedule.subjectId);
+        const skillName = skill ? skill.name : 'N/A';
+
+        const formatTime = (time24) => {
+          if (!time24) return 'N/A';
+          const [hours, minutes] = time24.split(':');
+          const hour = parseInt(hours, 10);
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          const hour12 = hour % 12 || 12;
+          return `${hour12}:${minutes} ${ampm}`;
+        };
+
+        const timeRange = `${formatTime(schedule.timeInStart || schedule.timeIn)} - ${formatTime(schedule.timeOutEnd || schedule.timeOut)}`;
+
+        return [timeRange, skillName, sectionName, teacherName];
+      });
+
+      autoTable(doc, {
+        startY: 40,
+        head: [['Time', 'Activity', 'Daycare Center', 'Teacher']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [21, 101, 192] },
+        margin: { left: 20, right: 20 },
+        columnStyles: { 0: { cellWidth: 45 }, 1: { cellWidth: 50 }, 2: { cellWidth: 45 }, 3: { cellWidth: 45 } }
+      });
+    }
+
+    const fileName = `Schedule_Mon-Fri_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
+
+    return { success: true, message: 'Weekly schedule exported to PDF successfully!' };
+  } catch (error) {
+    console.error('Error exporting weekly schedule to PDF:', error);
+    return { success: false, error: error.message };
+  }
+};
+

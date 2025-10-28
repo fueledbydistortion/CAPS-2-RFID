@@ -391,6 +391,31 @@ const SkillsContent = () => {
   const handleSkillFormSubmit = async (formData) => {
     setLoading(true);
     try {
+      // Check for duplicate skill name or code
+      const duplicateName = skills.find(
+        (skill) =>
+          skill.name.toLowerCase() === formData.name.toLowerCase() &&
+          (!editingSkill || skill.id !== editingSkill.id)
+      );
+      
+      const duplicateCode = skills.find(
+        (skill) =>
+          skill.code.toLowerCase() === formData.code.toLowerCase() &&
+          (!editingSkill || skill.id !== editingSkill.id)
+      );
+
+      if (duplicateName) {
+        showSnackbar(`Skill with name "${formData.name}" already exists!`, "error");
+        setLoading(false);
+        return;
+      }
+
+      if (duplicateCode) {
+        showSnackbar(`Skill with code "${formData.code}" already exists!`, "error");
+        setLoading(false);
+        return;
+      }
+
       let result;
       if (editingSkill) {
         // Update existing skill

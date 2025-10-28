@@ -44,6 +44,10 @@ const SectionForm = ({
   const [teachers, setTeachers] = useState([]);
   const [students, setStudents] = useState([]);
   const [allSections, setAllSections] = useState([]);
+  const [conflictChecked, setConflictChecked] = useState(false);
+  const [hasConflict, setHasConflict] = useState(false);
+  const [conflictMessage, setConflictMessage] = useState("");
+  const [lastCheckedName, setLastCheckedName] = useState("");
   const [loadingTeachers, setLoadingTeachers] = useState(false);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -141,7 +145,29 @@ const SectionForm = ({
     }
   };
 
-  // Get available teachers (not assigned to other daycare levels)
+  // Check for section name conflicts (unique name required)
+  const checkForSectionNameConflict = (name) => {
+    if (!name || !name.trim()) {
+      return { hasConflict: false, message: "Please enter a daycare center name to check." };
+    }
+
+    const trimmed = name.trim().toLowerCase();
+    const conflict = allSections.find((s) => {
+      if (sectionData && s.id === sectionData.id) return false; // ignore self when editing
+      return (s.name || "").trim().toLowerCase() === trimmed;
+    });
+
+    if (conflict) {
+      return {
+        hasConflict: true,
+        message: `A daycare center named "${conflict.name}" already exists. Please choose a different name.`,
+      };
+    }
+
+    return { hasConflict: false, message: "No conflicts found. Name is available." };
+  };
+
+  // Get available teachers (not assigned to other daycare centers)
   const getAvailableTeachers = () => {
     if (!teachers.length || !allSections.length) return teachers;
 
@@ -160,41 +186,6 @@ const SectionForm = ({
     return teachers.filter(
       (teacher) => !assignedTeacherIds.includes(teacher.uid)
     );
-  };
-
-  // Get available daycare levels (those that haven't been created yet)
-  const getAvailableDaycareLevels = () => {
-    if (!allSections.length) {
-      // If no sections exist, all levels are available
-      return [
-        { value: "Daycare Center K1", label: "K1" },
-        { value: "Daycare Center K2", label: "K2" },
-        { value: "Daycare Center K3", label: "K3" },
-        { value: "Daycare Center K4", label: "K4" },
-      ];
-    }
-
-    // Get existing daycare level names
-    const existingLevels = allSections
-      .filter((section) => {
-        // Exclude current section if editing
-        if (sectionData && section.id === sectionData.id) {
-          return false;
-        }
-        return section.name && section.name.trim() !== "";
-      })
-      .map((section) => section.name);
-
-    // Define all possible daycare levels
-    const allLevels = [
-      { value: "Daycare Center K1", label: "K1" },
-      { value: "Daycare Center K2", label: "K2" },
-      { value: "Daycare Center K3", label: "K3" },
-      { value: "Daycare Center K4", label: "K4" },
-    ];
-
-    // Filter out levels that already exist
-    return allLevels.filter((level) => !existingLevels.includes(level.value));
   };
 
   const handleAddStudent = async () => {
@@ -314,12 +305,6 @@ const SectionForm = ({
   };
 
   const handleSubmit = async (values, { setSubmitting }) => {
-    // Prevent submission if no daycare levels are available (for new sections)
-    if (!sectionData && getAvailableDaycareLevels().length === 0) {
-      setSubmitting(false);
-      return;
-    }
-
     const submissionData = {
       ...values,
       assignedStudents: assignedStudents,
@@ -331,7 +316,7 @@ const SectionForm = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
-        {sectionData ? "Edit Daycare Centers" : "Add New Daycare Centers"}
+        {sectionData ? "Edit Daycare Center" : "Add New Daycare Center"}
       </DialogTitle>
       <Formik
         initialValues={initialValues}
@@ -340,7 +325,7 @@ const SectionForm = ({
         enableReinitialize
         validateOnChange={true}
         validateOnBlur={true}>
-        {({ values, errors, touched, isSubmitting, setFieldValue }) => (
+        {({ isSubmitting, values }) => (
           <Form>
             <DialogContent>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -348,42 +333,19 @@ const SectionForm = ({
                   <Box sx={{ flex: "1 1 200px", minWidth: "200px" }}>
                     <Field name="name">
                       {({ field, meta }) => (
-                        <FormControl
+                        <TextField
+                          {...field}
                           fullWidth
                           required
-                          error={meta.touched && Boolean(meta.error)}>
-                          <InputLabel>Daycare Centers *</InputLabel>
-                          <Select {...field} label="Daycare Centers *">
-                            {getAvailableDaycareLevels().length === 0 ? (
-                              <MenuItem value="" disabled>
-                                <em>All daycare levels have been created</em>
-                              </MenuItem>
-                            ) : (
-                              getAvailableDaycareLevels().map((level) => (
-                                <MenuItem key={level.value} value={level.value}>
-                                  {level.label}
-                                </MenuItem>
-                              ))
-                            )}
-                          </Select>
-                          {meta.touched && meta.error && (
-                            <Typography
-                              variant="caption"
-                              color="error"
-                              sx={{ mt: 0.5, ml: 1.75 }}>
-                              {meta.error}
-                            </Typography>
-                          )}
-                          {getAvailableDaycareLevels().length === 0 && (
-                            <Typography
-                              variant="caption"
-                              color="warning.main"
-                              sx={{ mt: 0.5, ml: 1.75 }}>
-                              All daycare levels have been created. Cannot
-                              create duplicates.
-                            </Typography>
-                          )}
-                        </FormControl>
+                          label="Daycare Center Name"
+                          placeholder="e.g. K1, Toddlers, Preschool A, etc."
+                          error={meta.touched && Boolean(meta.error)}
+                          helperText={
+                            meta.touched && meta.error
+                              ? meta.error
+                              : "Enter any name you want for this daycare center"
+                          }
+                        />
                       )}
                     </Field>
                   </Box>
@@ -426,7 +388,7 @@ const SectionForm = ({
                               <MenuItem value="" disabled>
                                 <em>
                                   No available teachers (all assigned to other
-                                  daycare levels)
+                                  daycare centers)
                                 </em>
                               </MenuItem>
                             ) : (
@@ -451,7 +413,7 @@ const SectionForm = ({
                               color="warning.main"
                               sx={{ mt: 0.5, ml: 1.75 }}>
                               All teachers are already assigned to other daycare
-                              levels
+                              centers
                             </Typography>
                           )}
                         </FormControl>
@@ -678,16 +640,61 @@ const SectionForm = ({
               </Box>
             </DialogContent>
             <DialogActions>
+              {/* Conflict check status */}
+              {conflictMessage && (
+                <Box sx={{ flex: 1 }}>
+                  <Box
+                    sx={{
+                      p: 1,
+                      borderRadius: 1,
+                      backgroundColor: hasConflict ? "rgba(244, 67, 54, 0.06)" : "rgba(76, 175, 80, 0.06)",
+                      border: `1px solid ${hasConflict ? '#f44336' : '#4caf50'}`,
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ color: hasConflict ? '#f44336' : '#4caf50', fontWeight: 600 }}>
+                      {conflictMessage}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+
+              {/* Buttons row */}
               <Button onClick={onClose} disabled={loading || isSubmitting}>
                 Cancel
               </Button>
+              <Button
+                type="button"
+                variant="outlined"
+                onClick={() => {
+                  const res = checkForSectionNameConflict(values.name);
+                  setHasConflict(res.hasConflict);
+                  setConflictMessage(res.message);
+                  setConflictChecked(true);
+                  setLastCheckedName(values.name || "");
+                }}
+                disabled={loading || isSubmitting || !values.name || !values.name.trim()}
+                sx={{
+                  borderRadius: '12px',
+                  px: 3,
+                  py: 1,
+                  borderColor: 'hsl(152, 65%, 28%)',
+                  color: 'hsl(152, 65%, 28%)',
+                }}
+              >
+                Check for Conflicts
+              </Button>
+
               <Button
                 type="submit"
                 variant="contained"
                 disabled={
                   loading ||
                   isSubmitting ||
-                  (!sectionData && getAvailableDaycareLevels().length === 0)
+                  // require a conflict check and no conflicts; if the name changed since last check require re-check
+                  !conflictChecked ||
+                  hasConflict ||
+                  ((values.name || "") !== (lastCheckedName || ""))
                 }
                 sx={{
                   background:

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { loginUser, registerUser, logoutUser } from '../utils/firebase-auth';
+import { loginUser, logoutUser } from '../utils/firebase-auth';
 import Swal from 'sweetalert2';
 
 export const useAuthActions = () => {
@@ -29,29 +29,7 @@ export const useAuthActions = () => {
     }
   };
 
-  const signup = async (userData) => {
-    try {
-      const result = await registerUser(userData);
-      
-      if (result.success) {
-        await Swal.fire({
-          icon: 'success',
-          title: 'Account Created Successfully!',
-          text: 'Welcome to SmartChildcare! Your account has been created and you are now signed in.',
-          timer: 3000,
-          showConfirmButton: false
-        });
-        
-        navigate('/dashboard');
-        return { success: true };
-      } else {
-        return { success: false, error: result.error };
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      return { success: false, error: 'An unexpected error occurred. Please try again.' };
-    }
-  };
+  // Signup flow removed - user accounts should be provisioned by admin or via backend
 
   const logout = async () => {
     try {
@@ -79,5 +57,5 @@ export const useAuthActions = () => {
     }
   };
 
-  return { login, signup, logout };
+  return { login, logout };
 };

@@ -8,28 +8,28 @@
  * @returns {number} - Time in minutes from midnight
  */
 export const timeToMinutes = (timeStr) => {
-  if (!timeStr) return 0;
+	if (!timeStr) return 0;
 
-  // If already in 24-hour format (HH:MM), convert to 12-hour first
-  if (timeStr.match(/^\d{1,2}:\d{2}$/)) {
-    const [hours, minutes] = timeStr.split(":").map(Number);
-    const ampm = hours >= 12 ? "PM" : "AM";
-    const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-    timeStr = `${hour12}:${minutes.toString().padStart(2, "0")} ${ampm}`;
-  }
+	// If already in 24-hour format (HH:MM), convert to 12-hour first
+	if (timeStr.match(/^\d{1,2}:\d{2}$/)) {
+		const [hours, minutes] = timeStr.split(":").map(Number);
+		const ampm = hours >= 12 ? "PM" : "AM";
+		const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+		timeStr = `${hour12}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+	}
 
-  const [time, period] = timeStr.split(" ");
-  const [hours, minutes] = time.split(":").map(Number);
+	const [time, period] = timeStr.split(" ");
+	const [hours, minutes] = time.split(":").map(Number);
 
-  let totalMinutes = hours * 60 + minutes;
+	let totalMinutes = hours * 60 + minutes;
 
-  if (period === "PM" && hours !== 12) {
-    totalMinutes += 12 * 60;
-  } else if (period === "AM" && hours === 12) {
-    totalMinutes -= 12 * 60;
-  }
+	if (period === "PM" && hours !== 12) {
+		totalMinutes += 12 * 60;
+	} else if (period === "AM" && hours === 12) {
+		totalMinutes -= 12 * 60;
+	}
 
-  return totalMinutes;
+	return totalMinutes;
 };
 
 /**
@@ -37,8 +37,8 @@ export const timeToMinutes = (timeStr) => {
  * @returns {number} - Current time in minutes
  */
 export const getCurrentTimeInMinutes = () => {
-  const now = new Date();
-  return now.getHours() * 60 + now.getMinutes();
+	const now = new Date();
+	return now.getHours() * 60 + now.getMinutes();
 };
 
 /**
@@ -48,105 +48,75 @@ export const getCurrentTimeInMinutes = () => {
  * @returns {boolean} - True if current time is within range
  */
 export const isTimeInRange = (startTime, endTime) => {
-  const currentMinutes = getCurrentTimeInMinutes();
-  const startMinutes = timeToMinutes(startTime);
-  const endMinutes = timeToMinutes(endTime);
+	const currentMinutes = getCurrentTimeInMinutes();
+	const startMinutes = timeToMinutes(startTime);
+	const endMinutes = timeToMinutes(endTime);
 
-  return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+	return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
 };
 
 /**
  * Determine attendance type based on current time and schedule
  * @param {Object} schedule - Schedule object with time ranges
  * @param {string} currentDay - Current day of the week
- * @returns {Object} - { type: 'timeIn'|'timeOut'|'outside', message: string }
+ * @returns {Object} - { type: 'timeIn'|'timeOut', message: string }
  */
 export const determineAttendanceType = (schedule, currentDay) => {
-  console.log("⏰ [determineAttendanceType] Starting attendance type determination...");
-  console.log("⏰ [determineAttendanceType] Schedule:", schedule);
-  console.log("⏰ [determineAttendanceType] Current day:", currentDay);
-  
-  // Check if it's the correct day
-  if (schedule.day !== currentDay) {
-    console.log("⏰ [determineAttendanceType] Day mismatch - schedule day:", schedule.day, "current day:", currentDay);
-    return {
-      type: "outside",
-      message: `No schedule for ${currentDay}. Schedule is for ${schedule.day}.`,
-    };
-  }
+	console.log(
+		"⏰ [determineAttendanceType] Starting attendance type determination..."
+	);
+	console.log("⏰ [determineAttendanceType] Schedule:", schedule);
+	console.log("⏰ [determineAttendanceType] Current day:", currentDay);
 
-  const currentMinutes = getCurrentTimeInMinutes();
-  const timeInStartMinutes = timeToMinutes(schedule.timeInStart);
-  const timeInEndMinutes = timeToMinutes(schedule.timeInEnd);
-  const timeOutStartMinutes = timeToMinutes(schedule.timeOutStart);
-  const timeOutEndMinutes = timeToMinutes(schedule.timeOutEnd);
-  
-  console.log("⏰ [determineAttendanceType] Time calculations:");
-  console.log("⏰ [determineAttendanceType] Current time (minutes):", currentMinutes);
-  console.log("⏰ [determineAttendanceType] Time In range:", timeInStartMinutes, "-", timeInEndMinutes);
-  console.log("⏰ [determineAttendanceType] Time Out range:", timeOutStartMinutes, "-", timeOutEndMinutes);
+	// Allow attendance on any day, even if it doesn't match the schedule day
+	// This is useful for early arrivals, late stays, or makeup days
+	if (schedule.day !== currentDay) {
+		console.log(
+			"⏰ [determineAttendanceType] Day mismatch - schedule day:",
+			schedule.day,
+			"current day:",
+			currentDay,
+			"- allowing Time In"
+		);
+		// Default to Time In for off-schedule days
+		return {
+			type: "timeIn",
+			message: `Time In (Off-schedule: ${currentDay}, Schedule: ${schedule.day})`,
+		};
+	}
 
-  // Check if current time is within Time In range
-  if (
-    currentMinutes >= timeInStartMinutes &&
-    currentMinutes <= timeInEndMinutes
-  ) {
-    console.log("⏰ [determineAttendanceType] Within Time In range");
-    return {
-      type: "timeIn",
-      message: `Time In: ${schedule.timeInStart} - ${schedule.timeInEnd}`,
-    };
-  }
+	const currentMinutes = getCurrentTimeInMinutes();
 
-  // Check if current time is within Time Out range
-  if (
-    currentMinutes >= timeOutStartMinutes &&
-    currentMinutes <= timeOutEndMinutes
-  ) {
-    console.log("⏰ [determineAttendanceType] Within Time Out range");
-    return {
-      type: "timeOut",
-      message: `Time Out: ${schedule.timeOutStart} - ${schedule.timeOutEnd}`,
-    };
-  }
+	// Get time values (support both old and new format)
+	const timeInMinutes = timeToMinutes(schedule.timeInStart || schedule.timeIn);
+	const timeOutMinutes = timeToMinutes(schedule.timeOutEnd || schedule.timeOut);
 
-  // Check if it's before Time In
-  if (currentMinutes < timeInStartMinutes) {
-    const timeUntilStart = timeInStartMinutes - currentMinutes;
-    const hoursUntil = Math.floor(timeUntilStart / 60);
-    const minutesUntil = timeUntilStart % 60;
-    return {
-      type: "outside",
-      message: `Too early. Time In starts at ${schedule.timeInStart} (in ${hoursUntil}h ${minutesUntil}m)`,
-    };
-  }
+	console.log("⏰ [determineAttendanceType] Time calculations:");
+	console.log(
+		"⏰ [determineAttendanceType] Current time (minutes):",
+		currentMinutes
+	);
+	console.log("⏰ [determineAttendanceType] Time In:", timeInMinutes);
+	console.log("⏰ [determineAttendanceType] Time Out:", timeOutMinutes);
 
-  // Check if it's after Time Out
-  if (currentMinutes > timeOutEndMinutes) {
-    const timeSinceEnd = currentMinutes - timeOutEndMinutes;
-    const hoursSince = Math.floor(timeSinceEnd / 60);
-    const minutesSince = timeSinceEnd % 60;
-    return {
-      type: "outside",
-      message: `Too late. Time Out ended at ${schedule.timeOutEnd} (${hoursSince}h ${minutesSince}m ago)`,
-    };
-  }
+	// Allow attendance at any time - determine if it's time in or time out based on schedule midpoint
+	const midpoint = (timeInMinutes + timeOutMinutes) / 2;
 
-  // Check if it's between Time In and Time Out (break time)
-  if (
-    currentMinutes > timeInEndMinutes &&
-    currentMinutes < timeOutStartMinutes
-  ) {
-    return {
-      type: "outside",
-      message: `Break time. Time Out starts at ${schedule.timeOutStart}`,
-    };
-  }
-
-  return {
-    type: "outside",
-    message: "No valid attendance window available",
-  };
+	if (currentMinutes < midpoint) {
+		console.log("⏰ [determineAttendanceType] Before midpoint - Time In");
+		return {
+			type: "timeIn",
+			message: `Time In (Schedule: ${schedule.timeIn || schedule.timeInStart})`,
+		};
+	} else {
+		console.log("⏰ [determineAttendanceType] After midpoint - Time Out");
+		return {
+			type: "timeOut",
+			message: `Time Out (Schedule: ${
+				schedule.timeOut || schedule.timeOutEnd
+			})`,
+		};
+	}
 };
 
 /**
@@ -154,24 +124,24 @@ export const determineAttendanceType = (schedule, currentDay) => {
  * @returns {string} - Current day (e.g., "Monday", "Tuesday", etc.)
  */
 export const getCurrentDay = () => {
-  const days = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
-  const currentDate = new Date();
-  const dayIndex = currentDate.getDay();
-  const currentDay = days[dayIndex];
-  
-  console.log("📅 [getCurrentDay] Current date:", currentDate);
-  console.log("📅 [getCurrentDay] Day index:", dayIndex);
-  console.log("📅 [getCurrentDay] Current day:", currentDay);
-  
-  return currentDay;
+	const days = [
+		"Sunday",
+		"Monday",
+		"Tuesday",
+		"Wednesday",
+		"Thursday",
+		"Friday",
+		"Saturday",
+	];
+	const currentDate = new Date();
+	const dayIndex = currentDate.getDay();
+	const currentDay = days[dayIndex];
+
+	console.log("📅 [getCurrentDay] Current date:", currentDate);
+	console.log("📅 [getCurrentDay] Day index:", dayIndex);
+	console.log("📅 [getCurrentDay] Current day:", currentDay);
+
+	return currentDay;
 };
 
 /**
@@ -181,24 +151,24 @@ export const getCurrentDay = () => {
  * @returns {Object|null} - Relevant schedule or null
  */
 export const findRelevantSchedule = (schedules, studentId) => {
-  const currentDay = getCurrentDay();
+	const currentDay = getCurrentDay();
 
-  // Find schedules for today
-  const todaySchedules = schedules.filter(
-    (schedule) => schedule.day === currentDay
-  );
+	// Find schedules for today
+	const todaySchedules = schedules.filter(
+		(schedule) => schedule.day === currentDay
+	);
 
-  if (todaySchedules.length === 0) {
-    return null;
-  }
+	if (todaySchedules.length === 0) {
+		return null;
+	}
 
-  // If there's only one schedule for today, return it
-  if (todaySchedules.length === 1) {
-    return todaySchedules[0];
-  }
+	// If there's only one schedule for today, return it
+	if (todaySchedules.length === 1) {
+		return todaySchedules[0];
+	}
 
-  // If multiple schedules, find the one that matches the student's section
-  // This would require additional logic to match student to section
-  // For now, return the first schedule
-  return todaySchedules[0];
+	// If multiple schedules, find the one that matches the student's section
+	// This would require additional logic to match student to section
+	// For now, return the first schedule
+	return todaySchedules[0];
 };

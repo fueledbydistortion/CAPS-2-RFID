@@ -8,11 +8,11 @@ const app = express();
 
 // Import Firebase Admin config with error handling
 try {
-  require("./config/firebase-admin-config");
-  console.log("✅ Firebase Admin config loaded successfully");
+	require("./config/firebase-admin-config");
+	console.log("✅ Firebase Admin config loaded successfully");
 } catch (error) {
-  console.error("❌ Failed to load Firebase Admin config:", error.message);
-  // Don't throw here - let the server start and handle Firebase errors in routes
+	console.error("❌ Failed to load Firebase Admin config:", error.message);
+	// Don't throw here - let the server start and handle Firebase errors in routes
 }
 
 // Import routes
@@ -41,39 +41,43 @@ const PORT = process.env.PORT || 3001;
 
 // Enable CORS for all routes with specific origins
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+	origin: function (origin, callback) {
+		// Allow requests with no origin (like mobile apps or curl requests)
+		if (!origin) return callback(null, true);
 
-    const allowedOrigins = [
-      "http://localhost:3000",
-      "http://localhost:5173", // Vite dev server
-      "https://smart-child-care-app.vercel.app",
-      "https://smart-child-care-server.vercel.app/",
-    ];
+		const allowedOrigins = [
+			"http://localhost:3000",
+			"http://localhost:5173", // Vite dev server
+			// New Vercel deployments (added per user request)
+			"https://smart-child-care-xc5v.vercel.app",
+			"https://smart-child-care-xc5v-git-main-kurenairisus-projects.vercel.app",
+			"https://smart-child-care-xc5v-8bqkdscl7-kurenairisus-projects.vercel.app",
+			// Latest backend deployment
+			"https://smart-child-care-cghe.vercel.app",
+		];
 
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      console.log("CORS: Allowing origin:", origin);
-      callback(null, true); // Allow all origins for now
-    }
-  },
-  credentials: true,
-  optionsSuccessStatus: 200,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "X-Requested-With",
-    "Accept",
-    "Origin",
-    "Access-Control-Request-Method",
-    "Access-Control-Request-Headers",
-  ],
-  exposedHeaders: ["Content-Length", "X-Foo", "X-Bar"],
-  preflightContinue: false,
-  optionsSuccessStatus: 204,
+		if (allowedOrigins.indexOf(origin) !== -1) {
+			callback(null, true);
+		} else {
+			console.log("CORS: Allowing origin:", origin);
+			callback(null, true); // Allow all origins for now
+		}
+	},
+	credentials: true,
+	optionsSuccessStatus: 200,
+	methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+	allowedHeaders: [
+		"Content-Type",
+		"Authorization",
+		"X-Requested-With",
+		"Accept",
+		"Origin",
+		"Access-Control-Request-Method",
+		"Access-Control-Request-Headers",
+	],
+	exposedHeaders: ["Content-Length", "X-Foo", "X-Bar"],
+	preflightContinue: false,
+	optionsSuccessStatus: 204,
 };
 
 // Apply CORS to all routes
@@ -84,25 +88,25 @@ app.options("*", cors(corsOptions));
 
 // Additional CORS middleware for edge cases
 app.use((req, res, next) => {
-  // Set CORS headers manually as backup
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.header(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-  );
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
-  );
-  res.header("Access-Control-Allow-Credentials", "true");
+	// Set CORS headers manually as backup
+	res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+	res.header(
+		"Access-Control-Allow-Methods",
+		"GET, POST, PUT, DELETE, OPTIONS, PATCH"
+	);
+	res.header(
+		"Access-Control-Allow-Headers",
+		"Content-Type, Authorization, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers"
+	);
+	res.header("Access-Control-Allow-Credentials", "true");
 
-  // Handle preflight requests
-  if (req.method === "OPTIONS") {
-    res.status(200).end();
-    return;
-  }
+	// Handle preflight requests
+	if (req.method === "OPTIONS") {
+		res.status(200).end();
+		return;
+	}
 
-  next();
+	next();
 });
 
 // Parse JSON bodies
@@ -113,7 +117,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from uploads directory (only in non-Vercel environments)
 if (!process.env.VERCEL) {
-  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+	app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 }
 
 // API Routes
@@ -121,54 +125,54 @@ console.log("🔍 DEBUG: Mounting API routes...");
 
 // Add a simple health check route first (for faster cold starts)
 app.get("/api/health", (req, res) => {
-  res.json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
+	res.json({
+		status: "OK",
+		timestamp: new Date().toISOString(),
+		uptime: process.uptime(),
+	});
 });
 
 // Add a super simple test route for debugging
 app.get("/api/test", (req, res) => {
-  res.json({
-    message: "Backend is working!",
-    timestamp: Date.now(),
-    environment: process.env.NODE_ENV,
-    hasFirebase: !!process.env.FIREBASE_PROJECT_ID,
-  });
+	res.json({
+		message: "Backend is working!",
+		timestamp: Date.now(),
+		environment: process.env.NODE_ENV,
+		hasFirebase: !!process.env.FIREBASE_PROJECT_ID,
+	});
 });
 
 // Add a debug route to check environment variables
 app.get("/api/debug", (req, res) => {
-  res.json({
-    environment: process.env.NODE_ENV,
-    hasFirebaseProjectId: !!process.env.FIREBASE_PROJECT_ID,
-    hasFirebaseClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
-    hasFirebasePrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
-    hasFirebaseDatabaseUrl: !!process.env.FIREBASE_DATABASE_URL,
-    hasFirebaseStorageBucket: !!process.env.FIREBASE_STORAGE_BUCKET,
-    availableEnvVars: Object.keys(process.env).filter((key) =>
-      key.startsWith("FIREBASE")
-    ),
-  });
+	res.json({
+		environment: process.env.NODE_ENV,
+		hasFirebaseProjectId: !!process.env.FIREBASE_PROJECT_ID,
+		hasFirebaseClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+		hasFirebasePrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+		hasFirebaseDatabaseUrl: !!process.env.FIREBASE_DATABASE_URL,
+		hasFirebaseStorageBucket: !!process.env.FIREBASE_STORAGE_BUCKET,
+		availableEnvVars: Object.keys(process.env).filter((key) =>
+			key.startsWith("FIREBASE")
+		),
+	});
 });
 
 // Add a CORS test endpoint
 app.get("/api/cors-test", (req, res) => {
-  res.json({
-    message: "CORS test successful",
-    origin: req.headers.origin,
-    method: req.method,
-    headers: req.headers,
-    timestamp: new Date().toISOString(),
-  });
+	res.json({
+		message: "CORS test successful",
+		origin: req.headers.origin,
+		method: req.method,
+		headers: req.headers,
+		timestamp: new Date().toISOString(),
+	});
 });
 
 app.use("/api/sections", sectionRoutes);
 app.use("/api/skills", skillRoutes);
 app.use("/api/schedules", scheduleRoutes);
 console.log(
-  "🔍 DEBUG: Mounting parent schedule routes at /api/schedules/parent"
+	"🔍 DEBUG: Mounting parent schedule routes at /api/schedules/parent"
 );
 app.use("/api/schedules/parent", parentScheduleRoutes);
 app.use("/api/attendance", attendanceRoutes);
@@ -190,82 +194,82 @@ app.use("/api/health", healthRoutes);
 
 // Basic test route
 app.get("/", (req, res) => {
-  res.json({
-    message: "smartchildcare Server is running!",
-    endpoints: {
-      sections: "/api/sections",
-      skills: "/api/skills",
-      schedules: "/api/schedules",
-      parentSchedules: "/api/schedules/parent",
-      attendance: "/api/attendance",
-      lessons: "/api/lessons",
-      assignments: "/api/assignments",
-      users: "/api/users",
-      parentSections: "/api/parent-sections",
-      progress: "/api/progress",
-      reports: "/api/reports",
-      files: "/api/files",
-      chat: "/api/chat",
-      announcements: "/api/announcements",
-      badges: "/api/badges",
-      notifications: "/api/notifications",
-      health: "/health",
-      attachmentProgress: "/api/progress/attachment",
-    },
-  });
+	res.json({
+		message: "smartchildcare Server is running!",
+		endpoints: {
+			sections: "/api/sections",
+			skills: "/api/skills",
+			schedules: "/api/schedules",
+			parentSchedules: "/api/schedules/parent",
+			attendance: "/api/attendance",
+			lessons: "/api/lessons",
+			assignments: "/api/assignments",
+			users: "/api/users",
+			parentSections: "/api/parent-sections",
+			progress: "/api/progress",
+			reports: "/api/reports",
+			files: "/api/files",
+			chat: "/api/chat",
+			announcements: "/api/announcements",
+			badges: "/api/badges",
+			notifications: "/api/notifications",
+			health: "/health",
+			attachmentProgress: "/api/progress/attachment",
+		},
+	});
 });
 
 // Health check route
 app.get("/health", (req, res) => {
-  res.json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-  });
+	res.json({
+		status: "OK",
+		timestamp: new Date().toISOString(),
+		uptime: process.uptime(),
+	});
 });
 
 // 404 handler - MUST be after all routes
 app.use((req, res, next) => {
-  res.status(404).json({
-    success: false,
-    error: `Route not found: ${req.method} ${req.url}`,
-    availableEndpoints: {
-      files: "/api/files",
-      lessonUpload: "/api/files/lesson/:lessonId/upload",
-      genericUpload: "/api/files/upload",
-    },
-  });
+	res.status(404).json({
+		success: false,
+		error: `Route not found: ${req.method} ${req.url}`,
+		availableEndpoints: {
+			files: "/api/files",
+			lessonUpload: "/api/files/lesson/:lessonId/upload",
+			genericUpload: "/api/files/upload",
+		},
+	});
 });
 
 // Error handling middleware - MUST be last
 app.use((err, req, res, next) => {
-  console.error("Error caught by middleware:", err);
+	console.error("Error caught by middleware:", err);
 
-  // Handle multer errors
-  if (err.name === "MulterError") {
-    return res.status(400).json({
-      success: false,
-      error: `File upload error: ${err.message}`,
-      code: err.code,
-    });
-  }
+	// Handle multer errors
+	if (err.name === "MulterError") {
+		return res.status(400).json({
+			success: false,
+			error: `File upload error: ${err.message}`,
+			code: err.code,
+		});
+	}
 
-  // Handle other errors
-  res.status(err.status || 500).json({
-    success: false,
-    error: err.message || "Internal server error",
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-  });
+	// Handle other errors
+	res.status(err.status || 500).json({
+		success: false,
+		error: err.message || "Internal server error",
+		...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+	});
 });
 
 // Start the server only if not in Vercel environment
 if (process.env.NODE_ENV !== "production" || !process.env.VERCEL) {
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server is listening on port ${PORT}`);
-    console.log(`Server accessible at:`);
-    console.log(`  - Local: http://localhost:${PORT}`);
-    console.log(`  - Network: http://192.168.1.27:${PORT}`);
-  });
+	app.listen(PORT, "0.0.0.0", () => {
+		console.log(`Server is listening on port ${PORT}`);
+		console.log(`Server accessible at:`);
+		console.log(`  - Local: http://localhost:${PORT}`);
+		console.log(`  - Network: http://192.168.1.27:${PORT}`);
+	});
 }
 
 // Export the app for Vercel

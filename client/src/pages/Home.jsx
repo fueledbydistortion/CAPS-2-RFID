@@ -19,8 +19,8 @@ function Home() {
   const navigate = useNavigate()
 
   const handleGetStarted = () => {
-    // Navigate to the signup page
-    navigate('/signup')
+    // Navigate to the login page (signup removed)
+    navigate('/login')
   }
   return (
     <Box

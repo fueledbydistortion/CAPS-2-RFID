@@ -1,5 +1,34 @@
 import { API_BASE_URL, UPLOAD_BASE_URL } from '../config/api';
 
+// File upload constants
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+export const MAX_FILE_SIZE_MB = 10;
+export const ALLOWED_FILE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'text/plain',
+  'application/zip',
+  'application/x-zip-compressed'
+];
+
+export const ALLOWED_FILE_EXTENSIONS = [
+  '.jpg', '.jpeg', '.png', '.gif',
+  '.pdf',
+  '.doc', '.docx',
+  '.xls', '.xlsx',
+  '.ppt', '.pptx',
+  '.txt',
+  '.zip'
+];
+
 // Helper function to make API requests
 const apiRequest = async (endpoint, options = {}) => {
   try {
@@ -218,34 +247,21 @@ export const getFileUrlFromAttachment = (attachment) => {
 
 // Validate file before upload
 export const validateFile = (file) => {
-  const maxSize = 10 * 1024 * 1024; // 10MB
-  const allowedTypes = [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-powerpoint',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'text/plain',
-    'application/zip',
-    'application/x-zip-compressed'
-  ];
-
-  if (file.size > maxSize) {
+  // Check file size
+  if (file.size > MAX_FILE_SIZE) {
     return {
       valid: false,
-      error: 'File size must be less than 10MB'
+      error: `File "${file.name}" is too large. Maximum size is ${MAX_FILE_SIZE_MB}MB. Your file is ${formatFileSize(file.size)}.`
     };
   }
 
-  if (!allowedTypes.includes(file.type)) {
+  // Check file type
+  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+    const fileName = file.name;
+    const fileExtension = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
     return {
       valid: false,
-      error: 'Invalid file type. Only images, documents, and archives are allowed.'
+      error: `File type "${fileExtension}" is not allowed. Allowed types: Images (JPG, PNG, GIF), Documents (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT), and Archives (ZIP).`
     };
   }
 

@@ -2,6 +2,8 @@ import {
   Add,
   Delete,
   Edit,
+  ExpandLess,
+  ExpandMore,
   Print,
   Refresh,
   School,
@@ -18,7 +20,7 @@ import {
   CardHeader,
   Chip,
   CircularProgress,
-  // Collapse,
+  Collapse,
   Dialog,
   DialogActions,
   DialogContent,
@@ -623,6 +625,15 @@ const SectionsContent = () => {
                   }}>
                   <CardHeader
                     avatar={<School sx={{ color: "hsl(152, 65%, 28%)" }} />}
+                    action={
+                      <IconButton 
+                        size="small" 
+                        onClick={() => toggleExpand(section.id)}
+                        sx={{ color: "hsl(152, 65%, 28%)" }}
+                      >
+                        {expandedSectionIds[section.id] ? <ExpandLess /> : <ExpandMore />}
+                      </IconButton>
+                    }
                     title={section.name}
                     subheader={`Capacity: ${section.capacity}`}
                     titleTypographyProps={{ variant: "h6", fontWeight: 600 }}
@@ -642,7 +653,7 @@ const SectionsContent = () => {
                               variant="body2"
                               color="text.secondary"
                               sx={{ mb: 0.5 }}>
-                              Assigned Parents (
+                              Assigned Students (
                               {section.assignedStudents.length}):
                             </Typography>
                             <Box
@@ -651,7 +662,7 @@ const SectionsContent = () => {
                                 flexWrap: "wrap",
                                 gap: 0.5,
                               }}>
-                              {section.assignedStudents
+                              {!expandedSectionIds[section.id] && section.assignedStudents
                                 .slice(0, 3)
                                 .map((studentId) => (
                                   <Chip
@@ -662,7 +673,7 @@ const SectionsContent = () => {
                                     color="primary"
                                   />
                                 ))}
-                              {section.assignedStudents.length > 3 && (
+                              {!expandedSectionIds[section.id] && section.assignedStudents.length > 3 && (
                                 <Chip
                                   label={`+${
                                     section.assignedStudents.length - 3
@@ -676,9 +687,57 @@ const SectionsContent = () => {
                           </Box>
                         )}
                     </Box>
+                    
+                    {/* Expanded Student List */}
+                    <Collapse in={!!expandedSectionIds[section.id]} timeout="auto" unmountOnExit>
+                      <Box sx={{ 
+                        mt: 2, 
+                        p: 2, 
+                        backgroundColor: 'rgba(31, 120, 80, 0.03)', 
+                        borderRadius: 2,
+                        border: '1px solid rgba(31, 120, 80, 0.1)'
+                      }}>
+                        <Typography 
+                          variant="subtitle2" 
+                          sx={{ 
+                            mb: 1.5, 
+                            color: 'hsl(152, 65%, 28%)', 
+                            fontWeight: 600 
+                          }}
+                        >
+                          All Students
+                        </Typography>
+                        {section.assignedStudents && section.assignedStudents.length > 0 ? (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            {section.assignedStudents.map((studentId) => {
+                              const parent = allUsers.find(u => u.uid === studentId)
+                              if (!parent) return null
+                              const name = parent.childName ? `${parent.childName}` : `${parent.firstName} ${parent.lastName}`
+                              return (
+                                <Chip 
+                                  key={studentId}
+                                  label={name}
+                                  size="medium"
+                                  sx={{
+                                    backgroundColor: 'rgba(31, 120, 80, 0.1)',
+                                    color: 'hsl(152, 65%, 28%)',
+                                    fontWeight: 500
+                                  }}
+                                />
+                              )
+                            })}
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            No students assigned
+                          </Typography>
+                        )}
+                      </Box>
+                    </Collapse>
+
                     {/* Only show action buttons for non-teacher users */}
                     {(!userProfile || userProfile.role !== "teacher") && (
-                      <Box sx={{ display: "flex", gap: 1 }}>
+                      <Box sx={{ display: "flex", gap: 1, mt: 2 }}>
                         <Button
                           size="small"
                           variant="outlined"
@@ -812,9 +871,9 @@ const SectionsContent = () => {
                         <TableCell
                           width={48}
                           sx={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}>
-                          {/* <IconButton size="small" onClick={() => toggleExpand(section.id)}>
+                          <IconButton size="small" onClick={() => toggleExpand(section.id)}>
                             {expandedSectionIds[section.id] ? <ExpandLess /> : <ExpandMore />}
-                          </IconButton> */}
+                          </IconButton>
                         </TableCell>
                         <TableCell>
                           <Typography
@@ -929,45 +988,38 @@ const SectionsContent = () => {
                               : 6
                           }
                           sx={{ fontFamily: "Plus Jakarta Sans, sans-serif" }}>
-                          {/* <Collapse in={!!expandedSectionIds[section.id]} timeout="auto" unmountOnExit>
+                          <Collapse in={!!expandedSectionIds[section.id]} timeout="auto" unmountOnExit>
                             <Box sx={{ py: 2, px: 1, backgroundColor: 'rgba(31, 120, 80, 0.03)', borderRadius: 1 }}>
                               <Typography variant="subtitle2" sx={{ mb: 1, color: 'hsl(152, 65%, 28%)', fontWeight: 600 }}>
-                                Assigned Parents and QR Codes
+                                Assigned Students
                               </Typography>
                               {section.assignedStudents && section.assignedStudents.length > 0 ? (
-                                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto auto', rowGap: 1, columnGap: 12, alignItems: 'center', maxWidth: 720 }}>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                                   {section.assignedStudents.map((studentId) => {
                                     const parent = allUsers.find(u => u.uid === studentId)
                                     if (!parent) return null
-                                    const name = parent.childName ? `${parent.firstName} ${parent.lastName} (Child: ${parent.childName})` : `${parent.firstName} ${parent.lastName}`
+                                    const name = parent.childName ? `${parent.childName}` : `${parent.firstName} ${parent.lastName}`
                                     return (
-                                      <React.Fragment key={studentId}>
-                                        <Typography variant="body2" sx={{ py: 0.5 }}>{name}</Typography>
-                                        <Box sx={{ width: 36, height: 36, borderRadius: '4px', border: '2px solid #4caf50', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', cursor: 'pointer' }} onClick={() => openParentQRPreview(parent, 'timeIn')}>
-                                          {parentQrCache[parent.uid]?.timeIn ? (
-                                            <img src={parentQrCache[parent.uid].timeIn} alt="In QR" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                          ) : (
-                                            <QrCode2 fontSize="small" sx={{ color: '#4caf50' }} />
-                                          )}
-                                        </Box>
-                                        <Box sx={{ width: 36, height: 36, borderRadius: '4px', border: '2px solid #ff9800', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', cursor: 'pointer' }} onClick={() => openParentQRPreview(parent, 'timeOut')}>
-                                          {parentQrCache[parent.uid]?.timeOut ? (
-                                            <img src={parentQrCache[parent.uid].timeOut} alt="Out QR" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                          ) : (
-                                            <QrCode2 fontSize="small" sx={{ color: '#ff9800' }} />
-                                          )}
-                                        </Box>
-                                      </React.Fragment>
+                                      <Chip 
+                                        key={studentId}
+                                        label={name}
+                                        size="medium"
+                                        sx={{
+                                          backgroundColor: 'rgba(31, 120, 80, 0.1)',
+                                          color: 'hsl(152, 65%, 28%)',
+                                          fontWeight: 500
+                                        }}
+                                      />
                                     )
                                   })}
                                 </Box>
                               ) : (
                                 <Typography variant="body2" color="text.secondary">
-                                  No parents assigned
+                                  No students assigned
                                 </Typography>
                               )}
                             </Box>
-                          </Collapse> */}
+                          </Collapse>
                         </TableCell>
                       </TableRow>
                     </React.Fragment>

@@ -198,10 +198,7 @@ const getParentSectionContent = async (req, res) => {
 							...childSnapshot.val(),
 						};
 
-						if (
-							!submission.assignmentId ||
-							submission.studentId !== parentId
-						) {
+						if (!submission.assignmentId || submission.studentId !== parentId) {
 							return;
 						}
 

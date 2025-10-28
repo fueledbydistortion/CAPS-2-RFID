@@ -187,71 +187,60 @@ const getParentSectionContent = async (req, res) => {
 
 		if (uniqueAssignments.length > 0) {
 			try {
-				const assignmentWithSubmissions = await Promise.all(
-					uniqueAssignments.map(async (assignment) => {
-						try {
-							const submissionsSnapshot = await db
-								.ref("assignmentSubmissions")
-								.orderByChild("assignmentId")
-								.equalTo(assignment.id)
-								.once("value");
+				const submissionsByAssignment = new Map();
+				const submissionsSnapshot = await db
+					.ref("assignmentSubmissions")
+					.orderByChild("studentId")
+					.equalTo(parentId)
+					.once("value");
 
-							const submissions = [];
-							if (submissionsSnapshot.exists()) {
-								submissionsSnapshot.forEach((childSnapshot) => {
-									const submission = {
-										id: childSnapshot.key,
-										...childSnapshot.val(),
-									};
+				if (submissionsSnapshot.exists()) {
+					submissionsSnapshot.forEach((childSnapshot) => {
+						const submission = {
+							id: childSnapshot.key,
+							...childSnapshot.val(),
+						};
 
-									if (submission.studentId !== parentId) {
-										return;
-									}
-
-									submissions.push({
-										...submission,
-										attachments: normalizeAttachments(
-											submission.attachments,
-											`${assignment.id}_${submission.id || "submission"}`
-										),
-									});
-								});
-							}
-
-							submissions.sort(
-								(a, b) => getSubmissionTimestamp(b) - getSubmissionTimestamp(a)
-							);
-
-							const latestSubmission = submissions[0] || null;
-
-							return {
-								...assignment,
-								attachments: normalizeAttachments(
-									assignment.attachments,
-									assignment.id
-								),
-								submissions,
-								latestSubmission,
-							};
-						} catch (assignmentError) {
-							console.error(
-								`Error fetching submissions for assignment ${assignment.id}:`,
-								assignmentError
-							);
-							return {
-								...assignment,
-								attachments: normalizeAttachments(
-									assignment.attachments,
-									assignment.id
-								),
-								submissions: [],
-								latestSubmission: null,
-							};
+						if (!submission.assignmentId) {
+							return;
 						}
-					})
-				);
 
-				uniqueAssignments = assignmentWithSubmissions;
+						const normalizedSubmission = {
+							...submission,
+							attachments: normalizeAttachments(
+								submission.attachments,
+								`${submission.assignmentId}_${submission.id || "submission"}`
+							),
+						};
+
+						if (!submissionsByAssignment.has(submission.assignmentId)) {
+							submissionsByAssignment.set(submission.assignmentId, []);
+						}
+
+						submissionsByAssignment.get(submission.assignmentId).push(
+							normalizedSubmission
+						);
+					});
+
+					submissionsByAssignment.forEach((submissions) => {
+						submissions.sort(
+							(a, b) => getSubmissionTimestamp(b) - getSubmissionTimestamp(a)
+						);
+					});
+				}
+
+				uniqueAssignments = uniqueAssignments.map((assignment) => {
+					const submissions = submissionsByAssignment.get(assignment.id) || [];
+					return {
+						...assignment,
+						attachments: normalizeAttachments(
+							assignment.attachments,
+							assignment.id
+						),
+						submissions,
+						latestSubmission: submissions[0] || null,
+					};
+				});
 			} catch (submissionError) {
 				console.error(
 					"Error attaching assignment submissions:",

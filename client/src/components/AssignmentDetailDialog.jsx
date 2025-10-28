@@ -39,6 +39,8 @@ import {
   Delete
 } from '@mui/icons-material';
 import AssignmentSubmissionDialog from './AssignmentSubmissionDialog';
+import { getStudentSubmissions } from '../utils/assignmentService';
+import { useAuth } from '../contexts/AuthContext';
 
 const AssignmentDetailDialog = ({ 
   open, 
@@ -46,14 +48,36 @@ const AssignmentDetailDialog = ({
   assignment,
   onSubmissionSuccess
 }) => {
+  const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
   const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
+  const [mySubmission, setMySubmission] = useState(null);
+  const [loadingSubmission, setLoadingSubmission] = useState(false);
 
   useEffect(() => {
     if (open) {
       setActiveTab(0);
+      loadMySubmission();
     }
-  }, [open]);
+  }, [open, assignment]);
+
+  const loadMySubmission = async () => {
+    if (!assignment || !userProfile) return;
+    
+    setLoadingSubmission(true);
+    try {
+      const result = await getStudentSubmissions(userProfile.uid);
+      if (result.success) {
+        // Find submission for this specific assignment
+        const submission = result.data.find(sub => sub.assignmentId === assignment.id);
+        setMySubmission(submission || null);
+      }
+    } catch (error) {
+      console.error('Error loading submission:', error);
+    } finally {
+      setLoadingSubmission(false);
+    }
+  };
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -65,6 +89,8 @@ const AssignmentDetailDialog = ({
 
   const handleSubmissionSuccess = (submissionData) => {
     setSubmissionDialogOpen(false);
+    // Reload submission to show the new one
+    loadMySubmission();
     if (onSubmissionSuccess) {
       onSubmissionSuccess(submissionData);
     }
@@ -302,6 +328,12 @@ const AssignmentDetailDialog = ({
                   sx={{ textTransform: 'none', fontWeight: 600 }}
                 />
               )}
+              <Tab 
+                label={mySubmission ? "My Submission" : "My Submission"} 
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+                icon={mySubmission ? <CheckCircle /> : null}
+                iconPosition="start"
+              />
             </Tabs>
           </Box>
 
@@ -359,6 +391,149 @@ const AssignmentDetailDialog = ({
                 </List>
               </Box>
             )}
+
+            {/* My Submission Tab */}
+            {activeTab === (assignment.attachments && assignment.attachments.length > 0 ? 2 : 1) && (
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 600, fontFamily: 'Plus Jakarta Sans, sans-serif', color: 'hsl(152, 65%, 28%)', mb: 2 , fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700}}>
+                  My Submission
+                </Typography>
+                
+                {loadingSubmission ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                    <CircularProgress />
+                  </Box>
+                ) : mySubmission ? (
+                  <Card sx={{ 
+                    background: 'rgba(76, 175, 80, 0.05)',
+                    border: '1px solid rgba(76, 175, 80, 0.2)',
+                    borderRadius: '12px'
+                  }}>
+                    <CardContent sx={{ p: 3 }}>
+                      {/* Submission Status */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                        <CheckCircle sx={{ mr: 1, color: '#4caf50' }} />
+                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#4caf50' }}>
+                          Submitted
+                        </Typography>
+                        <Chip 
+                          label={mySubmission.status || 'submitted'} 
+                          size="small" 
+                          color="success" 
+                          variant="filled"
+                          sx={{ ml: 2 }}
+                        />
+                      </Box>
+
+                      {/* Submission Details */}
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                          Submitted on:
+                        </Typography>
+                        <Typography variant="body2" sx={{ mb: 2 }}>
+                          {formatDate(mySubmission.submittedAt)}
+                        </Typography>
+                      </Box>
+
+                      {/* Submission Text */}
+                      {mySubmission.submissionText && (
+                        <Box sx={{ mb: 3 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                            Your Response:
+                          </Typography>
+                          <Paper sx={{ 
+                            p: 2, 
+                            background: 'rgba(255, 255, 255, 0.8)',
+                            border: '1px solid rgba(0, 0, 0, 0.1)',
+                            borderRadius: '8px'
+                          }}>
+                            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                              {mySubmission.submissionText}
+                            </Typography>
+                          </Paper>
+                        </Box>
+                      )}
+
+                      {/* Attachments */}
+                      {mySubmission.attachments && mySubmission.attachments.length > 0 && (
+                        <Box sx={{ mb: 3 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                            Your Attachments ({mySubmission.attachments.length}):
+                          </Typography>
+                          <List>
+                            {mySubmission.attachments.map((attachment, index) => (
+                              <ListItem 
+                                key={index}
+                                sx={{ 
+                                  border: '1px solid #e0e0e0', 
+                                  borderRadius: '8px', 
+                                  mb: 1,
+                                  background: 'rgba(255, 255, 255, 0.8)'
+                                }}
+                              >
+                                <ListItemIcon>
+                                  <FilePresent sx={{ color: 'hsl(152, 65%, 28%)' }} />
+                                </ListItemIcon>
+                                <ListItemText
+                                  primary={attachment.name || attachment.filename}
+                                  secondary={`${(attachment.size / 1024).toFixed(1)} KB`}
+                                />
+                                <ListItemSecondaryAction>
+                                  <Button
+                                    size="small"
+                                    onClick={() => window.open(attachment.url, '_blank')}
+                                  >
+                                    View
+                                  </Button>
+                                </ListItemSecondaryAction>
+                              </ListItem>
+                            ))}
+                          </List>
+                        </Box>
+                      )}
+
+                      {/* Grade and Feedback */}
+                      {mySubmission.grade !== undefined && mySubmission.grade !== null && mySubmission.grade !== '' && (
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                            Grade:
+                          </Typography>
+                          <Chip 
+                            label={`${mySubmission.grade}%`} 
+                            size="medium" 
+                            color={mySubmission.grade >= 80 ? 'success' : mySubmission.grade >= 70 ? 'info' : 'warning'} 
+                            variant="filled"
+                            sx={{ fontWeight: 600 }}
+                          />
+                        </Box>
+                      )}
+
+                      {mySubmission.feedback && (
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                            Teacher Feedback:
+                          </Typography>
+                          <Paper sx={{ 
+                            p: 2, 
+                            background: 'rgba(31, 120, 80, 0.05)',
+                            border: '1px solid rgba(31, 120, 80, 0.2)',
+                            borderRadius: '8px'
+                          }}>
+                            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                              {mySubmission.feedback}
+                            </Typography>
+                          </Paper>
+                        </Box>
+                      )}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Alert severity="info">
+                    You haven't submitted this assignment yet. Click "Submit Assignment" to get started.
+                  </Alert>
+                )}
+              </Box>
+            )}
           </Box>
         </DialogContent>
         
@@ -376,18 +551,22 @@ const AssignmentDetailDialog = ({
           <Button 
             onClick={handleSubmitAssignment}
             variant="contained"
-            startIcon={<CloudUpload />}
+            startIcon={mySubmission ? <CloudUpload /> : <CloudUpload />}
             sx={{ 
-              background: 'linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))',
+              background: mySubmission ? 
+                'linear-gradient(45deg, #ff9800, #f57c00)' : 
+                'linear-gradient(45deg, hsl(152, 65%, 28%), hsl(145, 60%, 40%))',
               borderRadius: '12px',
               px: 3,
               py: 1,
               '&:hover': {
-                background: 'linear-gradient(45deg, #0d47a1, hsl(220, 60%, 25%))',
+                background: mySubmission ? 
+                  'linear-gradient(45deg, #f57c00, #ef6c00)' : 
+                  'linear-gradient(45deg, #0d47a1, hsl(220, 60%, 25%))',
               }
             }}
           >
-            Submit Assignment
+            {mySubmission ? 'Resubmit Assignment' : 'Submit Assignment'}
           </Button>
         </DialogActions>
       </Dialog>

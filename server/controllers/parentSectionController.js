@@ -229,6 +229,63 @@ const getParentSectionContent = async (req, res) => {
 					});
 				}
 
+				// Fallback: ensure each assignment has the parent's submissions even if the global query missed them
+				const assignmentsNeedingFallback = uniqueAssignments.filter(
+					(assignment) => !submissionsByAssignment.has(assignment.id)
+				);
+
+				if (assignmentsNeedingFallback.length > 0) {
+					await Promise.all(
+						assignmentsNeedingFallback.map(async (assignment) => {
+							try {
+								const fallbackSnapshot = await db
+									.ref("assignmentSubmissions")
+									.orderByChild("assignmentId")
+									.equalTo(assignment.id)
+									.once("value");
+
+								if (!fallbackSnapshot.exists()) {
+									return;
+								}
+
+								const filteredSubmissions = [];
+								fallbackSnapshot.forEach((childSnapshot) => {
+									const submission = childSnapshot.val();
+									if (submission?.studentId !== parentId) {
+										return;
+									}
+
+									filteredSubmissions.push({
+										id: childSnapshot.key,
+										...submission,
+										attachments: normalizeAttachments(
+											submission.attachments,
+											`${assignment.id}_${childSnapshot.key}`
+										),
+									});
+								});
+
+								if (filteredSubmissions.length > 0) {
+									filteredSubmissions.sort(
+										(a, b) =>
+											getSubmissionTimestamp(b) -
+											getSubmissionTimestamp(a)
+									);
+									submissionsByAssignment.set(
+										assignment.id,
+										filteredSubmissions
+									);
+								}
+							} catch (assignmentError) {
+								console.error(
+									`Fallback submission lookup failed for assignment ${assignment.id}:`,
+									assignmentError
+								);
+							}
+						})
+					);
+				}
+
 				uniqueAssignments = uniqueAssignments.map((assignment) => {
 					const submissions = submissionsByAssignment.get(assignment.id) || [];
 					return {
